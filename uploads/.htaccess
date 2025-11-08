@@ -1,0 +1,3 @@
+# BẢO VỆ THƯ MỤC UPLOADS
+# Ngăn chặn thực thi PHP trong thư mục này
+# Chỉ cho phép tải file, không cho chạy script

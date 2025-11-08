@@ -1,0 +1,2 @@
+# File và thư mục không cần commit lên Git
+# VD: /vendor/, /node_modules/, .env, /uploads/*, /logs/*
