@@ -3,9 +3,6 @@
 ```
 VOCAB/
 │
-├── 📂 admin/                    # Trang quản trị (Admin Panel)
-│   └── admin_Dashboard.html    # Dashboard cho admin quản lý hệ thống
-│
 ├── 📂 api/                      # API Endpoints (trả về JSON)
 │   └── get-users.php            # API lấy danh sách users
 │                                # Dùng cho AJAX calls từ frontend
@@ -14,6 +11,7 @@ VOCAB/
 │   ├── 📂 css/                  # Stylesheet files
 │   │   └── style.css            # CSS chính của website
 │   ├── 📂 fonts/                # Font chữ tùy chỉnh
+│   │   └── all.min.css          # Font Awesome icons
 │   ├── 📂 images/               # Hình ảnh trang trí, icons, logo
 │   └── 📂 js/                   # JavaScript files
 │       └── main.js              # JavaScript chính
@@ -30,9 +28,6 @@ VOCAB/
 │   ├── constants.php            # Các hằng số (roles, status, levels)
 │   └── database.php             # Kết nối database (MySQLi & PDO)
 │
-├── 📂 database/                 # Database Scripts (Tham khảo)
-│   └── database.sql             # Cấu trúc database mẫu (đã tạo sẵn trên XAMPP)
-│
 ├── 📂 includes/                 # File dùng chung (Common Files)
 │   ├── footer.php               # Footer HTML chung
 │   ├── functions.php            # ⭐ Các hàm PHP tiện ích
@@ -42,6 +37,12 @@ VOCAB/
 │
 ├── 📂 logs/                     # System Logs (tự động tạo)
 │   └── error_YYYY-MM-DD.log     # Log lỗi theo ngày
+│
+├── 📂 pages/                    # Trang giao diện người dùng
+│   ├── 📂 admin/                # Trang quản trị (Admin Panel)
+│   │   └── admin_Dashboard.html # Dashboard cho admin quản lý hệ thống
+│   └── 📂 user/                 # Trang người dùng (User Panel)
+│       └── user_Dashboard.html  # Dashboard cho user thường
 │
 ├── 📂 process/                  # Backend Processing Scripts
 │   ├── login-process.php        # Xử lý logic đăng nhập
@@ -55,9 +56,9 @@ VOCAB/
 │   ├── 📂 documents/            # Tài liệu đã upload
 │   └── 📂 temp/                 # File tạm thời
 │
-├── 📂 user/                     # Trang người dùng (User Panel)
-│   └── user_Dashboard.html      # Dashboard cho user thường
-│
+├── � .env                      # ⚠️ Biến môi trường (KHÔNG commit lên Git)
+├── 📄 .gitignore                # Danh sách file/folder bỏ qua khi commit
+├── 📄 .htaccess                 # Cấu hình Apache (URL rewrite, bảo mật)
 ├── 📄 index.php                 # ⭐ Trang chủ chính của website
 └── 📄 README.md                 # ⭐ File này - Tài liệu hướng dẫn
 ```
@@ -69,11 +70,7 @@ VOCAB/
 - `config.php`: Khởi động session, include các file cần thiết, set timezone
 - `constants.php`: Định nghĩa các hằng số: ROLE_ADMIN, ROLE_USER, STATUS_ACTIVE, v.v.
 
-#### 2. **database/** - Scripts tham khảo
-- `database.sql`: File SQL cấu trúc database (CHỈ THAM KHẢO - database đã tạo sẵn trên XAMPP)
-- Lưu ý: Database `english_learning` đã được tạo và cấu hình sẵn trên XAMPP
-
-#### 3. **includes/** - Thư viện hàm dùng chung
+#### 2. **includes/** - Thư viện hàm dùng chung
 - `functions.php`: Chứa 20+ hàm tiện ích:
   - `is_logged_in()` - Kiểm tra đăng nhập
   - `is_admin()` - Kiểm tra quyền admin
@@ -82,17 +79,24 @@ VOCAB/
   - `redirect()` - Chuyển trang
   - `set_message()` - Tạo thông báo
   - v.v.
+- `header.php`, `footer.php`, `navbar.php`: Components HTML dùng chung
+- `upload-functions.php`: Xử lý upload file an toàn
 
-#### 4. **auth/** - Hệ thống xác thực
+#### 3. **auth/** - Hệ thống xác thực
 - Flow đăng nhập: `login.php` → `process/login-process.php` → Dashboard
 - Flow đăng ký: `register.php` → `process/register-process.php` → Login
 - Quên mật khẩu: `forgot-password.php` → gửi email → `reset-password.php`
 
-#### 5. **process/** - Logic xử lý backend
+#### 4. **process/** - Logic xử lý backend
 - Nhận dữ liệu từ form (POST)
 - Validate dữ liệu
 - Xử lý database
 - Trả về kết quả hoặc redirect
+
+#### 5. **pages/** - Giao diện người dùng
+- `pages/admin/`: Dashboard và các trang quản trị cho Admin
+- `pages/user/`: Dashboard và các trang học tập cho User
+- Phân quyền: redirect nếu user không có quyền truy cập
 
 #### 6. **api/** - RESTful API Endpoints
 - Trả về dữ liệu dạng JSON
@@ -100,13 +104,21 @@ VOCAB/
 - Ví dụ: `get-users.php` → `{"status":"success","data":[...]}`
 
 #### 7. **uploads/** - Lưu trữ file
-- ⚠️ **QUAN TRỌNG**: Folder này cần có quyền ghi (chmod 777)
+- ⚠️ **QUAN TRỌNG**: Folder này cần có quyền ghi (chmod 777 trên Linux/Mac)
 - Không commit file upload lên Git (đã có trong `.gitignore`)
+- Có `.htaccess` ngăn chặn thực thi file PHP trong thư mục này
 
 #### 8. **logs/** - Ghi log lỗi
 - Tự động tạo file log theo ngày
 - Giúp debug và theo dõi lỗi
-- Ví dụ: `error_2025-11-08.log`
+- Ví dụ: `error_2025-11-09.log`
+- Có `.htaccess` ngăn chặn truy cập web
+
+#### 9. **Root files** - File cấu hình gốc
+- `.env`: Biến môi trường (database credentials, API keys) - ⚠️ KHÔNG commit
+- `.gitignore`: Loại trừ file nhạy cảm khỏi Git (logs/, uploads/, .env)
+- `.htaccess`: Cấu hình Apache (URL rewriting, security headers)
+- `index.php`: Landing page / trang chủ chính
 
 ---
 

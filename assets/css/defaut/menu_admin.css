@@ -1,0 +1,175 @@
+:root{
+  --accent: #7BB7EE;
+  --bg: #ffffff;
+  --text: #111111;
+  --width-collapsed: 4.5rem; /* ~72px */
+  --width-expanded: 15rem;  /* chiều rộng khi mở rộng */
+}
+
+/* Khung chính của menu bên */
+#menu_admin{
+  font-family: 'Roboto', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  width: var(--width-collapsed);
+  box-shadow: 0 0.25rem 0.5rem rgba(0,0,0,0.05);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 0.75rem 0;
+  border-right: #D9D9D9 1px solid;
+  box-sizing: border-box;
+  transition: width 220ms ease, font-size 220ms ease;
+  min-height: 100vh; /* đảm bảo logout có thể đẩy xuống dưới */
+  /* collapsed trick: set base font-size 0 so text nodes are hidden by default */
+  font-size: 0;
+  overflow: hidden;
+}
+
+/* Khi hover trên toàn bộ sidebar — mở rộng và cho phép chữ hiển thị */
+#menu_admin:hover{
+  width: var(--width-expanded);
+  font-size: 1rem; /* bật lại font-size để chữ hiện lên */
+  align-items: stretch;
+}
+
+/* Logo */
+#menu_admin #logo{
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0rem 0.5rem 1rem 0.3rem ;
+  box-sizing: border-box;
+  border-bottom: #D9D9D9 1px solid;
+}
+
+/* Kích cỡ khung logo: 40px = 2.5rem */
+#menu_admin #logo svg,
+#menu_admin #logo img{
+  width: 2.5rem;
+  height: 2.5rem;
+  flex: 0 0 2.5rem;
+  padding-left: 0.5rem;
+}
+
+/* Tiêu đề logo (VOCAB) — ẩn khi collapsed, hiện khi hover */
+#menu_admin #logo p{
+  margin: 0;
+  font-weight: 700;
+  font-size: 1.125rem; /* ~18px */
+  color: var(--text);
+  display: none;
+  margin-left: 0.5rem;
+}
+#menu_admin:hover #logo{
+  justify-content: flex-start;
+  padding-left: 1rem;
+}
+#menu_admin:hover #logo p{
+  display: block;
+}
+
+/* Frame chứa các mục menu chính */
+#frame_menu{
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  margin-top: 0.75rem;
+  align-items: center;
+  padding-right: 1rem;
+  padding-left: 0.5rem;
+}
+
+/* Với cấu trúc HTML hiện tại mỗi mục có id="main_menu" (lặp lại). Chọn trực tiếp phần a bên trong */
+#frame_menu > #main_menu{
+  width: 100%;
+}
+
+#frame_menu > #main_menu a{
+  display: flex;
+  align-items: center;
+  justify-content: center; /* collapsed: icon centered to match logo */
+  gap: 0.75rem;
+  width: calc(100% - 0.5rem);
+  margin: 0.3rem 0.25rem;
+  padding: 0.5rem 0.6rem;
+  box-sizing: border-box;
+  text-decoration: none;
+  color: var(--text);
+  border-radius: 0.5rem;
+  transition: background 180ms ease, color 180ms ease, transform 120ms ease, font-size 180ms ease, padding-left 180ms ease;
+  /* Khi collapsed: ẩn chữ bằng cách để font-size base = 0; icon sẽ có kích thước riêng */
+  overflow: hidden;
+}
+
+/* Icon luôn hiển thị */
+#frame_menu > #main_menu a i{
+  display: inline-block;
+  color: var(--text);
+  font-size: 1.25rem; /* ~20px */
+  width: 1.75rem;
+  text-align: center;
+}
+
+/* Văn bản menu (text node) sẽ kế thừa font-size của #menu_admin khi mở rộng; khi collapsed (font-size:0) sẽ bị ẩn */
+#frame_menu > #main_menu a {
+  font-size: inherit; /* khi mở rộng sẽ có 1rem; khi collapsed sẽ là 0 */
+}
+
+/* Hover / Active state: nền xanh, chữ trắng, in đậm, cỡ chữ 24px (1.5rem) */
+#frame_menu > #main_menu a:hover,
+#frame_menu > #main_menu a.active{
+  background: var(--accent);
+  color: #fff;
+  font-weight: 700;
+  font-size: 1.2rem; /* 24px */
+}
+
+#frame_menu > #main_menu a:hover i,
+#frame_menu > #main_menu a.active i{
+  color: #fff;
+}
+
+/* Logout luôn nằm ở dưới cùng */
+#logout{
+  width: 100%;
+  margin-top: auto; /* đẩy xuống đáy */
+  padding-bottom: 0.75rem;
+}
+
+#logout a{
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  width: calc(100% - 0.5rem);
+  margin: 0.125rem 0.25rem;
+  padding: 0.5rem 0.6rem;
+  text-decoration: none;
+  color: var(--text);
+  border-radius: 0.5rem;
+  transition: background 180ms ease, color 180ms ease;
+  font-size: inherit;
+}
+
+#logout a i{ font-size: 1.25rem; width: 1.75rem; text-align:center; }
+
+#logout a:hover{ background: #f6f6f6; }
+
+/* Khi menu được mở rộng, canh lề cho phần anchor căn trái */
+/* Khi hover: mở rộng menu, căn trái nội dung và đẩy icon + chữ vào vị trí bình thường */
+#menu_admin:hover #frame_menu > #main_menu a{
+  justify-content: flex-start;
+  padding-left: 1rem;
+}
+#menu_admin:hover #logout a{
+  justify-content: flex-start;
+  padding-left: 1rem;
+}
+
+/* Responsive nhỏ: nếu container quá nhỏ, thu gọn hơn */
+@media (max-width: 420px){
+  :root{ --width-expanded: 12rem; }
+}
+
+/* Kết thúc file */

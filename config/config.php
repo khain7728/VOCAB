@@ -81,7 +81,7 @@ header('X-Content-Type-Options: nosniff');
 // HÀM KIỂM TRA KẾT NỐI DATABASE
 // ========================================
 // Kiểm tra kết nối database có hoạt động không
-if (!isset($conn) || !$conn->ping()) {
+if (isset($conn) && !$conn->ping()) {
     die('
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 100px auto; padding: 20px; border: 2px solid #dc3545; border-radius: 10px; background: #fff;">
             <h2 style="color: #dc3545;">❌ Lỗi kết nối Database</h2>

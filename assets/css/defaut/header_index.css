@@ -1,0 +1,86 @@
+/* CSS cho header
+   - File: assets/css/defaut/header_index.css
+   - Tiền tố selector: #header_index
+   - Font: Roboto (link Google Fonts đã được thêm trong HTML)
+   Ghi chú: sử dụng rem để dễ scale (mặc định 1rem = 16px)
+*/
+
+#header_index {
+    background: #ffffff; /* nền trắng */
+    display: flex;
+    align-items: center;
+    justify-content: flex-start; /* logo bên trái */
+    padding: 0.75rem 0; /* 12px -> 0.75rem */
+    box-sizing: border-box;
+}
+
+/* Khối logo */
+#header_index .logo {
+    display: flex;
+    align-items: center;
+    gap: 0.625rem; /* 10px -> 0.625rem */
+    margin-left: 2rem; /* 20px -> 1.25rem */
+}
+
+#header_index .logo svg {
+    width: 2.5rem; /* 40px -> 2.5rem */
+    height: 2.5rem;
+    flex: 0 0 auto;
+}
+
+#header_index .logo p {
+    font-family: 'Roboto', sans-serif;
+    font-size: 2.5rem; /* 40px -> 2.5rem */
+    color: #7BB7EE; /* màu chủ đạo */
+    margin: 0;
+    line-height: 1; /* căn thẳng với svg */
+}
+
+/* Container điều hướng */
+#header_index #dieu_huong {
+    display: flex;
+    align-items: center;
+    margin-left: 12rem; /* đẩy điều hướng sang phải */
+    margin-right: 4.375rem; /* 70px -> 4.375rem */
+    gap: 5rem; /* khoảng cách các mục (30px -> 1.875rem) */
+}
+
+/* Mỗi mục clickable trong header */
+#header_index #dieu_huong .header {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.625rem 1rem; /* 10px 16px -> 0.625rem 1rem */
+    border-radius: 0.375rem; /* 6px -> 0.375rem */
+    cursor: pointer;
+    transition: background-color 160ms ease, color 160ms ease;
+    -webkit-user-select: none;
+    user-select: none;
+}
+
+#header_index #dieu_huong .header a {
+    text-decoration: none;
+    font-family: 'Roboto', sans-serif;
+    font-size: 1.8rem; /* 18px -> 1.125rem (navigation text hơi nhỏ hơn title) */
+    color: #7BB7EE;
+    font-weight: 700;
+}
+
+/* Hover/active: đổi nền thành accent và chữ trắng */
+#header_index #dieu_huong .header:hover,
+#header_index #dieu_huong .header.active {
+    background-color: #7BB7EE;
+}
+
+#header_index #dieu_huong .header:hover a,
+#header_index #dieu_huong .header.active a {
+    color: #ffffff;
+}
+
+/* Điều chỉnh cho màn hình nhỏ */
+@media (max-width: 40rem) { /* 640px */
+    #header_index .logo p { font-size: 1.75rem; } /* 28px -> 1.75rem */
+    #header_index .logo svg { width: 3rem; height: 3rem; } /* 48px -> 3rem */
+    #header_index #dieu_huong { gap: 0.625rem; margin-right: 0.625rem; }
+    #header_index #dieu_huong .header a { font-size: 0.875rem; } /* 14px -> 0.875rem */
+}
