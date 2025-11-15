@@ -1,0 +1,29 @@
+/* =========================================
+   QUAN LY KHOA HOC STYLES (quanlykhoahoc_admin.css)
+   ========================================= */
+
+
+/* Tiền tố cha */
+
+.khoahoc-page .page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+}
+
+.khoahoc-page .page-header .page-title {
+    margin: 0;
+}
+
+.khoahoc-page .admin-table-container td:nth-child(3) {
+    min-width: 150px;
+}
+
+
+/* Thêm CSS hover cho nút mở khóa (màu xanh) */
+
+.khoahoc-page .table-actions i.fa-lock-open:hover {
+    color: var(--status-green);
+    transform: scale(1.1);
+}
