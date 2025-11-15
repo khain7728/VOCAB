@@ -1,0 +1,45 @@
+/* =========================================
+   QUAN LY TAI KHOAN STYLES (quanlytaikhoan.css)
+   ========================================= */
+
+
+/* Tiền tố cha */
+
+.taikhoan-page .admin-table-container td:nth-child(3),
+.taikhoan-page .admin-table-container td:nth-child(4) {
+    /* Giúp tên và email không bị vỡ quá */
+    min-width: 150px;
+}
+
+
+/*
+ * CSS Thêm cho hành động
+ */
+
+.taikhoan-page .table-actions i.fa-lock-open:hover {
+    color: var(--status-green);
+    /* Hover màu xanh lá khi mở khóa */
+    transform: scale(1.1);
+    /* Giữ nguyên hiệu ứng scale */
+}
+
+
+/* *** SỬA LỖI CĂN CHỈNH (CĂN GIỮA) *** */
+
+.taikhoan-page .table-actions {
+    display: block;
+    text-align: center;
+    /* Căn giữa icon */
+}
+
+
+/* *** SỬA LỖI CĂN CHỈNH (THẲNG HÀNG) *** */
+
+.taikhoan-page .table-actions .js-lock-toggle {
+    width: 1.25rem;
+    /* Đặt chiều rộng cố định */
+    display: inline-block;
+    /* Đảm bảo width hoạt động */
+    text-align: center;
+    /* Đảm bảo icon bên trong nó cũng căn giữa */
+}
