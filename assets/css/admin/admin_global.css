@@ -1,0 +1,281 @@
+/* =========================================
+   ADMIN GLOBAL STYLES (admin_global.css)
+   ========================================= */
+
+
+/* --- Biến màu và Cài đặt cơ bản --- */
+
+:root {
+    --accent: #5B9BD5;
+    --accent-light: #7BB7EE;
+    --bg-main: #F4F7FC;
+    --bg-widget: #FFFFFF;
+    --text-primary: #333333;
+    --text-secondary: #757575;
+    --border-color: #EAEAEA;
+    --status-green: #5CB85C;
+    --status-green-bg: #EAF7E9;
+    --status-red: #D9534F;
+    --status-red-bg: #FCE8E6;
+}
+
+html {
+    font-size: 16px;
+    /* 1rem = 16px */
+}
+
+body {
+    margin: 0;
+    font-family: 'Roboto', sans-serif;
+    background-color: var(--bg-main);
+    color: var(--text-primary);
+    box-sizing: border-box;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+*,
+*::before,
+*::after {
+    box-sizing: inherit;
+}
+
+
+/* --- Layout chính --- */
+
+.admin-container {
+    display: flex;
+    min-height: 100vh;
+}
+
+.admin-container .admin-main-content {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    overflow-x: hidden;
+    transition: margin-left 220ms ease;
+    /* Dành cho JS nếu muốn ẩn/hiện menu */
+}
+
+
+/* --- Header chung --- */
+
+.admin-main-content .admin-header {
+    background: var(--bg-widget);
+    padding: 0 2rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid var(--border-color);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
+    height: 4.5rem;
+    /* = width-collapsed của menu */
+    flex-shrink: 0;
+}
+
+.admin-header .header-left,
+.admin-header .header-right {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+}
+
+.admin-header .header-left i,
+.admin-header .header-right i {
+    font-size: 1.25rem;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: color 0.2s ease;
+}
+
+.admin-header .header-left i:hover,
+.admin-header .header-right i:hover {
+    color: var(--accent);
+}
+
+.admin-header .admin-profile {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    cursor: pointer;
+}
+
+.admin-header .admin-profile i {
+    font-size: 1.75rem;
+    /* Icon user lớn hơn */
+    color: var(--accent);
+}
+
+.admin-header .admin-profile span {
+    font-weight: 500;
+    font-size: 0.9rem;
+}
+
+
+/* --- Vùng nội dung chung --- */
+
+.admin-main-content .page-content {
+    padding: 2rem;
+    flex-grow: 1;
+}
+
+.page-content .page-title {
+    font-size: 1.75rem;
+    /* ~28px */
+    font-weight: 700;
+    margin-top: 0;
+    margin-bottom: 1.5rem;
+    color: #222;
+}
+
+
+/* --- Thanh tìm kiếm --- */
+
+.page-content .search-bar {
+    position: relative;
+    margin-bottom: 1.5rem;
+    width: 100%;
+    max-width: 450px;
+}
+
+.search-bar input {
+    width: 100%;
+    padding: 0.75rem 1rem 0.75rem 2.75rem;
+    border-radius: 0.5rem;
+    border: 1px solid var(--border-color);
+    font-size: 0.9rem;
+    background: var(--bg-widget);
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.search-bar input:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(91, 155, 213, 0.2);
+}
+
+.search-bar i {
+    position: absolute;
+    left: 1rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-secondary);
+    font-size: 1rem;
+}
+
+
+/* --- Bảng biểu chung --- */
+
+.page-content .admin-table-container {
+    background: var(--bg-widget);
+    border-radius: 0.75rem;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    overflow: hidden;
+}
+
+.admin-table-container table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9rem;
+}
+
+.admin-table-container th,
+.admin-table-container td {
+    padding: 1rem 1.25rem;
+    text-align: left;
+    border-bottom: 1px solid var(--border-color);
+    vertical-align: middle;
+}
+
+.admin-table-container th {
+    background: #F9FAFB;
+    font-weight: 700;
+    color: var(--text-secondary);
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.admin-table-container tr:last-child td {
+    border-bottom: none;
+}
+
+.admin-table-container tr:hover {
+    background: #F8FBFD;
+}
+
+
+/* Status pills */
+
+.status-pill {
+    padding: 0.3rem 0.75rem;
+    border-radius: 1rem;
+    font-weight: 700;
+    font-size: 0.75rem;
+    display: inline-block;
+    white-space: nowrap;
+}
+
+.status-pill.status-green {
+    background: var(--status-green-bg);
+    color: var(--status-green);
+}
+
+.status-pill.status-red {
+    background: var(--status-red-bg);
+    color: var(--status-red);
+}
+
+
+/* Table actions */
+
+.table-actions {
+    display: flex;
+    gap: 1.25rem;
+    align-items: center;
+}
+
+.table-actions i {
+    cursor: pointer;
+    color: var(--text-secondary);
+    font-size: 1.1rem;
+    transition: color 0.2s ease, transform 0.2s ease;
+}
+
+.table-actions i:hover {
+    transform: scale(1.1);
+    color: var(--accent);
+}
+
+.table-actions i.fa-lock:hover,
+.table-actions i.fa-trash:hover {
+    color: var(--status-red);
+}
+
+
+/* --- Button chung --- */
+
+.btn {
+    padding: 0.7rem 1.25rem;
+    border: none;
+    border-radius: 0.5rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background 0.2s ease, box-shadow 0.2s ease;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.9rem;
+}
+
+.btn.btn-primary {
+    background: var(--accent);
+    color: white;
+}
+
+.btn.btn-primary:hover {
+    background: #4A8BC2;
+    /* Darker accent */
+    box-shadow: 0 4px 8px rgba(91, 155, 213, 0.2);
+}
