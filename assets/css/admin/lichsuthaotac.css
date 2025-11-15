@@ -1,0 +1,11 @@
+/* =========================================
+   LICH SU THAO TAC STYLES (lichsuthaotac_admin.css)
+   ========================================= */
+
+
+/* Tiền tố cha */
+
+.lichsu-page .admin-table-container td:nth-child(4) {
+    /* Cột chi tiết rộng hơn */
+    min-width: 300px;
+}
