@@ -1,0 +1,239 @@
+
+#main {
+    max-width: 62.5rem; /* 1000px */
+    margin: 1.25rem auto; /* 20px */
+    padding: 1.25rem; /* 20px */
+    font-family: 'Roboto', sans-serif;
+}
+
+#tieu_de_trang {
+    font-size: 1.5rem;     
+    font-weight: bold;
+    color: #333;
+    margin-bottom: 1.25rem;
+    margin-left: 1.25rem;
+}
+
+
+/* Thẻ thông tin cá nhân */
+#main .the-user {
+    background: #fff;
+    border-radius: 1rem; 
+    padding: 1.5rem; 
+    box-shadow: 0 0.25rem 0.75rem rgba(0, 0, 0, 0.05);
+    border: 0.0625rem solid #e0e0e0;
+}
+
+#main .tieu-de-the {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 0.0625rem solid #eee; 
+    padding-bottom: 0.9375rem; 
+    margin-bottom: 1.25rem; 
+}
+
+#main .tieu-de-the h2 {
+    margin: 0;
+    color: #333;
+    font-size: 1.4rem;
+}
+
+#main #btn-chinhsua {
+    background-color: #7ca9e8;
+    color: white;
+    border: none;
+    border-radius: 1.25rem; 
+    padding: 0.5rem 1.125rem;
+    font-size: 0.9rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.3s;
+    min-width: 6.25rem;
+    text-align: center;
+}
+
+#main #btn-chinhsua:hover {
+    background-color: #6a95d1;
+}
+
+
+#main #btn-chinhsua.che-do-luu {
+    background-color: #4CAF50;
+}
+#main #btn-chinhsua.che-do-luu:hover {
+    background-color: #45a049;
+}
+
+#main .noi-dung-the {
+    display: flex;
+    gap: 1.875rem; 
+}
+
+
+#main .khung-avt {
+    flex-basis: 12.5rem; 
+    text-align: center;
+}
+
+#main .avt {
+    width: 7.5rem; 
+    height: 7.5rem; 
+    background: #e0e0e0;
+    border-radius: 50%;
+    margin: 0 auto 0.9375rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+#main .avt i {
+    font-size: 3.75rem; 
+    color: #b0b0b0;
+}
+
+#main .ten-user {
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: #000;
+    margin: 0;
+    padding: 0.3125rem; 
+    border-radius: 0.3125rem;
+}
+
+#main .thongtin-chitiet-user {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 0.9375rem;
+}
+
+#main .thongtin-chitiet-user p {
+    margin: 0;
+    color: #333;
+    line-height: 1.5;
+    font-size: 0.95rem;
+}
+#main .thongtin-chitiet-user p strong {
+    font-weight: 700;
+    color: #000;
+}
+#main .thongtin-chitiet-user p span {
+    color: #555;
+    padding: 0.3125rem; 
+    border-radius: 0.3125rem;
+}
+
+#main .icon-,
+#main .icon-lich {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem; 
+}
+#main .icon- i,
+#main .icon-lich i {
+    font-size: 1rem;
+    color: #555;
+    margin-top: 0.25rem; 
+    width: 1.25rem; 
+    text-align: center;
+}
+
+
+#main .tieu-su .block {
+    color: #555;
+    padding: 0.3125rem; 
+    border-radius: 0.3125rem; 
+    margin-top: 0.3125rem; 
+}
+
+
+#main [contenteditable="true"] {
+    background-color: #f0f8ff;
+    outline: 0.125rem solid #7ca9e8;
+    box-shadow: 0 0 0.3125rem rgba(124, 169, 232, 0.5);
+    color: #000;
+    cursor: text;
+}
+
+
+
+#main #thanh-tich {
+    margin-top: 2.1875rem; 
+}
+
+#main #thanh-tich h2 {
+    font-size: 1.5rem;
+    color: #333;
+    margin-bottom: 1.25rem; 
+    display: flex;
+    align-items: center;
+    gap: 0.625rem;
+}
+
+#main #thanh-tich h2 i {
+    color: #6a5acd;
+}
+
+#main #noidung-thanhtich {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.25rem; 
+}
+
+
+#main .the-thanh-tich {
+    background: #fff;
+    border-radius: 0.75rem;
+    padding: 1.5rem; 
+    text-align: center;
+    box-shadow: 0 0.25rem 0.625rem rgba(0, 0, 0, 0.05);
+    border: 0.0625rem solid #e0e0e0;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+#main .the-thanh-tich:hover {
+    transform: translateY(-0.3125rem); 
+    box-shadow: 0 0.5rem 1.25rem rgba(0, 0, 0, 0.08);
+}
+
+#main .icon-huy-hieu {
+    font-size: 2.5rem;
+    color: #7ca9e8;
+    margin-bottom: 0.9375rem;
+}
+
+#main .tieu-de-thanh-tich {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #000;
+    margin: 0 0 0.3125rem 0;
+}
+
+#main .mota-thanh-tich {
+    font-size: 0.9rem;
+    color: #666;
+    margin: 0;
+}
+
+@media (max-width: 56.25em) { 
+    #main #noidung-thanhtich {
+        grid-template-columns: 1fr 1fr;
+    }
+}
+
+@media (max-width: 37.5em) { 
+    #main .noi-dung-the {
+        flex-direction: column;
+        align-items: center;
+        gap: 1.25rem; 
+    }
+    
+    #main .thongtin-chitiet-user {
+        width: 100%;
+    }
+
+    #main #noidung-thanhtich {
+        grid-template-columns: 1fr;
+    }
+}

@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="../../assets/css/defaut/body.css">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="../../assets/css/user/khoa_hoc_cua_toi.css">
+    <title>khoa_hoc_cua_toi</title>
+</head>
+
+<body>
+    <div id="menu_user"></div>
+
+    <div id="header_user"></div>
+
+    <div id="content">
+        <div class="khung-tab-chuyen-trang">
+            <button id="tab-khoa-hoc-cua-toi" class="tab-chuyen-trang active">Khóa học của tôi</button>
+            <button id="tab-khoa-hoc-cong-dong" class="tab-chuyen-trang">Khóa học cộng đồng</button>
+        </div>
+
+        <div id="main">
+            
+            <div class="khung-tieu-de-va-loc">
+                <div class="bo-loc-hien-tai" id="bo-loc-hien-tai">
+                    <h2 id="tieu-de-loc">Tất cả khóa học</h2>
+                    <i class="fa-solid fa-filter"></i>
+                </div>
+                
+                <div class="menu-loc-dropdown an" id="menu-loc-dropdown">
+                    <div class="lua-chon-loc active" data-filter="tat-ca">
+                        <i class="fa-solid fa-check"></i> Tất cả khóa học
+                    </div>
+                    <div class="lua-chon-loc" data-filter="da-tao">
+                        <i class="fa-solid fa-check"></i> Khóa học đã tạo
+                    </div>
+                    <div class="lua-chon-loc" data-filter="da-tham-gia">
+                        <i class="fa-solid fa-check"></i> Khóa học đã tham gia
+                    </div>
+                </div>
+
+                <button id="btn-tao-khoa-hoc">
+                    <i class="fa-solid fa-plus"></i> Tạo khóa học
+                </button>
+            </div>
+
+            <div class="khung-tim-kiem">
+                <i class="fa-solid fa-search"></i>
+                <input type="text" id="thanh-tim-kiem" placeholder="Tìm kiếm khóa học...">
+            </div>
+
+            <div class="danh-sach-khoa-hoc" id="danh-sach-khoa-hoc">
+                </div>
+
+            <div class="khung-phan-trang" id="khung-phan-trang">
+                </div>
+
+        </div>
+    </div>
+
+    <div id="khung-che-mo" class="an">
+
+        <div id="modal-tao-khoa-hoc" class="modal-noi-dung an">
+            <h2 class="tieu-de-modal">Thông tin khóa học</h2>
+            <p class="mota-modal">Nhập đầy đủ thông tin và những ô có dấu (*)</p>
+            
+            <form id="form-tao-khoa-hoc">
+                <div class="nhom-form">
+                    <label for="ten-khoa-hoc-input">Tên khóa học *</label>
+                    <input type"text" id="ten-khoa-hoc-input" placeholder="Nhập tên khóa học">
+                </div>
+                
+                <div class="hang-form">
+                    <div class="nhom-form">
+                        <label for="trang-thai-select">Trạng thái</label>
+                        <select id="trang-thai-select">
+                            <option value="cong-khai">Công khai</option>
+                            <option value="rieng-tu">Riêng tư</option>
+                        </select>
+                    </div>
+                    <div class="nhom-form">
+                        <label for="tag-input">Tag*</label>
+                        <input type="text" id="tag-input" placeholder="Nhập tag cách nhau bởi dấu ','">
+                        <a href="#" id="btn-chon-tag" class="link-modal">Hoặc chọn tag có sẵn</a>
+                    </div>
+                </div>
+                
+                <div class="nhom-form">
+                    <label for="mo-ta-input">Mô tả khóa học</label>
+                    <textarea id="mo-ta-input" rows="3" placeholder="Nhập mô tả khóa học tại đây"></textarea>
+                </div>
+                
+                <div class="khung-nut-modal">
+                    <button type="button" id="btn-huy-modal-taokhoahoc" class="nut-modal nut-huy">Hủy</button>
+                    <button type="submit" id="btn-them-tu-vung" class="nut-modal nut-xacnhan">Thêm từ vựng</button>
+                </div>
+            </form>
+        </div>
+
+        <div id="modal-them-tag" class="modal-noi-dung an">
+            <div class="dau-modal">
+                <h2 class="tieu-de-modal">Thêm Tag</h2>
+                <button id="btn-dong-modal-tag" class="nut-dong-modal"><i class="fa-solid fa-times"></i></button>
+            </div>
+            
+            <p class="tieu-de-nho">Tag đã chọn</p>
+            <div class="khung-tag-list" id="khung-tag-da-chon">
+                </div>
+
+            <p class="tieu-de-nho">Tag gợi ý</p>
+            <div class="khung-tag-list" id="khung-tag-goi-y">
+                </div>
+            
+            <div class="khung-nut-modal mot-nut">
+                <button type="button" id="btn-xac-nhan-tag" class="nut-modal nut-xacnhan">Xác nhận</button>
+            </div>
+        </div>
+
+    </div>
+    <script src="../../assets/js/user/layout_user.js"></script>
+    <script src="../../assets/js/user/khoa_hoc_cua_toi.js"></script>
+</body>
+
+</html>
