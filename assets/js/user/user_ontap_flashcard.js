@@ -95,7 +95,7 @@ btnNext.addEventListener('click', (e) => {
 		// Sau khi chuyển câu, cập nhật progress đã hoàn thành câu trước
 		fcProgressBar.style.width = ((fcIndex) / fcTotal) * 100 + '%';
 	} else {
-		btnNext.innerHTML = 'Đã kết thúc';
+		window.location.href = 'user_ontap_ketqua.html';
 		btnNext.disabled = true;
 		btnNext.style.opacity = '0.6';
 	}

@@ -158,7 +158,7 @@ btnDanhDauDaHoc.addEventListener('click', (e) => {
 // Nút luyện tập (có thể thêm chức năng sau)
 btnLuyenTap.addEventListener('click', (e) => {
   e.stopPropagation();
-  alert('Chức năng luyện tập đang được phát triển!');
+  window.location.href = 'user_hinh_thuc_on_tap.html';
 });
 
 // Hỗ trợ phím tắt

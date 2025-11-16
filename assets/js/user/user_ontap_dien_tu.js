@@ -87,7 +87,7 @@ function dtGoNext(e) {
 		dtIndex++;
 		dtRender();
 	} else {
-		dtBtnNextAnchor.innerHTML = 'Đã kết thúc';
+		window.location.href = 'user_ontap_ketqua.html';
 		dtBtnNext.disabled = true;
 		dtBtnNext.style.opacity = '0.6';
 	}

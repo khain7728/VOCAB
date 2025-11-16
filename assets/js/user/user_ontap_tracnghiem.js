@@ -90,7 +90,7 @@ btnNext.addEventListener('click', (e) => {
 		renderQuestion();
 	} else {
 		// Kết thúc - có thể điều hướng hoặc hiển thị thông báo
-		btnNextAnchor.innerHTML = 'Đã kết thúc';
+		window.location.href = 'user_ontap_ketqua.html';
 		btnNext.disabled = true;
 		btnNext.style.opacity = '0.6';
 	}

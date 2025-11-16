@@ -146,7 +146,7 @@ function next(){
 	if(index < KT_TOTAL){
 		render();
 	} else {
-		window.location.href = '';
+		window.location.href = 'user_ontap_ketqua.html';
 	}
 }
 
