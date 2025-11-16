@@ -1,6 +1,6 @@
 document.addEventListener('DOMContentLoaded', function() {
 
-    // Dữ liệu
+    // --- 1. Dữ liệu (Giữ nguyên) ---
     const mockKhoaHocData = [
         { id: 1, tieuDe: 'Tiếng Anh cơ bản', mota: 'Tiếng Anh cho người mới bắt đầu', nguoiTao: 'User', soTu: 20, trangThaiChiaSe: 'Công khai', hocVien: 10, trangThai: 'Hoàn thành', tienDo: 100, tags: ['Tag1', 'Tag2', 'Tag3', 'Tag4'], isOwner: true },
         { id: 2, tieuDe: 'Khóa số 1', mota: 'Tiếng Anh cho người mới bắt đầu', nguoiTao: 'Mino', soTu: 20, trangThaiChiaSe: 'Công khai', hocVien: 10, trangThai: 'Hoàn thành', tienDo: 100, tags: ['Tag1', 'Tag2', 'Tag3', 'Tag4'], isOwner: false },
@@ -12,6 +12,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     const mockTagData = ['Tiếng Anh', 'N5', 'Giao tiếp', 'TOEIC', 'IELTS', 'Cơ bản', 'Nâng cao'];
 
+    // --- 2. DOM (Giữ nguyên) ---
     const tabKhoaHocCuaToi = document.getElementById('tab-khoa-hoc-cua-toi');
     const tabKhoaHocCongDong = document.getElementById('tab-khoa-hoc-cong-dong');
     const boLocHienTaiBtn = document.getElementById('bo-loc-hien-tai');
@@ -34,14 +35,14 @@ document.addEventListener('DOMContentLoaded', function() {
     const khungTagDaChon = document.getElementById('khung-tag-da-chon');
     const khungTagGoiY = document.getElementById('khung-tag-goi-y');
 
-    // --- 3. Biến trạng thái ---
+    // --- 3. Biến trạng thái (Giữ nguyên) ---
     let boLocHienTai = 'tat-ca';
     let tuKhoaTimKiem = '';
     let trangHienTai = 1;
     const soMucTrenTrang = 5;
     let dsTagDaChon = [];
 
-    //4. Hàm chức năng
+    // --- 4. Hàm chức năng ---
     function renderDanhSach() {
         if (!danhSachContainer) return;
         let dataToRender = mockKhoaHocData;
@@ -72,6 +73,7 @@ document.addEventListener('DOMContentLoaded', function() {
         renderPhanTrang(tongSoTrang);
     }
     
+    // (ĐÃ THAY ĐỔI)
     function taoTheKhoaHoc(kh) {
         const theDiv = document.createElement('div');
         theDiv.className = 'the-khoa-hoc';
@@ -79,11 +81,26 @@ document.addEventListener('DOMContentLoaded', function() {
         let classTrangThai = 'trang-thai-chua-hoc';
         if (kh.trangThai === 'Hoàn thành') classTrangThai = 'trang-thai-hoan-thanh';
         if (kh.trangThai === 'Đang học') classTrangThai = 'trang-thai-dang-hoc';
+        
+        // (THAY ĐỔI LỚN)
+        // Xác định cả Text và data-action
         let nutHocText = 'Học';
-        if (kh.tienDo === 100) nutHocText = 'Kiểm tra';
-        else if (kh.tienDo > 0) nutHocText = 'Ôn tập';
+        let nutHocAction = 'hoc'; // Mặc định là 'hoc'
+        
+        if (kh.tienDo === 100) {
+            nutHocText = 'Kiểm tra';
+            nutHocAction = 'kiem-tra'; // Đổi action
+        } else if (kh.tienDo > 0) {
+            nutHocText = 'Ôn tập';
+            nutHocAction = 'on-tap'; // Đổi action
+        }
+        // Nếu tiến độ 0%, giữ nguyên 'Học' và 'hoc'
+
         const nutSuaHtml = kh.isOwner ? `<button class="nut-hanh-dong" data-action="sua"><i class="fa-solid fa-pencil"></i></button>` : '';
         const nutXoaTooltip = kh.isOwner ? 'Xóa khóa học' : 'Rời khỏi khóa học';
+        
+        // (THAY ĐỔI LỚN)
+        // Gán data-action động
         theDiv.innerHTML = `
             <div class="dau-the">
                 <div class="thong-tin-tieu-de"><h3 class="tieu-de-khoa-hoc">${kh.tieuDe}</h3><p class="mota-khoa-hoc">${kh.mota}</p></div>
@@ -102,7 +119,7 @@ document.addEventListener('DOMContentLoaded', function() {
             </div>
             <div class="khung-nut-bam">
                 <button class="nut-bam nut-xanh" data-action="chi-tiet">Xem chi tiết</button>
-                <button class="nut-bam nut-xanh" data-action="hoc">${nutHocText}</button>
+                <button class="nut-bam nut-xanh" data-action="${nutHocAction}">${nutHocText}</button>
                 <div class="nhom-nut-hanh-dong">
                     ${nutSuaHtml}
                     <button class="nut-hanh-dong nut-xoa" data-action="xoa" title="${nutXoaTooltip}"><i class="fa-solid fa-trash"></i></button>
@@ -111,6 +128,7 @@ document.addEventListener('DOMContentLoaded', function() {
         return theDiv;
     }
 
+    // (Các hàm renderPhanTrang, moModalTaoKhoaHoc, moModalThemTag, renderTagsTrongModal, dongTatCaModal không thay đổi)
     function renderPhanTrang(tongSoTrang) {
         if (!khungPhanTrang) return;
         khungPhanTrang.innerHTML = '';
@@ -136,7 +154,6 @@ document.addEventListener('DOMContentLoaded', function() {
         nutSau.addEventListener('click', () => { if (trangHienTai < tongSoTrang) { trangHienTai++; renderDanhSach(); } });
         khungPhanTrang.appendChild(nutSau);
     }
-    
     function moModalTaoKhoaHoc() {
         if (khungCheMo) khungCheMo.classList.remove('an');
         if (modalTaoKhoaHoc) modalTaoKhoaHoc.classList.remove('an');
@@ -177,15 +194,14 @@ document.addEventListener('DOMContentLoaded', function() {
         if (modalThemTag) modalThemTag.classList.add('an');
     }
 
-    //5. Gán Event Listeners
+    // --- 5. Gán Event Listeners ---
 
+    // (Các hàm tab, modal không thay đổi)
     if (tabKhoaHocCongDong) {
         tabKhoaHocCongDong.addEventListener('click', () => {
             window.location.href = 'khoa_hoc_cong_dong.html';
         });
     }
-
-    // (Các hàm modal không thay đổi)
     if (btnTaoKhoaHoc) {
         btnTaoKhoaHoc.addEventListener('click', moModalTaoKhoaHoc);
     }
@@ -234,7 +250,6 @@ document.addEventListener('DOMContentLoaded', function() {
             if (modalTaoKhoaHoc) modalTaoKhoaHoc.classList.remove('an');
         });
     }
-
     if (btnThemTuVung) {
         btnThemTuVung.addEventListener('click', (e) => {
             e.preventDefault();
@@ -243,15 +258,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 alert('Vui lòng nhập Tên khóa học!');
                 return;
             }
-            //Giả lập tạo khóa học mới và lấy id
             const newCourseId = Math.floor(Math.random() * 1000);
             alert('Đã tạo khóa học! Đang chuyển đến trang Thêm từ vựng...');
             dongTatCaModal();
             window.location.href = `them_tu_vung.html?id=${newCourseId}`;
         });
     }
-
-
     if (boLocHienTaiBtn) {
         boLocHienTaiBtn.addEventListener('click', () => {
             menuLocDropdown.classList.toggle('an');
@@ -276,6 +288,8 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
+    // (ĐÃ THAY ĐỔI)
+    // Cập nhật Switch Case
     if (danhSachContainer) {
         danhSachContainer.addEventListener('click', (e) => {
             const nut = e.target.closest('.nut-bam, .nut-hanh-dong');
@@ -290,10 +304,21 @@ document.addEventListener('DOMContentLoaded', function() {
                     // Chuyển sang trang chi tiết
                     window.location.href = `chi_tiet_khoa_hoc.html?id=${khoaHocId}`;
                     break;
+                
+                // (THAY ĐỔI) Tách các trường hợp
                 case 'hoc': 
-                    // Chuyển sang trang học
+                    // Chuyển sang trang học (flashcard)
                     window.location.href = `user_hoc_tu_vung.html?id=${khoaHocId}`;
                     break;
+                case 'on-tap': 
+                    // (ĐÃ THÊM) Chuyển sang trang ôn tập
+                    window.location.href = `on_tap.html?id=${khoaHocId}`;
+                    break;
+                case 'kiem-tra': 
+                    // (ĐÃ THÊM) Chuyển sang trang kiểm tra
+                    window.location.href = `kiem_tra.html?id=${khoaHocId}`;
+                    break;
+
                 case 'sua': 
                     // Chuyển sang trang sửa
                     window.location.href = `sua_khoa_hoc.html?id=${khoaHocId}`;
@@ -315,6 +340,8 @@ document.addEventListener('DOMContentLoaded', function() {
             menuLocDropdown.classList.add('an');
         }
     });
+
+    // --- 6. Khởi tạo ---
     renderDanhSach();
     
     console.log("Trang Khóa học của tôi (khoa_hoc_cua_toi.js) đã tải thành công.");
