@@ -5,107 +5,107 @@
  * - Ghi chú bằng tiếng Việt
  */
 
-(function(){
-  'use strict';
+(function() {
+    'use strict';
 
-  // Đường dẫn tương đối từ pages/admin/ đến includes/
-  const MENU_PATH = '../../includes/menu_admin.html';
-  const HEADER_PATH = '../../includes/header_admin.html';
+    // Đường dẫn tương đối từ pages/admin/ đến includes/
+    const MENU_PATH = '../../includes/menu_admin.html';
+    const HEADER_PATH = '../../includes/header_admin.html';
 
-  /**
-   * Hàm fetch và inject nội dung HTML include vào một container
-   * @param {string} url - đường dẫn đến file HTML
-   * @param {string} containerId - ID của div chứa nội dung
-   */
-  async function loadInclude(url, containerId){
-    try{
-      const response = await fetch(url);
-      if(!response.ok) throw new Error(`Không tải được ${url}: ${response.status}`);
-      
-      const html = await response.text();
-      const container = document.getElementById(containerId);
-      if(!container){
-        console.error(`Không tìm thấy container #${containerId}`);
-        return;
-      }
+    /**
+     * Hàm fetch và inject nội dung HTML include vào một container
+     * @param {string} url - đường dẫn đến file HTML
+     * @param {string} containerId - ID của div chứa nội dung
+     */
+    async function loadInclude(url, containerId) {
+        try {
+            const response = await fetch(url);
+            if (!response.ok) throw new Error(`Không tải được ${url}: ${response.status}`);
 
-      // Parse HTML để tách <link> tags và nội dung
-      const parser = new DOMParser();
-      const doc = parser.parseFromString(html, 'text/html');
-      
-      // Lấy tất cả <link> tags và thêm vào <head>
-      const links = doc.querySelectorAll('link[rel="stylesheet"]');
-      links.forEach(link => {
-        let href = link.getAttribute('href');
-        
-        // Chuyển đổi đường dẫn tương đối từ includes/ sang pages/admin/
-        // Ví dụ: ../assets/css/... (từ includes/) -> ../../assets/css/... (từ pages/admin/)
-        if(href && href.startsWith('../')){
-          href = '../' + href; // thêm một cấp ../ nữa
+            const html = await response.text();
+            const container = document.getElementById(containerId);
+            if (!container) {
+                console.error(`Không tìm thấy container #${containerId}`);
+                return;
+            }
+
+            // Parse HTML để tách <link> tags và nội dung
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(html, 'text/html');
+
+            // Lấy tất cả <link> tags và thêm vào <head>
+            const links = doc.querySelectorAll('link[rel="stylesheet"]');
+            links.forEach(link => {
+                let href = link.getAttribute('href');
+
+                // Chuyển đổi đường dẫn tương đối từ includes/ sang pages/admin/
+                // Ví dụ: ../assets/css/... (từ includes/) -> ../../assets/css/... (từ pages/admin/)
+                if (href && href.startsWith('../')) {
+                    href = '../' + href; // thêm một cấp ../ nữa
+                }
+
+                // Kiểm tra xem link đã tồn tại chưa (dùng href đã chuyển đổi)
+                if (href && !document.querySelector(`link[href="${href}"]`)) {
+                    const newLink = document.createElement('link');
+                    newLink.rel = 'stylesheet';
+                    newLink.href = href;
+                    document.head.appendChild(newLink);
+                    console.log(`  → Đã thêm CSS: ${href}`);
+                }
+            });
+
+            // Lấy phần tử có id trùng với containerId từ body của doc
+            // Ví dụ: nếu containerId là 'menu_admin', tìm <div id="menu_admin"> trong parsed HTML
+            const targetElement = doc.body.querySelector(`#${containerId}`);
+
+            if (targetElement) {
+                // Inject nội dung BÊN TRONG element đó (không bao gồm wrapper div)
+                container.innerHTML = targetElement.innerHTML;
+            } else {
+                // Fallback: inject toàn bộ body content
+                container.innerHTML = doc.body.innerHTML;
+            }
+            console.log(`✓ Đã tải ${url} vào #${containerId}`);
+
+        } catch (error) {
+            console.error(`Lỗi khi tải ${url}:`, error);
         }
-        
-        // Kiểm tra xem link đã tồn tại chưa (dùng href đã chuyển đổi)
-        if(href && !document.querySelector(`link[href="${href}"]`)){
-          const newLink = document.createElement('link');
-          newLink.rel = 'stylesheet';
-          newLink.href = href;
-          document.head.appendChild(newLink);
-          console.log(`  → Đã thêm CSS: ${href}`);
-        }
-      });
-
-      // Lấy phần tử có id trùng với containerId từ body của doc
-      // Ví dụ: nếu containerId là 'menu_admin', tìm <div id="menu_admin"> trong parsed HTML
-      const targetElement = doc.body.querySelector(`#${containerId}`);
-      
-      if(targetElement){
-        // Inject nội dung BÊN TRONG element đó (không bao gồm wrapper div)
-        container.innerHTML = targetElement.innerHTML;
-      } else {
-        // Fallback: inject toàn bộ body content
-        container.innerHTML = doc.body.innerHTML;
-      }
-      console.log(`✓ Đã tải ${url} vào #${containerId}`);
-      
-    } catch(error){
-      console.error(`Lỗi khi tải ${url}:`, error);
     }
-  }
 
-  /**
-   * Thiết lập layout: menu bên trái, header + content bên phải
-   */
-  function setupLayout(){
-    // Thêm class wrapper để body sử dụng flexbox layout
-    document.body.classList.add('layout-admin');
-    
-    // Tạo container chính bên phải cho header và content
-    const mainContainer = document.createElement('div');
-    mainContainer.id = 'main_container';
-    
-    // Di chuyển header và content vào main_container
-    const headerDiv = document.getElementById('header_admin');
-    const contentDiv = document.getElementById('content');
-    
-    if(headerDiv) mainContainer.appendChild(headerDiv);
-    if(contentDiv) mainContainer.appendChild(contentDiv);
-    
-    // Thêm main_container vào body (sau menu)
-    document.body.appendChild(mainContainer);
-    
-    console.log('✓ Đã thiết lập layout admin (menu trái, header + content phải)');
-  }
+    /**
+     * Thiết lập layout: menu bên trái, header + content bên phải
+     */
+    function setupLayout() {
+        // Thêm class wrapper để body sử dụng flexbox layout
+        document.body.classList.add('layout-admin');
 
-  /**
-   * Thêm CSS inline cho layout (nếu chưa có file CSS riêng)
-   */
-  function injectLayoutStyles(){
-    const styleId = 'layout-admin-styles';
-    if(document.getElementById(styleId)) return; // đã tồn tại
-    
-    const style = document.createElement('style');
-    style.id = styleId;
-    style.textContent = `
+        // Tạo container chính bên phải cho header và content
+        const mainContainer = document.createElement('div');
+        mainContainer.id = 'main_container';
+
+        // Di chuyển header và content vào main_container
+        const headerDiv = document.getElementById('header_admin');
+        const contentDiv = document.getElementById('content');
+
+        if (headerDiv) mainContainer.appendChild(headerDiv);
+        if (contentDiv) mainContainer.appendChild(contentDiv);
+
+        // Thêm main_container vào body (sau menu)
+        document.body.appendChild(mainContainer);
+
+        console.log('✓ Đã thiết lập layout admin (menu trái, header + content phải)');
+    }
+
+    /**
+     * Thêm CSS inline cho layout (nếu chưa có file CSS riêng)
+     */
+    function injectLayoutStyles() {
+        const styleId = 'layout-admin-styles';
+        if (document.getElementById(styleId)) return; // đã tồn tại
+
+        const style = document.createElement('style');
+        style.id = styleId;
+        style.textContent = `
       /* Layout admin: menu bên trái fixed, phần còn lại bên phải */
       body.layout-admin{
         margin: 0;
@@ -213,79 +213,79 @@
         }
       }
     `;
-    document.head.appendChild(style);
-    console.log('✓ Đã inject CSS layout admin');
-  }
-
-  /**
-   * Thiết lập chức năng toggle menu khi click vào icon menu trong header
-   */
-  function setupMenuToggle(){
-    // Giả định icon menu trong header admin cũng có id là 'menu'
-    const menuIcon = document.querySelector('#header_admin #menu');
-    const menuSidebar = document.getElementById('menu_admin');
-    
-    if(!menuIcon || !menuSidebar){
-      console.warn('Không tìm thấy icon menu hoặc sidebar menu');
-      // Thử tìm icon menu bằng class, ví dụ .menu-toggle
-      // const menuIcon = document.querySelector('#header_admin .menu-toggle');
-      // if(!menuIcon) return;
-      return;
+        document.head.appendChild(style);
+        console.log('✓ Đã inject CSS layout admin');
     }
-    
-    // Toggle class 'menu-open' khi click vào icon menu
-    menuIcon.addEventListener('click', function(e){
-      e.stopPropagation(); // ngăn event bubble lên document
-      document.body.classList.toggle('menu-open');
-      console.log('Toggle menu:', document.body.classList.contains('menu-open') ? 'MỞ' : 'ĐÓNG');
-    });
-    
-    // Đóng menu khi click bên ngoài menu (chỉ khi đang mở)
-    document.addEventListener('click', function(e){
-      // Kiểm tra xem click có nằm trong menu không
-      if(!menuSidebar.contains(e.target) && !menuIcon.contains(e.target)){
-        if(document.body.classList.contains('menu-open')){
-          document.body.classList.remove('menu-open');
-          console.log('Đóng menu (click bên ngoài)');
+
+    /**
+     * Thiết lập chức năng toggle menu khi click vào icon menu trong header
+     */
+    function setupMenuToggle() {
+        // Giả định icon menu trong header admin cũng có id là 'menu'
+        const menuIcon = document.querySelector('#header_admin #menu');
+        const menuSidebar = document.getElementById('menu_admin');
+
+        if (!menuIcon || !menuSidebar) {
+            console.warn('Không tìm thấy icon menu hoặc sidebar menu');
+            // Thử tìm icon menu bằng class, ví dụ .menu-toggle
+            // const menuIcon = document.querySelector('#header_admin .menu-toggle');
+            // if(!menuIcon) return;
+            return;
         }
-      }
-    });
-    
-    // Ngăn click trong menu làm đóng menu
-    menuSidebar.addEventListener('click', function(e){
-      e.stopPropagation();
-    });
-    
-    console.log('✓ Đã thiết lập menu toggle');
-  }
 
-  /**
-   * Khởi tạo khi DOM sẵn sàng
-   */
-  function init(){
-    console.log('Đang khởi tạo layout admin...');
-    
-    // Inject CSS layout trước
-    injectLayoutStyles();
-    
-    // Load menu và header song song
-    Promise.all([
-      loadInclude(MENU_PATH, 'menu_admin'),
-      loadInclude(HEADER_PATH, 'header_admin')
-    ]).then(() => {
-      // Sau khi load xong, thiết lập layout
-      setupLayout();
-      // Thiết lập menu toggle (cần header load xong)
-      setupMenuToggle();
-      console.log('✓ Layout admin đã sẵn sàng!');
-    });
-  }
+        // Toggle class 'menu-open' khi click vào icon menu
+        menuIcon.addEventListener('click', function(e) {
+            e.stopPropagation(); // ngăn event bubble lên document
+            document.body.classList.toggle('menu-open');
+            console.log('Toggle menu:', document.body.classList.contains('menu-open') ? 'MỞ' : 'ĐÓNG');
+        });
 
-  // Chạy khi DOM đã load
-  if(document.readyState === 'loading'){
-    document.addEventListener('DOMContentLoaded', init);
-  } else {
-    init();
-  }
+        // Đóng menu khi click bên ngoài menu (chỉ khi đang mở)
+        document.addEventListener('click', function(e) {
+            // Kiểm tra xem click có nằm trong menu không
+            if (!menuSidebar.contains(e.target) && !menuIcon.contains(e.target)) {
+                if (document.body.classList.contains('menu-open')) {
+                    document.body.classList.remove('menu-open');
+                    console.log('Đóng menu (click bên ngoài)');
+                }
+            }
+        });
+
+        // Ngăn click trong menu làm đóng menu
+        menuSidebar.addEventListener('click', function(e) {
+            e.stopPropagation();
+        });
+
+        console.log('✓ Đã thiết lập menu toggle');
+    }
+
+    /**
+     * Khởi tạo khi DOM sẵn sàng
+     */
+    function init() {
+        console.log('Đang khởi tạo layout admin...');
+
+        // Inject CSS layout trước
+        injectLayoutStyles();
+
+        // Load menu và header song song
+        Promise.all([
+            loadInclude(MENU_PATH, 'menu_admin'),
+            loadInclude(HEADER_PATH, 'header_admin')
+        ]).then(() => {
+            // Sau khi load xong, thiết lập layout
+            setupLayout();
+            // Thiết lập menu toggle (cần header load xong)
+            setupMenuToggle();
+            console.log('✓ Layout admin đã sẵn sàng!');
+        });
+    }
+
+    // Chạy khi DOM đã load
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', init);
+    } else {
+        init();
+    }
 
 })();
