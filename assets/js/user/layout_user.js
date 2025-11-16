@@ -247,6 +247,43 @@
   }
 
   /**
+   * Thiết lập notification toggle
+   */
+  function setupNotifications(){
+    const notifContainer = document.getElementById('notifications');
+    const notifTrigger = document.getElementById('notif-trigger');
+    const notifPanel = document.getElementById('notif-panel');
+
+    if (!notifContainer || !notifTrigger || !notifPanel) {
+      console.warn('Không tìm thấy elements notification');
+      return;
+    }
+
+    // Toggle panel on click
+    notifTrigger.addEventListener('click', (e) => {
+      e.stopPropagation();
+      notifContainer.classList.toggle('open');
+    });
+
+    // Close panel when clicking outside
+    document.addEventListener('click', (e) => {
+      if (!notifContainer.contains(e.target)) {
+        notifContainer.classList.remove('open');
+      }
+    });
+
+    // Close on Escape key
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && notifContainer.classList.contains('open')) {
+        notifContainer.classList.remove('open');
+        notifTrigger.focus();
+      }
+    });
+    
+    console.log('✓ Đã thiết lập notification toggle');
+  }
+
+  /**
    * Khởi tạo khi DOM sẵn sàng
    */
   function init(){
@@ -264,6 +301,8 @@
       setupLayout();
       // Thiết lập menu toggle
       setupMenuToggle();
+      // Thiết lập notifications
+      setupNotifications();
       console.log('✓ Layout user đã sẵn sàng!');
     });
   }
