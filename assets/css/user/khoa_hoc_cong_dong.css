@@ -1,43 +1,34 @@
-
 /* Tab chuyển trang */
 #content .khung-tab-chuyen-trang {
-max-width: 62.5rem; /* 1000px */
-margin: 0 auto; /* Căn giữa giống #main */
-
-/* (THAY ĐỔI) Thêm padding nhỏ 4px để tạo viền bên trong */
-padding: 0.25rem; /* 4px */
-
-display: flex;
-/* (BỎ) gap: 0.25rem; */
-border: 0.0625rem solid black; /* 1px black - stroke */
-background-color: #fff; /* Nền trắng */
-
-/* (THAY ĐỔI) Tăng border-radius để tạo hình "viên thuốc" (pill) */
-border-radius: 2rem; /* 32px */
-
-max-width: 25rem; /* 400px - thu hẹp lại */
-/* (BỎ) overflow: hidden; */
-margin-bottom: 1.25rem; /* 20px */
+    max-width: 62.5rem; /* 1000px */
+    margin: 0 auto; /* Căn giữa giống #main */
+    padding: 0.25rem; /* 4px */
+    display: flex;
+    border: 0.0625rem solid black; /* 1px black - stroke */
+    background-color: #fff; /* Nền trắng */
+    border-radius: 2rem; /* 32px */
+    max-width: 25rem; /* 400px - thu hẹp lại */
+    margin-bottom: 1.25rem; /* 20px */
 }
 #content .tab-chuyen-trang {
-flex: 1;
-padding: 0.75rem 1rem; /* 12px 16px */
-border: none;
-background-color: transparent;
-font-size: 1rem;
-font-weight: 500;
-color: #333;
-cursor: pointer;
-transition: all 0.3s ease;
-/* (THAY ĐỔI) Thêm border-radius để khớp với container */
- border-radius: 2rem; /* 32px */
+    flex: 1;
+    padding: 0.75rem 1rem; /* 12px 16px */
+    border: none;
+    background-color: transparent;
+    font-size: 1rem;
+    font-weight: 500;
+    color: #333;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    border-radius: 2rem; /* 32px */
 }
+/* (ĐÃ THAY ĐỔI) */
 #content .tab-chuyen-trang.active {
-background-color: #7ca9e8;
- color: white;
+    background-color: #7bb7ee;
+    color: white;
 }
 #content .tab-chuyen-trang:not(.active):hover {
-     background-color: #f0f0f0;
+    background-color: #f0f0f0;
 }
 
 
@@ -76,10 +67,11 @@ background-color: #7ca9e8;
     border-radius: 0.5rem; /* 8px */
     box-sizing: border-box;
 }
+/* (ĐÃ THAY ĐỔI) */
 #main #thanh-tim-kiem:focus {
     outline: none;
-    border-color: #7ca9e8;
-    box-shadow: 0 0 0 0.1875rem rgba(124, 169, 232, 0.3); /* 3px */
+    border-color: #7bb7ee;
+    box-shadow: 0 0 0 0.1875rem rgba(123, 183, 238, 0.3); /* 3px */
 }
 #main .khung-tim-kiem i {
     position: absolute;
@@ -138,8 +130,8 @@ background-color: #7ca9e8;
     color: #fff;
     white-space: nowrap;
 }
-#main .trang-thai-da-tham-gia { background-color: #28a745; } /* Xanh */
-#main .trang-thai-chua-tham-gia { background-color: #dc3545; } /* Đỏ */
+#main .trang-thai-da-tham-gia { background-color: #28a745; }
+#main .trang-thai-chua-tham-gia { background-color: #dc3545; }
 
 #main .noi-dung-the {
     display: grid;
@@ -166,9 +158,6 @@ background-color: #7ca9e8;
     color: #333;
 }
 
-/* (ĐÃ THAY ĐỔI)
-  Thêm justify-content: center; để căn giữa các tag
-*/
 #main .khung-tags {
     display: flex;
     flex-wrap: wrap;
@@ -208,13 +197,16 @@ background-color: #7ca9e8;
     background-color: #f0f0f0;
     color: #333;
 }
+/* (ĐÃ THAY ĐỔI) */
 #main .nut-bam.nut-them {
-    background-color: #7ca9e8;
+    background-color: #7bb7ee;
     color: white;
 }
+/* (ĐÃ THAY ĐỔI) */
 #main .nut-bam.nut-xem-chi-tiet:hover {
-    background-color: #e0e0e0;
+    background-color: #7bb7ee;
 }
+/* (Giữ nguyên hover) */
 #main .nut-bam.nut-them:hover {
     background-color: #6a95d1;
 }
@@ -237,11 +229,15 @@ background-color: #7ca9e8;
     cursor: pointer;
     transition: background-color 0.3s, border-color 0.3s;
 }
-#main .nut-phan-trang:hover { background-color: #f5f5f5; }
+/* (ĐÃ THAY ĐỔI) */
+#main .nut-phan-trang:hover { 
+    background-color: #7bb7ee; 
+}
+/* (ĐÃ THAY ĐỔI) */
 #main .nut-phan-trang.trang-hien-tai {
-    background-color: #7ca9e8;
+    background-color: #7bb7ee;
     color: white;
-    border-color: #7ca9e8;
+    border-color: #7bb7ee;
 }
 
 /* Responsive */

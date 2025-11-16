@@ -16,6 +16,7 @@
     justify-content: space-between;
     align-items: center;
     background-color: #fff;
+    /* (ĐÃ THAY ĐỔI) Bỏ border xanh */
     padding: 1rem 1.5rem; /* 16px 24px */
     margin-bottom: 1.5rem; /* 24px */
 }
@@ -34,6 +35,7 @@
     align-items: center;
     gap: 0.5rem; /* 8px */
 }
+/* (ĐÃ THAY ĐỔI) Đổi màu hover của nút xám */
 #main #btn-tro-ve:hover {
     background-color: #7bb7ee;
 }
@@ -63,10 +65,12 @@
     align-items: center;
     gap: 0.5rem; /* 8px */
 }
+/* (ĐÃ THAY ĐỔI) Đổi màu nền xanh */
 #main .nut-hanh-dong-tren.nut-xanh {
-    background-color: #7ca9e8;
+    background-color: #7bb7ee;
     color: white;
 }
+/* (Giữ nguyên hover) */
 #main .nut-hanh-dong-tren.nut-xanh:hover {
     background-color: #6a95d1;
 }
@@ -105,10 +109,21 @@
     color: #000;
 }
 /* Màu nền từ design */
-#main .khoi-thong-so.mau-1 { background-color: #e0f8f0; } /* Xanh lá nhạt */
-#main .khoi-thong-so.mau-2 { background-color: #e6f3ff; } /* Xanh dương nhạt */
-#main .khoi-thong-so.mau-3 { background-color: #fff9e6; } /* Vàng nhạt */
-
+#main .khoi-thong-so.mau-1 { background-color: #9EEFC4; }
+#main .khoi-thong-so.mau-2 { background-color: #BAC8F1; }
+#main .khoi-thong-so.mau-3 { background-color: #EBEFB2; } /* Vàng nhạt */
+#main .tieu-de-khoi.mau-1 {
+    color: #FF0000;
+    font-weight: bold;
+}
+#main .tieu-de-khoi.mau-2 {
+    color: #0325FF;
+    font-weight: bold
+}
+#main .tieu-de-khoi.mau-3 {
+    color: #972FBD;
+    font-weight: bold
+}
 
 /* Hàng 3: Danh sách từ vựng */
 #main .khung-danh-sach-tu {
@@ -194,6 +209,7 @@
     padding-top: 1.5rem; /* 24px */
     border-top: 0.0625rem solid #eee; /* 1px */
 }
+/* (ĐÃ THAY ĐỔI) Đổi màu nền xanh */
 #main .nut-hoc-tap {
     padding: 0.75rem 1.5rem; /* 12px 24px */
     font-size: 1rem;
@@ -201,11 +217,12 @@
     border-radius: 0.5rem; /* 8px */
     cursor: pointer;
     border: 0.0625rem solid black; /* 1px black */
-    background-color: #7ca9e8;
+    background-color: #7bb7ee;
     color: white;
     transition: background-color 0.3s;
     min-width: 9.375rem; /* 150px */
 }
+/* (Giữ nguyên hover) */
 #main .nut-hoc-tap:hover {
     background-color: #6a95d1;
 }
@@ -311,9 +328,16 @@
     background-color: #f0f0f0;
     color: #333;
 }
+/* (ĐÃ THAY ĐỔI) Đổi màu nền xanh */
 .nut-modal.nut-xacnhan { /* "Học lại" */
-    background-color: #7ca9e8;
+    background-color: #7bb7ee;
     color: white;
 }
-.nut-modal.nut-phu:hover { background-color: #e0e0e0; }
-.nut-modal.nut-xacnhan:hover { background-color: #6a95d1; }
+/* (ĐÃ THAY ĐỔI) Đổi màu hover của nút xám */
+.nut-modal.nut-phu:hover { 
+    background-color: #7bb7ee; 
+}
+/* (Giữ nguyên hover) */
+.nut-modal.nut-xacnhan:hover { 
+    background-color: #6a95d1; 
+}

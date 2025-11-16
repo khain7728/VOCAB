@@ -112,7 +112,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function loadCourseDetails(course, viewState) {
         tieuDeChinh.textContent = course.tieuDe;
-        giatriTacGia.textContent = course.tacGia;
+        giatriTacGia.textContent = course.nguoiTao;
         giatriTienBo.textContent = `${course.tienDo}%`;
         giatriSoLanOn.textContent = course.soLanOn;
 
