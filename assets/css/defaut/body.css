@@ -4,3 +4,22 @@
     box-sizing: border-box;
     font-family: 'roboto', Arial, sans-serif;
 }
+
+* {
+    font-family: 'roboto', arial, sans-serif;
+}
+
+#main {
+    width: 95%;
+    margin-left: 2.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+#tieu_de_trang {
+    font-size: 2.25rem;
+    font-weight: bold;
+    font-style: italic;
+    margin-bottom: 0.75rem;
+}
