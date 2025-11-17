@@ -2,3 +2,209 @@
     DASHBOARD USER
     Trang dashboard dành cho người dùng thường
 -->
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="../../assets/css/defaut/body.css">
+    <link rel="stylesheet" href="../../assets/css/defaut/menu_user.css">
+    <link rel="stylesheet" href="../../assets/css/user/user_Dashboard.css">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <title>Dashboard</title>
+</head>
+
+<body>
+    <!-- menu user -->
+    <div id="menu_user"></div>
+
+    <!-- header user -->
+    <div id="header_user"></div>
+
+    <!-- content -->
+    <div id="content">
+        <p id="tieu_de_trang">Trang chủ</p>
+        <div class="title" style="font-size: 14px; font-weight: 200;">Chào mừng bạn trở lại, Nguyễn Văn A</div>
+        <div id="main">
+            <!-- nội dung trang sẽ được viết bên trong này -->
+            <div class="dashboard-container">
+                <!-- Stats Cards -->
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-label">Khóa học</div>
+                        <div class="stat-icon">
+                            <div class="icon-box">
+                                <i class="fa-solid fa-folder"></i>
+                            </div>
+                        </div>
+                        <div class="stat-value">3</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Số từ đã học</div>
+                        <div class="stat-icon">
+                            <div class="icon-box">
+                                <i class="fa-solid fa-book"></i>
+                            </div>
+                        </div>
+                        <div class="stat-value">197</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Điểm trung bình</div>
+                        <div class="stat-icon">
+                            <div class="icon-box">
+                                <i class="fa-solid fa-chart-line"></i>
+                            </div>
+                        </div>
+                        <div class="stat-value">7.9/10</div>
+                    </div>
+                </div>
+
+                <!-- Chart Section -->
+                <div class="chart-section">
+                    <h2 class="section-title">Kết quả bài kiểm tra tuần này</h2>
+                    <div class="chart-container">
+                        <svg viewBox="0 0 750 300" class="chart">
+                            <!-- Grid lines -->
+                            <line x1="50" y1="50" x2="50" y2="250" stroke="#ccc" stroke-width="1" />
+                            <line x1="50" y1="250" x2="720" y2="250" stroke="#ccc" stroke-width="1" />
+
+                            <!-- Y-axis labels -->
+                            <text x="30" y="255" font-size="12" fill="#666">0</text>
+                            <text x="30" y="205" font-size="12" fill="#666">2</text>
+                            <text x="30" y="155" font-size="12" fill="#666">4</text>
+                            <text x="30" y="105" font-size="12" fill="#666">6</text>
+                            <text x="30" y="55" font-size="12" fill="#666">12</text>
+
+                            <!-- Grid horizontal lines -->
+                            <line x1="50" y1="200" x2="720" y2="200" stroke="#e0e0e0" stroke-width="1" />
+                            <line x1="50" y1="150" x2="720" y2="150" stroke="#e0e0e0" stroke-width="1" />
+                            <line x1="50" y1="100" x2="720" y2="100" stroke="#e0e0e0" stroke-width="1" />
+
+                            <!-- Line chart -->
+                            <polyline
+                                points="70,160 130,130 190,120 250,140 310,110 370,130 430,90 490,110 550,80 610,70"
+                                fill="none" stroke="#4A90E2" stroke-width="3" stroke-linecap="round"
+                                stroke-linejoin="round" />
+
+                            <!-- Data points -->
+                            <circle cx="70" cy="160" r="4" fill="#4A90E2" />
+                            <circle cx="130" cy="130" r="4" fill="#4A90E2" />
+                            <circle cx="190" cy="120" r="4" fill="#4A90E2" />
+                            <circle cx="250" cy="140" r="4" fill="#4A90E2" />
+                            <circle cx="310" cy="110" r="4" fill="#4A90E2" />
+                            <circle cx="370" cy="130" r="4" fill="#4A90E2" />
+                            <circle cx="430" cy="90" r="4" fill="#4A90E2" />
+                            <circle cx="490" cy="110" r="4" fill="#4A90E2" />
+                            <circle cx="550" cy="80" r="4" fill="#4A90E2" />
+                            <circle cx="610" cy="70" r="4" fill="#4A90E2" />
+
+                            <!-- Data labels -->
+                            <text x="60" y="180" font-size="11" fill="#666">Thứ 2</text>
+                            <text x="120" y="180" font-size="11" fill="#666">Thứ 3</text>
+                            <text x="180" y="180" font-size="11" fill="#666">Thứ 4</text>
+                            <text x="240" y="180" font-size="11" fill="#666">Thứ 5</text>
+                            <text x="300" y="180" font-size="11" fill="#666">Thứ 6</text>
+                            <text x="360" y="180" font-size="11" fill="#666">Thứ 7</text>
+                            <text x="420" y="180" font-size="11" fill="#666">Chủ nhật</text>
+
+                            <!-- Data values on chart -->
+                            <text x="60" y="155" font-size="10" fill="#4A90E2" font-weight="bold">6</text>
+                            <text x="120" y="125" font-size="10" fill="#4A90E2" font-weight="bold">7</text>
+                            <text x="180" y="115" font-size="10" fill="#4A90E2" font-weight="bold">8</text>
+                            <text x="240" y="135" font-size="10" fill="#4A90E2" font-weight="bold">7</text>
+                            <text x="300" y="105" font-size="10" fill="#4A90E2" font-weight="bold">9</text>
+                            <text x="360" y="125" font-size="10" fill="#4A90E2" font-weight="bold">8</text>
+                            <text x="420" y="85" font-size="10" fill="#4A90E2" font-weight="bold">10</text>
+                            <text x="480" y="105" font-size="10" fill="#4A90E2" font-weight="bold">9</text>
+                            <text x="540" y="75" font-size="10" fill="#4A90E2" font-weight="bold">10</text>
+                        </svg>
+                    </div>
+                </div>
+
+                <!-- My Courses Section -->
+                <div class="courses-section">
+                    <div class="section-header">
+                        <h2 class="section-title">Khóa học của tôi</h2>
+                        <button class="btn-create-course">+ Tạo khóa học mới</button>
+                    </div>
+
+                    <!-- Course Cards Grid -->
+                    <div class="courses-grid">
+                        <!-- Course 1 -->
+                        <div class="course-card">
+                            <h3 class="course-title">Tiếng anh cơ bản</h3>
+                            <p class="course-description">Học 500 từ vựng thường dùng nhất trong giao tiếp hàng ngày.
+                            </p>
+                            <div class="progress-section">
+                                <div class="progress-label"><span>Hoàn thành</span><span>40%</span></div>
+                                <div class="progress-bar">
+                                    <div class="progress-fill" style="width: 40%"></div>
+                                </div>
+                            </div>
+                            <button class="btn-continue">Tiếp tục học</button>
+                        </div>
+
+                        <!-- Course 2 -->
+                        <div class="course-card">
+                            <h3 class="course-title">English for Business</h3>
+                            <p class="course-description">Tiếng Anh thương mại, email, hội họp, đàm phán.</p>
+                            <div class="progress-section">
+                                <div class="progress-label"><span>Hoàn thành</span><span>20%</span></div>
+                                <div class="progress-bar">
+                                    <div class="progress-fill" style="width: 20%"></div>
+                                </div>
+                            </div>
+                            <button class="btn-continue">Tiếp tục học</button>
+                        </div>
+
+                        <!-- Course 3 -->
+                        <div class="course-card">
+                            <h3 class="course-title">TOEIC 600+ Vocabulary</h3>
+                            <p class="course-description">Từ vựng TOEIC theo chủ đề công việc và du lịch.</p>
+                            <div class="progress-section">
+                                <div class="progress-label"><span>Hoàn thành</span><span>10%</span></div>
+                                <div class="progress-bar">
+                                    <div class="progress-fill" style="width: 10%"></div>
+                                </div>
+                            </div>
+                            <button class="btn-continue">Tiếp tục học</button>
+                        </div>
+
+                        <!-- Xem thêm -->
+                        <div class="more-card">
+                            <i class="fa-solid fa-arrow-right"></i>
+                            <p>Xem tất cả khóa học</p>
+                        </div>
+                    </div>
+
+                    <!-- Mục tiêu hôm nay -->
+                    <div class="goal-section">
+                        <h2 class="section-title">🎯 Mục tiêu hôm nay</h2>
+
+                        <div class="goal-card">
+                            <p class="goal-text">Học 20 từ hôm nay</p>
+
+                            <div class="progress-section">
+                                <div class="progress-label">
+                                    <span>Hoàn thành</span>
+                                    <span>50%</span>
+                                </div>
+                                <div class="progress-bar">
+                                    <div class="progress-fill" style="width: 50%"></div>
+                                </div>
+                            </div>
+
+                            <button class="btn-continue">Bắt đầu lại</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Script để load menu và header -->
+    <script src="../../assets/js/user/layout_user.js"></script>
+</body>
+
+</html>

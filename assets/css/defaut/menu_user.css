@@ -26,8 +26,8 @@
   overflow: hidden;
 }
 
-/* Khi hover trên toàn bộ sidebar — mở rộng và cho phép chữ hiển thị */
-#menu_user:hover{
+/* Khi menu được mở bằng click (class menu-open trên body) — mở rộng và cho phép chữ hiển thị */
+body.menu-open #menu_user{
   width: var(--width-expanded);
   font-size: 1rem; /* bật lại font-size để chữ hiện lên */
   align-items: stretch;
@@ -62,11 +62,11 @@
   display: none;
   margin-left: 0.5rem;
 }
-#menu_user:hover #logo{
+body.menu-open #menu_user #logo{
   justify-content: flex-start;
   padding-left: 1rem;
 }
-#menu_user:hover #logo p{
+body.menu-open #menu_user #logo p{
   display: block;
 }
 
@@ -117,17 +117,26 @@
   font-size: inherit; /* khi mở rộng sẽ có 1rem; khi collapsed sẽ là 0 */
 }
 
-/* Hover / Active state: nền xanh, chữ trắng, in đậm, cỡ chữ 24px (1.5rem) */
-#frame_menu > #main_menu a:hover,
+/* Active state: nền xanh, chữ trắng, in đậm */
 #frame_menu > #main_menu a.active{
+  background: var(--accent);
+  color: #fff;
+  font-weight: 700;
+}
+
+#frame_menu > #main_menu a.active i{
+  color: #fff;
+}
+
+/* Hover chỉ hoạt động khi menu mở */
+body.menu-open #frame_menu > #main_menu a:hover {
   background: var(--accent);
   color: #fff;
   font-weight: 700;
   font-size: 1.2rem; /* 24px */
 }
 
-#frame_menu > #main_menu a:hover i,
-#frame_menu > #main_menu a.active i{
+body.menu-open #frame_menu > #main_menu a:hover i {
   color: #fff;
 }
 
@@ -157,15 +166,17 @@
 #logout a:hover{ background: #f6f6f6; }
 
 /* Khi menu được mở rộng, canh lề cho phần anchor căn trái */
-/* Khi hover: mở rộng menu, căn trái nội dung và đẩy icon + chữ vào vị trí bình thường */
-#menu_user:hover #frame_menu > #main_menu a{
+/* Khi click icon: mở rộng menu, căn trái nội dung và đẩy icon + chữ vào vị trí bình thường */
+body.menu-open #menu_user #frame_menu > #main_menu a{
   justify-content: flex-start;
   padding-left: 1rem;
 }
-#menu_user:hover #logout a{
+body.menu-open #menu_user #logout a{
   justify-content: flex-start;
   padding-left: 1rem;
 }
+
+
 
 /* Responsive nhỏ: nếu container quá nhỏ, thu gọn hơn */
 @media (max-width: 420px){

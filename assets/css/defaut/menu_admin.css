@@ -32,9 +32,9 @@
 }
 
 
-/* Khi hover trên toàn bộ sidebar — mở rộng và cho phép chữ hiển thị */
+/* Khi menu được mở bằng click (class menu-open trên body) — mở rộng và cho phép chữ hiển thị */
 
-#menu_admin:hover {
+body.menu-open #menu_admin {
     width: var(--width-expanded);
     font-size: 1rem;
     /* bật lại font-size để chữ hiện lên */
@@ -78,12 +78,12 @@
     margin-left: 0.5rem;
 }
 
-#menu_admin:hover #logo {
+body.menu-open #menu_admin #logo {
     justify-content: flex-start;
     padding-left: 1rem;
 }
 
-#menu_admin:hover #logo p {
+body.menu-open #menu_admin #logo p {
     display: block;
 }
 
@@ -151,30 +151,30 @@
  * ========================================= */
 
 
-/* 1. Áp dụng nền/màu chữ cho hover và active (luôn luôn) */
+/* Active state: nền xanh, chữ trắng, in đậm */
 
-#frame_menu>#main_menu a:hover,
 #frame_menu>#main_menu a.active {
     background: var(--accent);
     color: #fff;
     font-weight: 700;
 }
 
-
-/* 2. Đổi màu icon tương ứng */
-
-#frame_menu>#main_menu a:hover i,
 #frame_menu>#main_menu a.active i {
     color: #fff;
 }
 
+/* Hover chỉ hoạt động khi menu mở */
 
-/* 3. CHỈ Áp dụng cỡ chữ lớn KHI MENU MỞ RỘNG (hover) */
-
-#menu_admin:hover #frame_menu>#main_menu a:hover,
-#menu_admin:hover #frame_menu>#main_menu a.active {
+body.menu-open #menu_admin #frame_menu>#main_menu a:hover {
+    background: var(--accent);
+    color: #fff;
+    font-weight: 700;
     font-size: 1.2rem;
     /* 24px */
+}
+
+body.menu-open #menu_admin #frame_menu>#main_menu a:hover i {
+    color: #fff;
 }
 
 
@@ -220,17 +220,19 @@
 /* Khi menu được mở rộng, canh lề cho phần anchor căn trái */
 
 
-/* Khi hover: mở rộng menu, căn trái nội dung và đẩy icon + chữ vào vị trí bình thường */
+/* Khi click icon: mở rộng menu, căn trái nội dung và đẩy icon + chữ vào vị trí bình thường */
 
-#menu_admin:hover #frame_menu>#main_menu a {
+body.menu-open #menu_admin #frame_menu>#main_menu a {
     justify-content: flex-start;
     padding-left: 1rem;
 }
 
-#menu_admin:hover #logout a {
+body.menu-open #menu_admin #logout a {
     justify-content: flex-start;
     padding-left: 1rem;
 }
+
+
 
 
 /* Responsive nhỏ: nếu container quá nhỏ, thu gọn hơn */

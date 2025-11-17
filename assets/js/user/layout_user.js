@@ -150,11 +150,6 @@
         box-sizing: border-box;
       }
       
-      /* Khi menu hover (mở rộng), tăng margin-left của main container */
-      body.layout-user > #menu_user:hover ~ #main_container{
-        margin-left: 15rem; /* chiều rộng menu khi expanded */
-      }
-      
       /* Khi menu được mở bằng click (class menu-open), giữ menu ở trạng thái expanded */
       body.layout-user.menu-open > #menu_user{
         width: 15rem !important; /* force expanded width */
@@ -199,8 +194,8 @@
           transform: translateX(-100%); /* ẩn menu mặc định */
           transition: transform 220ms ease;
         }
-        body.layout-user > #menu_user:hover{
-          transform: translateX(0); /* hiện menu khi hover */
+        body.layout-user.menu-open > #menu_user{
+          transform: translateX(0); /* hiện menu khi click icon */
         }
       }
     `;
