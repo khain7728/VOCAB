@@ -1,3 +1,7 @@
+// =====================================================
+// FLASHCARD VOCABULARY LEARNING - DATABASE VERSION
+// =====================================================
+
 // Khởi tạo các phần tử DOM
 const soluonghientai = document.getElementById('soluonghientai');
 const soluongtuvung = document.getElementById('soluongtuvung');
@@ -13,173 +17,379 @@ const daHocElement = document.getElementById('dahoc');
 const conLaiElement = document.getElementById('conlai');
 const tienDoElement = document.getElementById('tiendo');
 
-// Dữ liệu từ vựng (mẫu - có thể thay bằng dữ liệu từ API)
-const vocabularyData = [
-  {
-    word: "Hello",
-    ipa: "/heˈləʊ/",
-    definition: "used when meeting someone",
-    meaning: "Xin chào",
-    learned: false
-  },
-  {
-    word: "Goodbye",
-    ipa: "/ɡʊdˈbaɪ/",
-    definition: "used when leaving someone",
-    meaning: "Tạm biệt",
-    learned: false
-  },
-  {
-    word: "Thank you",
-    ipa: "/θæŋk juː/",
-    definition: "used to express gratitude",
-    meaning: "Cảm ơn",
-    learned: false
-  },
-  // Thêm các từ vựng khác...
-];
+// =====================================================
+// CONFIGURATION
+// =====================================================
+const API_BASE_URL = '../../api'; // Đường dẫn đến thư mục API
 
-// Biến trạng thái
-let current = 0; // Bắt đầu từ 0
-const total = vocabularyData.length;
+// Lấy course_id và user_id từ URL hoặc dùng giá trị mặc định
+const urlParams = new URLSearchParams(window.location.search);
+const COURSE_ID = urlParams.get('course_id') || 1; // Mặc định khóa học 1
+const USER_ID = urlParams.get('user_id') || 1; // Mặc định user 1 (để test)
+
+// =====================================================
+// STATE MANAGEMENT
+// =====================================================
+let vocabularyData = []; // Dữ liệu từ vựng từ database
+let current = 0;
+let total = 0;
 let learnedCount = 0;
+let isLoading = false;
 
-// Hàm cập nhật giao diện
+// =====================================================
+// API FUNCTIONS
+// =====================================================
+
+/**
+ * Lấy danh sách từ vựng từ API
+ */
+async function fetchVocabulary() {
+    try {
+        isLoading = true;
+        showLoading();
+
+        const response = await fetch(
+            `${API_BASE_URL}/get-words.php?course_id=${COURSE_ID}&user_id=${USER_ID}`
+        );
+
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const result = await response.json();
+
+        if (!result.success) {
+            throw new Error(result.error || 'Failed to fetch vocabulary');
+        }
+
+        // Lưu dữ liệu
+        vocabularyData = result.data.words;
+        total = vocabularyData.length;
+        learnedCount = result.data.statistics.learned;
+
+        // Cập nhật tiêu đề trang với tên khóa học
+        document.getElementById('tieu_de_trang').textContent = 
+            `Học từ vựng - ${result.data.course_name}`;
+
+        hideLoading();
+        
+        if (total === 0) {
+            showError('Khóa học này chưa có từ vựng nào!');
+            return;
+        }
+
+        updateUI();
+
+    } catch (error) {
+        console.error('Error fetching vocabulary:', error);
+        hideLoading();
+        showError('Không thể tải dữ liệu từ vựng. Vui lòng thử lại!');
+    } finally {
+        isLoading = false;
+    }
+}
+
+/**
+ * Cập nhật trạng thái đã học lên server
+ */
+async function updateLearnedStatus(wordId, learned) {
+    try {
+        const response = await fetch(`${API_BASE_URL}/update-learned-word.php`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                user_id: USER_ID,
+                word_id: wordId,
+                learned: learned
+            })
+        });
+
+        const result = await response.json();
+
+        if (!result.success) {
+            throw new Error(result.error || 'Failed to update status');
+        }
+
+        return result;
+
+    } catch (error) {
+        console.error('Error updating learned status:', error);
+        showError('Không thể cập nhật trạng thái. Vui lòng thử lại!');
+        return null;
+    }
+}
+
+// =====================================================
+// UI UPDATE FUNCTIONS
+// =====================================================
+
+/**
+ * Cập nhật giao diện
+ */
 function updateUI() {
-  const currentVocab = vocabularyData[current];
-  
-  // Cập nhật nội dung flashcard
-  document.getElementById('noidung_tuvung').textContent = currentVocab.word;
-  document.getElementById('ipa').textContent = currentVocab.ipa;
-  document.getElementById('dinhnghia').textContent = currentVocab.definition;
-  document.getElementById('ynghia').textContent = currentVocab.meaning;
-  
-  // Cập nhật thanh tiến độ
-  soluongtuvung.textContent = `${current + 1}/${total}`;
-  soluonghientai.style.width = `${((current + 1) / total) * 100}%`;
-  
-  // Cập nhật thống kê
-  daHocElement.textContent = learnedCount;
-  conLaiElement.textContent = total - learnedCount;
-  tienDoElement.textContent = `${Math.round((learnedCount / total) * 100)}%`;
-  
-  // Cập nhật nút đánh dấu đã học
-  if (currentVocab.learned) {
-    btnDanhDauDaHoc.textContent = "Đã học ✓";
-    btnDanhDauDaHoc.style.backgroundColor = "#7BB7EE";
-    btnDanhDauDaHoc.style.color = "white";
-  } else {
-    btnDanhDauDaHoc.textContent = "Đánh dấu đã học";
-    btnDanhDauDaHoc.style.backgroundColor = "white";
-    btnDanhDauDaHoc.style.color = "black";
-  }
-  
-  // Đảm bảo flashcard ở mặt trước
-  frame.classList.remove('flipped');
+    if (vocabularyData.length === 0) return;
+
+    const currentVocab = vocabularyData[current];
+
+    // Cập nhật nội dung flashcard
+    document.getElementById('noidung_tuvung').textContent = currentVocab.word;
+    document.getElementById('ipa').textContent = currentVocab.ipa || '';
+    document.getElementById('dinhnghia').textContent = currentVocab.definition || '';
+    document.getElementById('ynghia').textContent = currentVocab.meaning;
+
+    // Ẩn IPA nếu không có
+    const ipaElement = document.getElementById('ipa');
+    ipaElement.style.display = currentVocab.ipa ? 'block' : 'none';
+
+    // Cập nhật thanh tiến độ
+    soluongtuvung.textContent = `${current + 1}/${total}`;
+    soluonghientai.style.width = `${((current + 1) / total) * 100}%`;
+
+    // Cập nhật thống kê
+    daHocElement.textContent = learnedCount;
+    conLaiElement.textContent = total - learnedCount;
+    tienDoElement.textContent = `${Math.round((learnedCount / total) * 100)}%`;
+
+    // Cập nhật nút đánh dấu đã học
+    if (currentVocab.learned) {
+        btnDanhDauDaHoc.textContent = "Đã học ✓";
+        btnDanhDauDaHoc.style.backgroundColor = "#7BB7EE";
+        btnDanhDauDaHoc.style.color = "white";
+    } else {
+        btnDanhDauDaHoc.textContent = "Đánh dấu đã học";
+        btnDanhDauDaHoc.style.backgroundColor = "white";
+        btnDanhDauDaHoc.style.color = "black";
+    }
+
+    // Đảm bảo flashcard ở mặt trước
+    frame.classList.remove('flipped');
+
+    // Disable/Enable navigation buttons
+    btnPrev.style.opacity = current > 0 ? '1' : '0.3';
+    btnPrev.style.cursor = current > 0 ? 'pointer' : 'not-allowed';
+    btnNext.style.opacity = current < total - 1 ? '1' : '0.3';
+    btnNext.style.cursor = current < total - 1 ? 'pointer' : 'not-allowed';
 }
 
-// Hàm chuyển đến từ tiếp theo
+/**
+ * Hiển thị loading
+ */
+function showLoading() {
+    document.getElementById('main').style.opacity = '0.5';
+    document.getElementById('main').style.pointerEvents = 'none';
+}
+
+/**
+ * Ẩn loading
+ */
+function hideLoading() {
+    document.getElementById('main').style.opacity = '1';
+    document.getElementById('main').style.pointerEvents = 'auto';
+}
+
+/**
+ * Hiển thị thông báo lỗi
+ */
+function showError(message) {
+    alert(message); // Có thể thay bằng modal đẹp hơn
+}
+
+/**
+ * Hiển thị thông báo thành công
+ */
+function showSuccess(message) {
+    // Tạo toast notification
+    const toast = document.createElement('div');
+    toast.textContent = message;
+    toast.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        padding: 15px 20px;
+        border-radius: 5px;
+        z-index: 10000;
+        animation: slideIn 0.3s ease-out;
+    `;
+    document.body.appendChild(toast);
+
+    setTimeout(() => {
+        toast.remove();
+    }, 2000);
+}
+
+// =====================================================
+// NAVIGATION FUNCTIONS
+// =====================================================
+
+/**
+ * Chuyển đến từ tiếp theo
+ */
 function nextCard() {
-  if (current < total - 1) {
-    current++;
-    updateUI();
-  }
+    if (current < total - 1) {
+        current++;
+        updateUI();
+    }
 }
 
-// Hàm quay lại từ trước đó
+/**
+ * Quay lại từ trước đó
+ */
 function prevCard() {
-  if (current > 0) {
-    current--;
+    if (current > 0) {
+        current--;
+        updateUI();
+    }
+}
+
+/**
+ * Đánh dấu đã học
+ */
+async function toggleLearned() {
+    if (isLoading) return;
+
+    const currentVocab = vocabularyData[current];
+    const newLearnedState = !currentVocab.learned;
+
+    // Cập nhật UI ngay lập tức (optimistic update)
+    currentVocab.learned = newLearnedState;
+    if (newLearnedState) {
+        learnedCount++;
+    } else {
+        learnedCount--;
+    }
     updateUI();
-  }
+
+    // Gửi request lên server
+    const result = await updateLearnedStatus(currentVocab.word_id, newLearnedState);
+
+    if (result) {
+    } else {
+        // Rollback nếu lỗi
+        currentVocab.learned = !newLearnedState;
+        if (newLearnedState) {
+            learnedCount--;
+        } else {
+            learnedCount++;
+        }
+        updateUI();
+    }
 }
 
-// Hàm đánh dấu đã học
-function toggleLearned() {
-  const currentVocab = vocabularyData[current];
-  
-  if (!currentVocab.learned) {
-    currentVocab.learned = true;
-    learnedCount++;
-  } else {
-    currentVocab.learned = false;
-    learnedCount--;
-  }
-  
-  updateUI();
+/**
+ * Phát âm từ (Text-to-Speech hoặc Audio file)
+ */
+async function speakWord() {
+    const currentVocab = vocabularyData[current];
+
+    // Nếu có audio file, phát từ file
+    if (currentVocab.audio) {
+        try {
+            const audio = new Audio(currentVocab.audio);
+            await audio.play();
+            return;
+        } catch (error) {
+            console.log('Audio file failed, fallback to TTS:', error);
+        }
+    }
+
+    // Fallback: Dùng Text-to-Speech của browser
+    if ('speechSynthesis' in window) {
+        window.speechSynthesis.cancel();
+
+        const utterance = new SpeechSynthesisUtterance(currentVocab.word);
+        utterance.lang = 'en-US';
+        utterance.rate = 0.8;
+        window.speechSynthesis.speak(utterance);
+    } else {
+        showError('Trình duyệt của bạn không hỗ trợ phát âm!');
+    }
 }
 
-// Hàm phát âm (Text-to-Speech)
-function speakWord() {
-  const currentVocab = vocabularyData[current];
-  
-  if ('speechSynthesis' in window) {
-    // Dừng phát âm hiện tại nếu có
-    window.speechSynthesis.cancel();
-    
-    const utterance = new SpeechSynthesisUtterance(currentVocab.word);
-    utterance.lang = 'en-US';
-    utterance.rate = 0.8; // Tốc độ phát âm chậm hơn một chút
-    window.speechSynthesis.speak(utterance);
-  } else {
-    alert('Trình duyệt của bạn không hỗ trợ phát âm!');
-  }
-}
+// =====================================================
+// EVENT LISTENERS
+// =====================================================
 
-// Event Listeners
 // Lật thẻ khi click vào flashcard
 frame.addEventListener('click', () => {
-  frame.classList.toggle('flipped');
+    frame.classList.toggle('flipped');
 });
 
 // Nút điều khiển
 btnPrev.addEventListener('click', (e) => {
-  e.stopPropagation(); // Ngăn không cho lật thẻ
-  prevCard();
+    e.stopPropagation();
+    prevCard();
 });
 
 btnNext.addEventListener('click', (e) => {
-  e.stopPropagation(); // Ngăn không cho lật thẻ
-  nextCard();
+    e.stopPropagation();
+    nextCard();
 });
 
 // Nút phát âm
 btnPhatAm.addEventListener('click', (e) => {
-  e.stopPropagation();
-  speakWord();
+    e.stopPropagation();
+    speakWord();
 });
 
 // Nút đánh dấu đã học
 btnDanhDauDaHoc.addEventListener('click', (e) => {
-  e.stopPropagation();
-  toggleLearned();
+    e.stopPropagation();
+    toggleLearned();
 });
 
-// Nút luyện tập (có thể thêm chức năng sau)
+// Nút luyện tập
 btnLuyenTap.addEventListener('click', (e) => {
-  e.stopPropagation();
-  window.location.href = 'user_hinh_thuc_on_tap.html';
+    e.stopPropagation();
+    window.location.href = `user_hinh_thuc_on_tap.html?course_id=${COURSE_ID}&user_id=${USER_ID}`;
 });
 
 // Hỗ trợ phím tắt
 document.addEventListener('keydown', (e) => {
-  switch(e.key) {
-    case 'ArrowLeft':
-      prevCard();
-      break;
-    case 'ArrowRight':
-      nextCard();
-      break;
-    case ' ':
-      e.preventDefault();
-      frame.classList.toggle('flipped');
-      break;
-    case 's':
-    case 'S':
-      speakWord();
-      break;
-  }
+    switch (e.key) {
+        case 'ArrowLeft':
+            prevCard();
+            break;
+        case 'ArrowRight':
+            nextCard();
+            break;
+        case ' ':
+            e.preventDefault();
+            frame.classList.toggle('flipped');
+            break;
+        case 's':
+        case 'S':
+            speakWord();
+            break;
+        case 'm':
+        case 'M':
+            toggleLearned();
+            break;
+    }
 });
 
-// Khởi tạo giao diện ban đầu
-updateUI();
+// =====================================================
+// INITIALIZATION
+// =====================================================
+
+// Tải dữ liệu khi trang được load
+document.addEventListener('DOMContentLoaded', () => {
+    fetchVocabulary();
+});
+
+// CSS cho toast animation (thêm vào head)
+const style = document.createElement('style');
+style.textContent = `
+@keyframes slideIn {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+`;
+document.head.appendChild(style);
