@@ -3,7 +3,7 @@
    ========================================= */
 
 
-/* --- Biến màu và Cài đặt cơ bản --- */
+/* --- 1. Biến màu và Cài đặt cơ bản --- */
 
 :root {
     --accent: #5B9BD5;
@@ -21,7 +21,6 @@
 
 html {
     font-size: 16px;
-    /* 1rem = 16px */
 }
 
 body {
@@ -31,7 +30,10 @@ body {
     color: var(--text-primary);
     box-sizing: border-box;
     -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
+    /* --- FIX LAYOUT: Flexbox cho toàn trang --- */
+    display: flex;
+    min-height: 100vh;
+    overflow-x: hidden;
 }
 
 *,
@@ -41,26 +43,36 @@ body {
 }
 
 
-/* --- Layout chính --- */
+/* --- 2. Cấu hình MENU (Cột Trái) --- */
 
-.admin-container {
-    display: flex;
-    min-height: 100vh;
+#menu_admin {
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    z-index: 1000;
+    background: #fff;
+    border-right: 1px solid var(--border-color);
+    flex-shrink: 0;
+    width: auto;
+    min-width: 72px;
 }
 
-.admin-container .admin-main-content {
+
+/* --- 3. Cấu hình KHUNG BAO NỘI DUNG (Cột Phải) --- */
+
+.main-wrapper {
     flex-grow: 1;
     display: flex;
     flex-direction: column;
-    overflow-x: hidden;
-    transition: margin-left 220ms ease;
-    /* Dành cho JS nếu muốn ẩn/hiện menu */
+    width: 100%;
+    min-width: 0;
 }
 
 
-/* --- Header chung --- */
+/* --- 4. HEADER (Đã sửa selector để nhận diện đúng ID) --- */
 
-.admin-main-content .admin-header {
+#header_admin {
+    /* Style trang trí */
     background: var(--bg-widget);
     padding: 0 2rem;
     display: flex;
@@ -69,59 +81,63 @@ body {
     border-bottom: 1px solid var(--border-color);
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
     height: 4.5rem;
-    /* = width-collapsed của menu */
+    /* Style vị trí (Layout Fix) */
     flex-shrink: 0;
+    position: sticky;
+    top: 0;
+    z-index: 900;
+    width: 100%;
 }
 
-.admin-header .header-left,
-.admin-header .header-right {
+
+/* Các thành phần con trong header */
+
+#header_admin .header-left,
+#header_admin .header-right {
     display: flex;
     align-items: center;
     gap: 1.5rem;
 }
 
-.admin-header .header-left i,
-.admin-header .header-right i {
+#header_admin i {
+    /* Icon trong header */
     font-size: 1.25rem;
     color: var(--text-secondary);
     cursor: pointer;
     transition: color 0.2s ease;
 }
 
-.admin-header .header-left i:hover,
-.admin-header .header-right i:hover {
+#header_admin i:hover {
     color: var(--accent);
 }
 
-.admin-header .admin-profile {
+#header_admin .admin-profile {
     display: flex;
     align-items: center;
     gap: 0.5rem;
     cursor: pointer;
 }
 
-.admin-header .admin-profile i {
+#header_admin .admin-profile i {
     font-size: 1.75rem;
-    /* Icon user lớn hơn */
     color: var(--accent);
 }
 
-.admin-header .admin-profile span {
+#header_admin .admin-profile span {
     font-weight: 500;
     font-size: 0.9rem;
 }
 
 
-/* --- Vùng nội dung chung --- */
+/* --- 5. CONTENT (Nội dung chính) --- */
 
-.admin-main-content .page-content {
+#content {
     padding: 2rem;
     flex-grow: 1;
 }
 
 .page-content .page-title {
     font-size: 1.75rem;
-    /* ~28px */
     font-weight: 700;
     margin-top: 0;
     margin-bottom: 1.5rem;
@@ -129,9 +145,12 @@ body {
 }
 
 
-/* --- Thanh tìm kiếm --- */
+/* --- 6. CÁC COMPONENT CHUNG (Search, Table, Button...) --- */
 
-.page-content .search-bar {
+
+/* Thanh tìm kiếm */
+
+.search-bar {
     position: relative;
     margin-bottom: 1.5rem;
     width: 100%;
@@ -164,13 +183,15 @@ body {
 }
 
 
-/* --- Bảng biểu chung --- */
+/* Bảng biểu */
 
-.page-content .admin-table-container {
+.admin-table-container {
     background: var(--bg-widget);
     border-radius: 0.75rem;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
     overflow: hidden;
+    overflow-x: auto;
+    /* Scroll ngang */
 }
 
 .admin-table-container table {
@@ -185,6 +206,8 @@ body {
     text-align: left;
     border-bottom: 1px solid var(--border-color);
     vertical-align: middle;
+    white-space: nowrap;
+    /* Chống vỡ giao diện */
 }
 
 .admin-table-container th {
@@ -253,7 +276,7 @@ body {
 }
 
 
-/* --- Button chung --- */
+/* Button */
 
 .btn {
     padding: 0.7rem 1.25rem;
@@ -276,6 +299,25 @@ body {
 
 .btn.btn-primary:hover {
     background: #4A8BC2;
-    /* Darker accent */
     box-shadow: 0 4px 8px rgba(91, 155, 213, 0.2);
+}
+
+
+/* --- 7. RESPONSIVE MOBILE --- */
+
+@media (max-width: 768px) {
+    body {
+        display: block;
+    }
+    #menu_admin {
+        display: none;
+        position: fixed;
+        left: 0;
+        top: 0;
+        width: 240px;
+        box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+    }
+    body.menu-open #menu_admin {
+        display: flex;
+    }
 }

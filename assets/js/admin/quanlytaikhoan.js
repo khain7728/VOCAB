@@ -1,64 +1,106 @@
-// quanlytaikhoan_admin.js
+let usersList = [];
 
 document.addEventListener('DOMContentLoaded', function() {
-
-    // Tìm tất cả các nút khóa/mở khóa
-    const lockButtons = document.querySelectorAll('.js-lock-toggle');
-
-    // Gán sự kiện click cho từng nút
-    lockButtons.forEach(button => {
-        button.onclick = function() {
-            toggleLockState(button);
-        }
-    });
-
+    loadData();
 });
 
-/**
- * Hàm để xử lý logic khóa/mở khóa
- * @param {HTMLElement} button - Nút icon (fa-lock hoặc fa-lock-open) đã được click
- */
-function toggleLockState(button) {
-    // 1. Tìm hàng (tr) cha của nút
-    const row = button.closest('tr');
-    if (!row) return;
+// 1. Tải danh sách người dùng
+function loadData() {
+    const tbody = document.getElementById('user_table_body');
+    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center">Đang tải dữ liệu...</td></tr>';
 
-    // 2. Tìm status pill trong hàng đó
-    const statusPill = row.querySelector('.status-pill');
-    if (!statusPill) return;
+    fetch('../../api/admin/user_get_list.php')
+        .then(res => res.json())
+        .then(data => {
+            if (data.status === 'success') {
+                usersList = data.data;
+                renderTable(usersList);
+            } else {
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align:center">Không có dữ liệu.</td></tr>';
+            }
+        })
+        .catch(err => {
+            console.error(err);
+            tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:red">Lỗi kết nối server!</td></tr>';
+        });
+}
 
-    // 3. Kiểm tra trạng thái hiện tại (đang bị khóa hay không)
-    // *** ĐÂY LÀ DÒNG ĐÃ SỬA LỖI: Bỏ ".contents" bị dư ***
-    const isCurrentlyLocked = button.classList.contains('fa-lock-open');
+// 2. Hiển thị bảng
+function renderTable(data) {
+    const tbody = document.getElementById('user_table_body');
+    let html = '';
 
-    // 4. Tạo tin nhắn xác nhận
-    const confirmMessage = isCurrentlyLocked ?
-        "Bạn có chắc muốn MỞ KHÓA tài khoản này?" :
-        "Bạn có chắc muốn KHÓA tài khoản này?";
-
-    // 5. Hiển thị hộp thoại confirm
-    if (confirm(confirmMessage)) {
-        // 6. Nếu người dùng đồng ý, thay đổi trạng thái
-        if (isCurrentlyLocked) {
-            // --- Logic MỞ KHÓA ---
-            statusPill.textContent = 'Hoạt động';
-            statusPill.classList.remove('status-red');
-            statusPill.classList.add('status-green');
-
-            button.classList.remove('fa-lock-open');
-            button.classList.add('fa-lock');
-            button.title = 'Khóa tài khoản';
-
-        } else {
-            // --- Logic KHÓA ---
-            statusPill.textContent = 'Bị khóa';
-            statusPill.classList.remove('status-green');
-            statusPill.classList.add('status-red');
-
-            button.classList.remove('fa-lock');
-            button.classList.add('fa-lock-open');
-            button.title = 'Mở khóa';
-        }
+    if (data.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center">Chưa có người dùng nào.</td></tr>';
+        return;
     }
-    // Nếu không đồng ý, không làm gì cả
+
+    data.forEach((user, index) => {
+        // Kiểm tra trạng thái: active (hoạt động) hay locked (bị khóa)
+        const isLocked = user.status === 'locked';
+        const statusClass = isLocked ? 'status-red' : 'status-green';
+        const statusText = isLocked ? 'Đã khóa' : 'Hoạt động';
+
+        // Icon nút bấm: Nếu đang khóa -> Hiện icon mở. Nếu đang mở -> Hiện icon khóa
+        const toggleIcon = isLocked ? 'fa-lock' : 'fa-unlock';
+        const toggleTitle = isLocked ? 'Mở khóa tài khoản' : 'Khóa tài khoản';
+        const toggleBtnColor = isLocked ? '#28a745' : '#dc3545'; // Xanh lá (để mở) hoặc Đỏ (để khóa)
+
+        html += `
+            <tr>
+                <td style="text-align:center">${index + 1}</td>
+                <td><strong>${user.fullname}</strong></td>
+                <td>${user.email}</td>
+                <td>${user.created_at}</td>
+                <td><span class="status-pill ${statusClass}">${statusText}</span></td>
+                <td class="table-actions" style="text-align:center">
+                    <i class="fa-solid ${toggleIcon}" 
+                       style="color: ${toggleBtnColor}; cursor: pointer;" 
+                       title="${toggleTitle}" 
+                       onclick="toggleUserStatus(${user.id}, '${user.status}')">
+                    </i>
+                </td>
+            </tr>
+        `;
+    });
+    tbody.innerHTML = html;
+}
+
+// 3. Chức năng Khóa / Mở khóa (Toggle)
+function toggleUserStatus(id, currentStatus) {
+    const action = currentStatus === 'active' ? 'KHÓA' : 'MỞ KHÓA';
+
+    if (confirm(`Bạn có chắc muốn ${action} tài khoản người dùng này?`)) {
+        fetch('../../api/admin/user_update_status.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    user_id: id,
+                    status: currentStatus
+                })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    alert(data.message);
+                    loadData(); // Tải lại bảng sau khi cập nhật xong
+                } else {
+                    alert('Lỗi: ' + data.message);
+                }
+            })
+            .catch(err => {
+                console.error(err);
+                alert('Lỗi kết nối server!');
+            });
+    }
+}
+
+// 4. Tìm kiếm
+function searchTable() {
+    const val = document.getElementById('searchBox').value.toLowerCase();
+    const filtered = usersList.filter(u =>
+        u.fullname.toLowerCase().includes(val) ||
+        u.email.toLowerCase().includes(val)
+    );
+    renderTable(filtered);
 }

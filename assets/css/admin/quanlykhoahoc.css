@@ -1,29 +1,339 @@
-/* =========================================
-   QUAN LY KHOA HOC STYLES (quanlykhoahoc_admin.css)
-   ========================================= */
+/* ==========================================================================
+   FILE: assets/css/admin/quanlykhoahoc.css
+   ========================================================================== */
 
 
-/* Tiền tố cha */
+/* --- 1. FIX LAYOUT (CẤU TRÚC FLEXBOX CHUẨN) --- */
 
-.khoahoc-page .page-header {
+* {
+    box-sizing: border-box;
+}
+
+body {
+    display: flex !important;
+    /* Bắt buộc để Menu và Nội dung nằm ngang */
+    min-height: 100vh;
+    margin: 0;
+    background-color: #f4f7f6;
+    font-family: 'Roboto', sans-serif;
+    overflow-x: hidden;
+}
+
+
+/* Cột Trái: Menu */
+
+#menu_admin {
+    position: sticky !important;
+    top: 0;
+    height: 100vh;
+    flex-shrink: 0;
+    /* Không co lại */
+    z-index: 1000;
+    /* Thấp hơn Modal */
+    background: #fff;
+    border-right: 1px solid #ddd;
+    width: auto;
+    min-width: 72px;
+}
+
+
+/* Cột Phải: Khung Nội dung */
+
+.main-wrapper {
+    flex-grow: 1;
+    /* Chiếm hết phần còn lại */
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    width: 100%;
+}
+
+
+/* Header (Dính trên cùng cột phải) */
+
+#header_admin {
+    position: sticky;
+    top: 0;
+    z-index: 900;
+    width: 100%;
+    background: #fff;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+}
+
+
+/* Nội dung chính */
+
+#content {
+    padding: 20px;
+    flex-grow: 1;
+}
+
+
+/* Mobile Responsive */
+
+@media (max-width: 768px) {
+    body {
+        display: block;
+    }
+    #menu_admin {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 240px;
+    }
+    body.menu-open #menu_admin {
+        display: flex;
+    }
+}
+
+
+/* --- 2. GIAO DIỆN TRANG KHÓA HỌC --- */
+
+
+/* Header trang: Tiêu đề trái - Nút phải */
+
+.page-header {
     display: flex;
     justify-content: space-between;
+    /* Đẩy 2 phần tử ra 2 đầu */
     align-items: center;
-    margin-bottom: 1.5rem;
+    margin-bottom: 20px;
 }
 
-.khoahoc-page .page-header .page-title {
+.page-title {
     margin: 0;
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: #333;
 }
 
-.khoahoc-page .admin-table-container td:nth-child(3) {
-    min-width: 150px;
+
+/* Nút Thêm mới */
+
+.btn-primary {
+    background: #007bff;
+    color: #fff;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: 0.2s;
+}
+
+.btn-primary:hover {
+    background: #0056b3;
 }
 
 
-/* Thêm CSS hover cho nút mở khóa (màu xanh) */
+/* Thanh tìm kiếm */
 
-.khoahoc-page .table-actions i.fa-lock-open:hover {
-    color: var(--status-green);
-    transform: scale(1.1);
+.search-bar {
+    margin-bottom: 20px;
+    background: #fff;
+    padding: 10px 15px;
+    border-radius: 8px;
+    border: 1px solid #eee;
+    display: flex;
+    width: fit-content;
+}
+
+.search-bar i {
+    color: #888;
+    margin-right: 10px;
+    display: flex;
+    align-items: center;
+}
+
+.search-bar input {
+    border: none;
+    outline: none;
+    width: 250px;
+}
+
+
+/* Bảng dữ liệu */
+
+.admin-table-container {
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+    overflow-x: auto;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+th,
+td {
+    padding: 12px 15px;
+    text-align: left;
+    border-bottom: 1px solid #eee;
+    white-space: nowrap;
+}
+
+th {
+    background-color: #f8f9fa;
+    font-weight: 700;
+    color: #555;
+}
+
+
+/* Trạng thái & Icon */
+
+.status-pill {
+    padding: 5px 10px;
+    border-radius: 15px;
+    font-size: 0.8rem;
+    font-weight: bold;
+}
+
+.status-green {
+    background: #EAF7E9;
+    color: #28a745;
+}
+
+.status-red {
+    background: #FCE8E6;
+    color: #dc3545;
+}
+
+.table-actions i {
+    cursor: pointer;
+    padding: 6px;
+    font-size: 1.1rem;
+    margin: 0 2px;
+}
+
+.table-actions i:hover {
+    transform: scale(1.2);
+}
+
+.fa-pen {
+    color: #007bff;
+}
+
+.fa-lock {
+    color: #ffc107;
+}
+
+.fa-lock-open {
+    color: #28a745;
+}
+
+.fa-trash {
+    color: #dc3545;
+}
+
+
+/* --- 3. MODAL HỘP THOẠI (POPUP) --- */
+
+
+/* CSS này giúp modal nổi lên trên cùng */
+
+.modal-overlay {
+    display: none;
+    /* Mặc định ẩn */
+    position: fixed;
+    /* Ghim chặt vào màn hình */
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    /* Nền tối mờ */
+    z-index: 9999;
+    /* Số rất cao để đè lên Menu và Header */
+    justify-content: center;
+    align-items: center;
+}
+
+.modal-content {
+    background: #fff;
+    width: 500px;
+    padding: 25px;
+    border-radius: 8px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+    position: relative;
+    animation: slideDown 0.3s ease-out;
+}
+
+@keyframes slideDown {
+    from {
+        transform: translateY(-50px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 20px;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 10px;
+}
+
+.close-btn {
+    font-size: 28px;
+    cursor: pointer;
+    color: #aaa;
+}
+
+.close-btn:hover {
+    color: #000;
+}
+
+.form-group {
+    margin-bottom: 15px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: 600;
+}
+
+.form-group input {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    outline: none;
+}
+
+.form-group input:focus {
+    border-color: #007bff;
+}
+
+.modal-footer {
+    text-align: right;
+    margin-top: 20px;
+}
+
+.btn-cancel {
+    background: #eee;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    margin-right: 10px;
+}
+
+.btn-save {
+    background: #007bff;
+    color: #fff;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
 }

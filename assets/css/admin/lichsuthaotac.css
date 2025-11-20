@@ -1,11 +1,178 @@
-/* =========================================
-   LICH SU THAO TAC STYLES (lichsuthaotac_admin.css)
-   ========================================= */
+/* ==========================================================================
+   FILE: assets/css/admin/lichsuthaotac.css
+   ========================================================================== */
 
 
-/* Tiền tố cha */
+/* --- 1. FIX LAYOUT (BẮT BUỘC PHẢI CÓ ĐỂ KHÔNG LỖI MENU) --- */
 
-.lichsu-page .admin-table-container td:nth-child(4) {
-    /* Cột chi tiết rộng hơn */
-    min-width: 300px;
+* {
+    box-sizing: border-box;
+}
+
+body {
+    display: flex !important;
+    /* Layout Ngang */
+    min-height: 100vh;
+    margin: 0;
+    background-color: #f4f7f6;
+    font-family: 'Roboto', sans-serif;
+    overflow-x: hidden;
+}
+
+
+/* Menu Trái */
+
+#menu_admin {
+    position: sticky !important;
+    top: 0;
+    height: 100vh;
+    flex-shrink: 0;
+    z-index: 1000;
+    background: #fff;
+    border-right: 1px solid #ddd;
+    width: auto;
+    min-width: 72px;
+}
+
+
+/* Nội dung Phải */
+
+.main-wrapper {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    width: 100%;
+}
+
+
+/* Header */
+
+#header_admin {
+    position: sticky;
+    top: 0;
+    z-index: 900;
+    width: 100%;
+    background: #fff;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+}
+
+#content {
+    padding: 20px;
+    flex-grow: 1;
+}
+
+
+/* Mobile Responsive */
+
+@media (max-width: 768px) {
+    body {
+        display: block;
+    }
+    #menu_admin {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 240px;
+    }
+    body.menu-open #menu_admin {
+        display: flex;
+    }
+}
+
+
+/* --- 2. STYLE RIÊNG CHO TRANG LỊCH SỬ --- */
+
+.page-header {
+    margin-bottom: 20px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #eee;
+}
+
+.page-title {
+    margin: 0;
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: #333;
+}
+
+
+/* Thanh tìm kiếm */
+
+.search-bar {
+    margin-bottom: 20px;
+    background: #fff;
+    padding: 10px 15px;
+    border-radius: 8px;
+    border: 1px solid #eee;
+    display: flex;
+    width: fit-content;
+}
+
+.search-bar i {
+    color: #888;
+    margin-right: 10px;
+    display: flex;
+    align-items: center;
+}
+
+.search-bar input {
+    border: none;
+    outline: none;
+    width: 300px;
+}
+
+
+/* Bảng */
+
+.admin-table-container {
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+    overflow-x: auto;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+th,
+td {
+    padding: 12px 15px;
+    text-align: left;
+    border-bottom: 1px solid #eee;
+    white-space: nowrap;
+}
+
+th {
+    background-color: #f8f9fa;
+    font-weight: 700;
+    color: #555;
+}
+
+
+/* Status Pill */
+
+.status-pill {
+    padding: 5px 10px;
+    border-radius: 15px;
+    font-size: 0.8rem;
+    font-weight: bold;
+}
+
+.status-green {
+    background: #EAF7E9;
+    color: #28a745;
+}
+
+.status-red {
+    background: #FCE8E6;
+    color: #dc3545;
+}
+
+.status-blue {
+    background: #E7F3FF;
+    color: #007bff;
 }

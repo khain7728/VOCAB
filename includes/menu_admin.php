@@ -1,6 +1,7 @@
-<link rel="stylesheet" href="../assets/css/defaut/menu_admin.css">
-<link rel="stylesheet" href="../assets/fonts/fontawesome/css/all.min.css">
+<link rel="stylesheet" href="../../assets/css/default/menu_admin.css">
+<link rel="stylesheet" href="../../assets/fonts/fontawesome/css/all.min.css">
 <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+
 <div id="menu_admin">
     <div id="logo">
         <svg width="65" height="65" viewBox="0 0 65 65" fill="none" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
@@ -23,22 +24,22 @@
     </div>
     <div id="frame_menu">
         <div id="main_menu">
-            <a href="trangchu_admin.html">
+            <a href="trangchu_admin.php">
                 <i class="fa-solid fa-grip"></i> Trang chủ
             </a>
         </div>
         <div id="main_menu">
-            <a href="quanlytaikhoan.html">
+            <a href="quanlytaikhoan.php">
                 <i class="fa-solid fa-user"></i> Quản lý tài khoản
             </a>
         </div>
         <div id="main_menu">
-            <a href="quanlykhoahoc.html">
+            <a href="quanlykhoahoc.php">
                 <i class="fa-regular fa-folder-open"></i> Quản lý khóa học
             </a>
         </div>
         <div id="main_menu">
-            <a href="lichsuthaotac.html">
+            <a href="lichsuthaotac.php">
                 <i class="fa-solid fa-clock-rotate-left"></i> Lịch sử thao tác
             </a>
         </div>
