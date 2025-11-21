@@ -2,7 +2,7 @@
 error_reporting(0);
 header('Content-Type: application/json; charset=utf-8');
 $rootPath = dirname(__DIR__);
-require_once $rootPath . '/../includes/db_connection.php';
+require_once $rootPath .  '/../../config/database.php';
 
 $sql = "SELECT user_id, name, email, created_at, status FROM user WHERE role = 'user' ORDER BY user_id DESC";
 $result = $conn->query($sql);

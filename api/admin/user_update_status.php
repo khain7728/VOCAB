@@ -2,7 +2,7 @@
 error_reporting(0);
 header('Content-Type: application/json; charset=utf-8');
 $rootPath = dirname(__DIR__);
-require_once $rootPath . '/../includes/db_connection.php';
+require_once $rootPath .  '/../../config/database.php';
 require_once $rootPath . '/../includes/log_helper.php';
 
 $input = json_decode(file_get_contents("php://input"), true);

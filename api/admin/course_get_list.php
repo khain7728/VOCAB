@@ -2,7 +2,7 @@
 error_reporting(0);
 header('Content-Type: application/json; charset=utf-8');
 $rootPath = dirname(__DIR__);
-require_once $rootPath . '/../includes/db_connection.php';
+require_once $rootPath .  '/../../config/database.php';
 
 $sql = "SELECT c.course_id, c.course_code, c.course_name, c.created_at, c.visibility, u.name as author_name FROM course c LEFT JOIN user u ON c.create_by = u.user_id ORDER BY c.created_at DESC";
 $result = $conn->query($sql);

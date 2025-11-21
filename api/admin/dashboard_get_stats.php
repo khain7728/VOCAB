@@ -7,7 +7,7 @@ header('Content-Type: application/json; charset=utf-8');
 try {
     // 1. Kết nối Database (Đường dẫn tuyệt đối)
     $rootPath = dirname(__DIR__);
-    require_once $rootPath . '/../includes/db_connection.php';
+    require_once $rootPath .  '/../../config/database.php';
 
     $response = [];
 
