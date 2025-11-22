@@ -1,11 +1,11 @@
 <?php
 /**
- * API LẤY THÔNG TIN HỒ SƠ USER
+ * API LẤY THÔNG TIN HỒ SƠ USER (Full Update)
  * Endpoint: api/get-user-profile.php?user_id=1
- * * Lấy dữ liệu trực tiếp từ bảng `user` và `statistic`
  */
 
-// Tắt báo lỗi HTML để tránh hỏng JSON
+// 1. Vệ sinh bộ đệm và tắt lỗi rác
+ob_start();
 error_reporting(0);
 ini_set('display_errors', 0);
 
@@ -14,48 +14,35 @@ header('Access-Control-Allow-Origin: *');
 
 require_once '../config/database.php';
 
-try {
-    // Kiểm tra kết nối
-    if (!isset($conn)) {
-        throw new Exception("Lỗi kết nối database");
-    }
+$response = [];
 
-    // Lấy ID từ URL (mặc định 1)
+try {
+    if (!isset($conn)) throw new Exception("Lỗi kết nối Database");
+
     $user_id = isset($_GET['user_id']) ? intval($_GET['user_id']) : 1;
 
-    if ($user_id <= 0) {
-        throw new Exception('User ID không hợp lệ');
-    }
-
-    // ---------------------------------------------------------
-    // 1. LẤY THÔNG TIN USER (Bảng `user`)
-    // ---------------------------------------------------------
-    $sqlUser = "SELECT user_id, name, email, bio, avatar, created_at 
+    // --- A. LẤY THÔNG TIN USER ---
+    $sqlUser = "SELECT user_id, name, email, bio, avatar, created_at, role 
                 FROM user WHERE user_id = ?";
-    
     $stmtUser = $conn->prepare($sqlUser);
     $stmtUser->bind_param("i", $user_id);
     $stmtUser->execute();
-    $resultUser = $stmtUser->get_result();
-    $userInfo = $resultUser->fetch_assoc();
+    $userInfo = $stmtUser->get_result()->fetch_assoc();
 
     if (!$userInfo) {
-        throw new Exception('Không tìm thấy người dùng');
+        throw new Exception('User không tồn tại');
     }
 
-    // ---------------------------------------------------------
-    // 2. LẤY THỐNG KÊ (Trực tiếp từ bảng `statistic`)
-    // ---------------------------------------------------------
+    // --- B. LẤY THỐNG KÊ TỪ BẢNG STATISTIC ---
+    // Lưu ý: Nếu chưa có record, ta sẽ trả về 0
     $sqlStats = "SELECT total_courses, total_words_learned, total_quizzes_done, accuracy_rate, streak_days 
                  FROM statistic WHERE user_id = ?";
-    
     $stmtStats = $conn->prepare($sqlStats);
     $stmtStats->bind_param("i", $user_id);
     $stmtStats->execute();
-    $resultStats = $stmtStats->get_result();
-    $statsInfo = $resultStats->fetch_assoc();
+    $statsInfo = $stmtStats->get_result()->fetch_assoc();
 
-    // Nếu chưa có record trong bảng statistic, gán mặc định bằng 0
+    // Nếu chưa có thống kê, tạo mảng mặc định
     if (!$statsInfo) {
         $statsInfo = [
             'total_courses' => 0,
@@ -64,41 +51,53 @@ try {
             'accuracy_rate' => 0,
             'streak_days' => 0
         ];
+    } 
+    // Nếu có, đảm bảo dữ liệu là số thực tế (đôi khi null)
+    else {
+        // Cập nhật lại số khóa học thực tế từ bảng user_course để đảm bảo chính xác nhất
+        // (Phòng trường hợp trigger bị lệch)
+        $sqlCountCourse = "SELECT COUNT(*) as cnt FROM user_course WHERE user_id = ?";
+        $stmtCount = $conn->prepare($sqlCountCourse);
+        $stmtCount->bind_param("i", $user_id);
+        $stmtCount->execute();
+        $statsInfo['total_courses'] = $stmtCount->get_result()->fetch_assoc()['cnt'];
     }
 
-    // ---------------------------------------------------------
-    // 3. TRẢ VỀ JSON
-    // ---------------------------------------------------------
-    echo json_encode([
+    // --- C. TRẢ VỀ KẾT QUẢ ---
+    $response = [
         'success' => true,
         'data' => [
             'user' => [
                 'id' => $userInfo['user_id'],
-                'fullname' => $userInfo['name'], // Mapping: cột name -> fullname
+                'fullname' => $userInfo['name'], // Mapping cột name
                 'email' => $userInfo['email'],
                 'bio' => $userInfo['bio'] ?? 'Chưa cập nhật tiểu sử',
-                'avatar' => $userInfo['avatar'],
+                'avatar' => $userInfo['avatar'] ?? '',
                 'joined_date' => date('d/m/Y', strtotime($userInfo['created_at'])),
-                'language' => 'Tiếng Anh', 
-                'level' => 'Trung cấp'     
+                'role' => $userInfo['role'],
+                'language' => 'Tiếng Anh',
+                'level' => 'Trung cấp' // Có thể logic thêm
             ],
             'statistics' => [
                 'courses_joined' => (int)$statsInfo['total_courses'],
                 'words_learned' => (int)$statsInfo['total_words_learned'],
-                'streak_days' => (int)$statsInfo['streak_days'],
+                'quizzes_done' => (int)$statsInfo['total_quizzes_done'],
                 'accuracy' => (float)$statsInfo['accuracy_rate'],
-                'quizzes_done' => (int)$statsInfo['total_quizzes_done']
+                'streak_days' => (int)$statsInfo['streak_days']
             ]
         ]
-    ], JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
+    ];
 
 } catch (Exception $e) {
-    http_response_code(400);
-    echo json_encode([
+    http_response_code(400); // Bad Request
+    $response = [
         'success' => false,
         'error' => $e->getMessage()
-    ], JSON_UNESCAPED_UNICODE);
-} finally {
-    if (isset($conn)) $conn->close();
+    ];
 }
+
+// Xóa sạch buffer trước khi in JSON
+ob_clean();
+echo json_encode($response);
+exit();
 ?>
