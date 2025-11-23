@@ -1,98 +1,96 @@
 <?php
 /**
- * API CẬP NHẬT TRẠNG THÁI ĐÃ HỌC
+ * API CẬP NHẬT TRẠNG THÁI HỌC TỪ VỰNG
  * Endpoint: api/update-learned-word.php
  * Method: POST
- * Body: { "user_id": 1, "word_id": 3, "learned": true }
+ * Body: { user_id, word_id, learned, review_mode }
  */
 
 header('Content-Type: application/json; charset=utf-8');
 header('Access-Control-Allow-Origin: *');
-header('Access-Control-Allow-Methods: POST, OPTIONS');
+header('Access-Control-Allow-Methods: POST');
 header('Access-Control-Allow-Headers: Content-Type');
-
-// Xử lý preflight request
-if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
-    exit(0);
-}
 
 require_once '../config/database.php';
 
 try {
-    // Chỉ chấp nhận POST request
-    if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-        throw new Exception('Only POST method is allowed');
-    }
-    
-    // Đọc JSON từ request body
-    $input = json_decode(file_get_contents('php://input'), true);
-    
-    if (!$input) {
-        throw new Exception('Invalid JSON input');
-    }
+    // Lấy dữ liệu JSON từ request body
+    $json = file_get_contents('php://input');
+    $data = json_decode($json, true);
     
     // Validate input
-    $user_id = isset($input['user_id']) ? intval($input['user_id']) : 0;
-    $word_id = isset($input['word_id']) ? intval($input['word_id']) : 0;
-    $learned = isset($input['learned']) ? (bool)$input['learned'] : false;
-    
-    if ($user_id <= 0 || $word_id <= 0) {
-        throw new Exception('Invalid user_id or word_id');
+    if (!isset($data['user_id']) || !isset($data['word_id'])) {
+        throw new Exception('Missing required fields: user_id, word_id');
     }
+    
+    $user_id = intval($data['user_id']);
+    $word_id = intval($data['word_id']);
+    $learned = isset($data['learned']) ? (bool)$data['learned'] : false;
+    $review_mode = isset($data['review_mode']) ? $data['review_mode'] : 'flashcard';
+    $is_correct = isset($data['is_correct']) ? (bool)$data['is_correct'] : null;
     
     // Kiểm tra xem đã có record chưa
-    $checkSql = "SELECT user_id FROM learned_word WHERE user_id = ? AND word_id = ?";
-    $statementGetWords = $conn->prepare($checkSql);
-    $statementGetWords->bind_param("ii", $user_id, $word_id);
-    $statementGetWords->execute();
-    $vocabularyResult = $statementGetWords->get_result();
-    $exists = $vocabularyResult->num_rows > 0;
-    $statementGetWords->close();
+    $checkStmt = $conn->prepare("SELECT * FROM learned_word WHERE user_id = ? AND word_id = ?");
+    $checkStmt->bind_param("ii", $user_id, $word_id);
+    $checkStmt->execute();
+    $result = $checkStmt->get_result();
     
-    if ($exists) {
-        // Update existing record
-        $status = $learned ? 'reviewing' : 'learning';
-        $progress = $learned ? 50 : 25; // 50% khi đánh dấu đã học, 25% khi bỏ đánh dấu
+    if ($result->num_rows > 0) {
+        // Cập nhật record hiện có
+        $row = $result->fetch_assoc();
+        $current_progress = $row['learning_progress'];
+        $review_count = $row['review_count'];
         
-        $updateSql = "UPDATE learned_word 
-                      SET status = ?, 
-                          learning_progress = ?,
-                          last_reviewed_at = NOW(),
-                          review_count = review_count + 1
-                      WHERE user_id = ? AND word_id = ?";
+        // Tính toán trạng thái mới
+        $new_status = $learned ? 'reviewing' : 'learning';
+        $new_progress = $learned ? min(100, $current_progress + 10) : max(0, $current_progress - 5);
+        $new_review_count = $review_count + 1;
         
-        $statementGetWords = $conn->prepare($updateSql);
-        $statementGetWords->bind_param("siii", $status, $progress, $user_id, $word_id);
+        // Nếu progress = 100, chuyển sang mastered
+        if ($new_progress >= 100) {
+            $new_status = 'mastered';
+        }
+        
+        $updateStmt = $conn->prepare(
+            "UPDATE learned_word 
+             SET status = ?, 
+                 learning_progress = ?, 
+                 review_mode = ?,
+                 review_count = ?,
+                 last_reviewed_at = NOW()
+             WHERE user_id = ? AND word_id = ?"
+        );
+        $updateStmt->bind_param("sisiii", $new_status, $new_progress, $review_mode, $new_review_count, $user_id, $word_id);
+        $updateStmt->execute();
         
     } else {
-        // Insert new record
-        $status = $learned ? 'reviewing' : 'learning';
-        $progress = $learned ? 50 : 25;
+        // Tạo record mới
+        $initial_status = $learned ? 'learning' : 'not_learned';
+        $initial_progress = $learned ? 10 : 0;
         
-        $insertSql = "INSERT INTO learned_word 
-                      (user_id, word_id, status, learning_progress, current_position, review_mode, review_count) 
-                      VALUES (?, ?, ?, ?, 0, 'flashcard', 1)";
-        
-        $statementGetWords = $conn->prepare($insertSql);
-        $statementGetWords->bind_param("iisi", $user_id, $word_id, $status, $progress);
+        $insertStmt = $conn->prepare(
+            "INSERT INTO learned_word 
+             (user_id, word_id, status, learning_progress, review_mode, review_count, current_position, last_reviewed_at) 
+             VALUES (?, ?, ?, ?, ?, 1, 0, NOW())"
+        );
+        $insertStmt->bind_param("iisis", $user_id, $word_id, $initial_status, $initial_progress, $review_mode);
+        $insertStmt->execute();
     }
     
-    if (!$statementGetWords->execute()) {
-        throw new Exception('Failed to update database: ' . $statementGetWords->error);
+    // Ghi log review nếu có
+    if ($is_correct !== null) {
+        $logStmt = $conn->prepare(
+            "INSERT INTO review_log (user_id, word_id, is_correct) VALUES (?, ?, ?)"
+        );
+        $is_correct_int = $is_correct ? 1 : 0;
+        $logStmt->bind_param("iii", $user_id, $word_id, $is_correct_int);
+        $logStmt->execute();
     }
     
-    // Trả về kết quả
     echo json_encode([
         'success' => true,
-        'message' => 'Word status updated successfully',
-        'data' => [
-            'user_id' => $user_id,
-            'word_id' => $word_id,
-            'learned' => $learned,
-            'status' => $status,
-            'progress' => $progress
-        ]
-    ], JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
+        'message' => 'Updated successfully'
+    ], JSON_UNESCAPED_UNICODE);
     
 } catch (Exception $e) {
     http_response_code(400);
@@ -101,7 +99,10 @@ try {
         'error' => $e->getMessage()
     ], JSON_UNESCAPED_UNICODE);
 } finally {
-    if (isset($statementGetWords)) $statementGetWords->close();
+    if (isset($checkStmt)) $checkStmt->close();
+    if (isset($updateStmt)) $updateStmt->close();
+    if (isset($insertStmt)) $insertStmt->close();
+    if (isset($logStmt)) $logStmt->close();
     if (isset($conn)) $conn->close();
 }
 ?>

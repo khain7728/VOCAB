@@ -7,7 +7,7 @@ html { font-size: 16px; }
 
 #main {
     width: 95%;
-    margin-left: 2.5rem;
+    margin: 0 auto;
     display: flex;
     flex-direction: column;
     gap: 1.25rem; /* ~20px */
@@ -151,17 +151,31 @@ a {
 button[title="dathuoctunay"] {
     background-color: #2F80ED;
     color: white;
+    transition: all 0.3s ease, transform 0.12s ease;
 }
 button[title="dathuoctunay"]:hover { background-color:#2567c7; }
 button[title="dathuoctunay"]:active { transform:scale(0.95); }
+
+/* State khi đã đánh dấu "Đã thuộc" */
+button[title="dathuoctunay"].marked {
+    background-color: #27AE60 !important;
+    color: white !important;
+}
 
 button[title="quentunay"] {
     background-color:#ffffff;
     color: #FF0404;
     border: #FF0404 0.0625rem solid !important;
+    transition: all 0.3s ease, transform 0.12s ease;
 }
 button[title="quentunay"]:hover { background-color:#FF0404; color:#fff; }
 button[title="quentunay"]:active { transform:scale(0.95); }
+
+/* State khi đã đánh dấu "Quên" */
+button[title="quentunay"].marked {
+    background-color: #FF0404 !important;
+    color: white !important;
+}
 
 button[title="tieptheo"] {
     background-color: #A8CAF8;
