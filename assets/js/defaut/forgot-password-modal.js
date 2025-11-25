@@ -233,9 +233,24 @@ document.addEventListener('DOMContentLoaded', function() {
     // BƯỚC 3: ĐẶT LẠI MẬT KHẨU
     // ========================================
     
-    resetPasswordBtn.addEventListener('click', async function() {
+    resetPasswordBtn.addEventListener('click', async function(e) {
+        // Ngăn không cho submit nhiều lần
+        if (resetPasswordBtn.disabled) {
+            console.log('Button đã disabled, bỏ qua click');
+            return;
+        }
+        
+        console.log('Reset password button clicked');
+        
         const password = newPassword.value;
         const confirm = confirmPassword.value;
+        
+        console.log('Password validation:', {
+            hasPassword: !!password,
+            hasConfirm: !!confirm,
+            length: password.length,
+            match: password === confirm
+        });
         
         // Validate
         if (!password || !confirm) {
@@ -258,12 +273,16 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
         
-        // Disable button
+        // Disable button ngay lập tức
+        console.log('Disabling button...');
         resetPasswordBtn.disabled = true;
         resetPasswordBtn.innerHTML = '<span class="modal-loading"></span>Đang cập nhật...';
         clearAlert(alertStep3);
         
         try {
+            console.log('Sending request to reset-password.php...');
+            const startTime = performance.now();
+            
             const response = await fetch('../api/reset-password.php', {
                 method: 'POST',
                 headers: {
@@ -275,7 +294,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 })
             });
             
+            const endTime = performance.now();
+            console.log(`API response time: ${endTime - startTime}ms`);
+            
             const data = await response.json();
+            console.log('API response:', data);
             
             if (data.success) {
                 // Thành công - hiển thị thông báo và đóng modal
@@ -287,11 +310,14 @@ document.addEventListener('DOMContentLoaded', function() {
                 }, 1500);
             } else {
                 showAlert(alertStep3, data.message, 'error');
+                // Re-enable button khi có lỗi
+                resetPasswordBtn.disabled = false;
+                resetPasswordBtn.innerHTML = 'Đặt lại mật khẩu';
             }
         } catch (error) {
             console.error('Error:', error);
             showAlert(alertStep3, 'Có lỗi xảy ra. Vui lòng thử lại.', 'error');
-        } finally {
+            // Re-enable button khi có exception
             resetPasswordBtn.disabled = false;
             resetPasswordBtn.innerHTML = 'Đặt lại mật khẩu';
         }

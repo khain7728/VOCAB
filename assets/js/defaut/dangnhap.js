@@ -33,6 +33,12 @@
             loginButton.addEventListener('click', function(e) {
                 e.preventDefault();
 
+                // Ngăn không cho submit nhiều lần
+                if (loginButton.disabled) {
+                    console.log('Login button đã disabled, bỏ qua click');
+                    return;
+                }
+
                 // Lấy giá trị từ input
                 const email = emailInput ? emailInput.value.trim() : '';
                 const password = passwordInput ? passwordInput.value : '';
@@ -67,7 +73,8 @@
                 formData.append('email', email);
                 formData.append('password', password);
 
-                // Vô hiệu hóa nút đăng nhập
+                // Vô hiệu hóa nút đăng nhập ngay lập tức
+                console.log('Disabling login button...');
                 loginButton.disabled = true;
                 loginButton.textContent = 'Đang xử lý...';
 

@@ -36,6 +36,12 @@
             registerButton.addEventListener('click', function(e) {
                 e.preventDefault();
 
+                // Ngăn không cho submit nhiều lần
+                if (registerButton.disabled) {
+                    console.log('Register button đã disabled, bỏ qua click');
+                    return;
+                }
+
                 // Lấy giá trị từ input
                 const name = nameInput ? nameInput.value.trim() : '';
                 const email = emailInput ? emailInput.value.trim() : '';
@@ -117,7 +123,8 @@
                 formData.append('confirm_password', confirmPassword);
                 formData.append('terms_accepted', termsAccepted ? '1' : '0');
 
-                // Vô hiệu hóa nút đăng ký
+                // Vô hiệu hóa nút đăng ký ngay lập tức
+                console.log('Disabling register button...');
                 registerButton.disabled = true;
                 registerButton.textContent = 'Đang xử lý...';
 
@@ -142,6 +149,7 @@
                 .catch(error => {
                     console.error('Lỗi:', error);
                     showError('Có lỗi xảy ra. Vui lòng thử lại!');
+                    // Re-enable button khi có exception
                     registerButton.disabled = false;
                     registerButton.textContent = 'Đăng ký';
                 });
