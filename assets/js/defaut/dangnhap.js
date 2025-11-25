@@ -16,17 +16,17 @@
         if (facebookButton) {
             facebookButton.addEventListener('click', function(e) {
                 e.preventDefault();
-                alert('Đăng nhập với Facebook\n\nTính năng này đang được phát triển.');
+                showInfo('Đăng nhập với Facebook\n\nTính năng này đang được phát triển.');
             });
         }
 
         // Xử lý đăng nhập bằng Google
-        if (googleButton) {
-            googleButton.addEventListener('click', function(e) {
-                e.preventDefault();
-                alert('Đăng nhập với Google\n\nTính năng này đang được phát triển.');
-            });
-        }
+        // if (googleButton) {
+        //     googleButton.addEventListener('click', function(e) {
+        //         e.preventDefault();
+        //         alert('Đăng nhập với Google\n\nTính năng này đang được phát triển.');
+        //     });
+        // }
 
         // Xử lý đăng nhập thường
         if (loginButton) {
@@ -39,32 +39,91 @@
 
                 // Validate
                 if (!email) {
-                    alert('Vui lòng nhập email!');
+                    showError('Vui lòng nhập email!');
                     emailInput.focus();
                     return;
                 }
 
                 if (!validateEmail(email)) {
-                    alert('Email không hợp lệ!');
+                    showError('Email không hợp lệ!');
                     emailInput.focus();
                     return;
                 }
 
                 if (!password) {
-                    alert('Vui lòng nhập mật khẩu!');
+                    showError('Vui lòng nhập mật khẩu!');
                     passwordInput.focus();
                     return;
                 }
 
                 if (password.length < 6) {
-                    alert('Mật khẩu phải có ít nhất 6 ký tự!');
+                    showError('Mật khẩu phải có ít nhất 6 ký tự!');
                     passwordInput.focus();
                     return;
                 }
 
-                // Nếu validate thành công
-                alert(`Đăng nhập thành công!\n\nEmail: ${email}\n\nChức năng đăng nhập đầy đủ đang được phát triển.`);
-                // Ở đây bạn có thể thêm mã để gửi dữ liệu đăng nhập lên server
+                // Nếu validate thành công, gửi request đến backend
+                const formData = new FormData();
+                formData.append('email', email);
+                formData.append('password', password);
+
+                // Vô hiệu hóa nút đăng nhập
+                loginButton.disabled = true;
+                loginButton.textContent = 'Đang xử lý...';
+
+                // Gửi request
+                fetch('../process/login-process.php', {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(response => {
+                    // Kiểm tra xem có redirect không
+                    if (response.redirected) {
+                        window.location.href = response.url;
+                        return;
+                    }
+                    
+                    // Kiểm tra content-type
+                    const contentType = response.headers.get('content-type');
+                    if (contentType && contentType.includes('application/json')) {
+                        return response.json();
+                    }
+                    return response.text();
+                })
+                .then(data => {
+                    // Xử lý response JSON
+                    if (data && typeof data === 'object') {
+                        if (data.error_type === 'email_not_found') {
+                            // Hiển thị confirm dialog
+                            const userConfirm = confirm(
+                                data.message + '\n\n' +
+                                'Bạn có muốn đăng ký tài khoản với email này không?'
+                            );
+                            
+                            if (userConfirm) {
+                                // Chuyển sang trang đăng ký
+                                window.location.href = 'dangki.html';
+                            } else {
+                                // Người dùng không muốn đăng ký, giữ nguyên
+                                loginButton.disabled = false;
+                                loginButton.textContent = 'Đăng nhập';
+                            }
+                        } else {
+                            // Lỗi khác
+                            showError(data.message || 'Có lỗi xảy ra!');
+                            loginButton.disabled = false;
+                            loginButton.textContent = 'Đăng nhập';
+                        }
+                    } else if (data) {
+                        console.log(data);
+                    }
+                })
+                .catch(error => {
+                    console.error('Lỗi:', error);
+                    showError('Có lỗi xảy ra. Vui lòng thử lại!');
+                    loginButton.disabled = false;
+                    loginButton.textContent = 'Đăng nhập';
+                });
             });
         }
 

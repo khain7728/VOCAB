@@ -1,0 +1,157 @@
+<?php
+/**
+ * FILE INDEX.PHP - ĐIỂM VÀO CHÍNH CỦA ỨNG DỤNG
+ * Trang chủ landing page
+ */
+
+// Load cấu hình
+require_once __DIR__ . '/config/config.php';
+
+// Kiểm tra xem user đã đăng nhập chưa
+if (is_logged_in()) {
+    // Nếu đã đăng nhập, redirect theo role
+    if (is_admin()) {
+        redirect('/VOCAB/pages/admin/trangchu_admin.php');
+    } else {
+        redirect('/VOCAB/pages/user/user_Dashboard.html');
+    }
+    exit;
+}
+
+// Hiển thị flash message nếu có
+$flash_message = get_message();
+?>
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="assets/css/defaut/index.css">
+    <link rel="stylesheet" href="assets/css/defaut/body.css">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <title>Giới thiệu - VOCAB</title>
+    <style>
+        .flash-message {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            z-index: 9999;
+            animation: slideIn 0.3s ease-out;
+            max-width: 400px;
+        }
+        .flash-success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .flash-error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .flash-warning {
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+        }
+        @keyframes slideIn {
+            from { transform: translateX(400px); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+    </style>
+</head>
+
+<body>
+    <?php if ($flash_message): ?>
+        <div class="flash-message flash-<?php 
+            echo $flash_message['type'] === MSG_SUCCESS ? 'success' : 
+                ($flash_message['type'] === MSG_ERROR ? 'error' : 'warning'); 
+        ?>">
+            <?php echo htmlspecialchars($flash_message['message']); ?>
+        </div>
+        <script>
+            // Tự động ẩn sau 5 giây
+            setTimeout(() => {
+                document.querySelector('.flash-message').style.display = 'none';
+            }, 5000);
+        </script>
+    <?php endif; ?>
+
+    <!-- header -->
+    <div id="header_index"></div>
+
+    <div id="content">
+        <div class="intro-section">
+            <div class="intro-text">
+                <h1>Học từ vựng Tiếng Anh dễ dàng và hiệu quả</h1>
+                <p>Tham gia cộng đồng VOCAB để nâng cao vốn từ vựng Tiếng Anh của bạn thông qua các bài học tương tác,
+                    trò chơi thú vị và kiểm tra định kỳ.</p>
+                <p>Học bất kỳ nơi nào, ở bất kỳ đâu.</p>
+                <a href="/VOCAB/pages/dangki.html" class="get-started-button">Bắt đầu ngay</a>
+            </div>
+            <div class="intro-image">
+                <img src="assets/images/defaut/intro.png" alt="Intro Image">
+            </div>
+        </div>
+
+        <div class="features-section">
+            <h2>Tính năng nổi bật</h2>
+            <div class="features-container">
+                <div class="feature-item">
+                    <div class="feature-icon"><i class="fa-solid fa-folder-plus"></i></div>
+                    <h3>Flashcard</h3>
+                    <p>Học từ vựng qua các thẻ flashcard sinh động và dễ hiểu.</p>
+                </div>
+                <div class="feature-item">
+                    <div class="feature-icon"><i class="fa-solid fa-square-poll-vertical"></i></div>
+                    <h3>Theo dõi tiến độ</h3>
+                    <p>Xem báo cáo chi tiết về tiến độ học tập.</p>
+                </div>
+                <div class="feature-item">
+                    <div class="feature-icon"><i class="fa-solid fa-file-lines"></i></div>
+                    <h3>Bài kiểm tra</h3>
+                    <p>Đánh giá tiến trình học tập của bạn qua các bài kiểm tra.</p>
+                </div>
+                <div class="feature-item">
+                    <div class="feature-icon"><i class="fa-solid fa-volume-high"></i></div>
+                    <h3>Phát âm</h3>
+                    <p>Nghe phát âm từ vựng và luyện tập theo.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="benefits-section">
+            <h2>Lợi ích khi sử dụng VOCAB</h2>
+            <div class="benefits-item">
+                <div class="benefit-image">
+                    <img src="assets/images/defaut/benefit1.png" alt="Benefit 1">
+                </div>
+                <div class="benefit-content">
+                    <h3>Miễn phí, vui nhộn, hiệu quả</h3>
+                    <p>Học cùng Vocab rất vui nhộn. Các bài học gọn sẽ giúp bạn ghi nhớ từ vựng hiệu quả.</p>
+                </div>
+            </div>
+            <div class="benefits-item">
+                <div class="benefit-image">
+                    <img src="assets/images/defaut/benefit2.png" alt="Benefit 2">
+                </div>
+                <div class="benefit-content">
+                    <h3>Tiếp thêm động lực học tập</h3>
+                    <p>Ứng dụng giúp người học dễ dàng xây dựng thói quen học tập, tạo môi trường học năng động.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- footer -->
+    <div id="footer"></div>
+
+    <script src="assets/js/defaut/include-layout.js" defer></script>
+</body>
+
+</html>

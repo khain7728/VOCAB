@@ -8,6 +8,7 @@
     <link rel="stylesheet" href="../assets/css/defaut/index.css">
     <link rel="stylesheet" href="../assets/css/defaut/body.css">
     <link rel="stylesheet" href="../assets/css/defaut/dangnhap.css">
+    <link rel="stylesheet" href="../assets/css/defaut/toast-message.css">
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <title>Đăng ký - VOCAB</title>
@@ -21,7 +22,7 @@
         <div class="login-container">
             <h2>Đăng ký</h2>
             <p>Hãy tạo tài khoản của bạn để bắt đầu hành trình học tập.</p>
-
+            
             <!-- Đăng ký -->
             <div class="input-group">
                 <div class="name">
@@ -41,6 +42,24 @@
                     <input type="password" id="confirm-password" placeholder="Xác nhận mật khẩu của bạn">
                 </div>
             </div>
+           
+            <div class="divider">
+                <div class="line-left"></div>
+                <span>Hoặc đăng ký bằng</span>
+                <div class="line-right"></div>
+            </div>
+
+             <!-- đăng ký bằng facebook -->
+            <button class="facebook-login-button" onclick="alert('Chức năng đăng nhập bằng Facebook đang được triển khai. Vui lòng đăng ký phương thức khác'); return false;">
+                <i class="fa-brands fa-facebook"></i>
+                Đăng ký với Facebook
+            </button>
+            <!-- Đăng ký bằng google -->
+            <button class="google-login-button" onclick="window.location.href='../auth/google-login.php'">
+                <i class="fa-brands fa-google"></i>
+                Đăng ký với Google
+            </button>
+
             <div class="terms">
                 <input type="checkbox" id="terms-checkbox">
                 <label for="terms-checkbox">Tôi đồng ý với <a href="#">Điều khoản dịch vụ</a> và <a href="#">Chính sách bảo mật</a></label>
@@ -55,6 +74,7 @@
     <!-- footer -->
     <div id="footer"></div>
 
+    <script src="../assets/js/defaut/toast-message.js"></script>
     <script src="../assets/js/defaut/include-layout.js" defer></script>
     <script src="../assets/js/defaut/dangky.js" defer></script>
 </body>

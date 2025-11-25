@@ -45,7 +45,7 @@
         </div>
     </div>
     <div id="logout">
-        <a href="!#">
+        <a href="/VOCAB/auth/logout.php">
             <i class="fa-solid fa-arrow-right-from-bracket"></i> Đăng xuất
         </a>
     </div>

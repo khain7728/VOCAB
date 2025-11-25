@@ -242,6 +242,28 @@
   }
 
   /**
+   * Thiết lập logout button
+   */
+  function setupLogout(){
+    // Tìm link logout trong menu
+    const logoutLink = document.querySelector('#logout a');
+    
+    if(!logoutLink){
+      console.warn('Không tìm thấy link logout');
+      return;
+    }
+    
+    // Xử lý click logout
+    logoutLink.addEventListener('click', function(e){
+      if(!confirm('Bạn có chắc chắn muốn đăng xuất?')){
+        e.preventDefault();
+      }
+    });
+    
+    console.log('✓ Đã thiết lập logout button');
+  }
+
+  /**
    * Thiết lập notification toggle
    */
   function setupNotifications(){
@@ -298,6 +320,8 @@
       setupMenuToggle();
       // Thiết lập notifications
       setupNotifications();
+      // Thiết lập logout
+      setupLogout();
       console.log('✓ Layout user đã sẵn sàng!');
     });
   }

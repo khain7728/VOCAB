@@ -146,7 +146,7 @@ define('POS_CONJUNCTION', 'conjunction'); // Liên từ
 // ========================================
 // VALIDATION
 // ========================================
-define('MIN_PASSWORD_LENGTH', 6);       // Độ dài password tối thiểu
+define('MIN_PASSWORD_LENGTH', 8);       // Độ dài password tối thiểu
 define('MAX_PASSWORD_LENGTH', 255);     // Độ dài password tối đa
 define('MIN_USERNAME_LENGTH', 3);       // Độ dài username tối thiểu
 define('MAX_USERNAME_LENGTH', 50);      // Độ dài username tối đa

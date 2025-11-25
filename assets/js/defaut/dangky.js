@@ -13,6 +13,9 @@
         const confirmPasswordInput = document.getElementById('confirm-password');
         const termsCheckbox = document.getElementById('terms-checkbox');
 
+        // Tự động điền email từ trang đăng nhập (nếu có)
+        checkAndFillEmail();
+
         // Xử lý click vào "Điều khoản dịch vụ"
         const termsLinks = document.querySelectorAll('.terms a');
         termsLinks.forEach(function(link) {
@@ -42,65 +45,106 @@
 
                 // Validate
                 if (!name) {
-                    alert('Vui lòng nhập tên đầy đủ!');
+                    showError('Vui lòng nhập tên đầy đủ!');
                     nameInput.focus();
                     return;
                 }
 
                 if (name.length < 2) {
-                    alert('Tên phải có ít nhất 2 ký tự!');
+                    showError('Tên phải có ít nhất 2 ký tự!');
                     nameInput.focus();
                     return;
                 }
 
                 if (!email) {
-                    alert('Vui lòng nhập email!');
+                    showError('Vui lòng nhập email!');
                     emailInput.focus();
                     return;
                 }
 
                 if (!validateEmail(email)) {
-                    alert('Email không hợp lệ!');
+                    showError('Email không hợp lệ!');
                     emailInput.focus();
                     return;
                 }
 
                 if (!password) {
-                    alert('Vui lòng nhập mật khẩu!');
+                    showError('Vui lòng nhập mật khẩu!');
                     passwordInput.focus();
                     return;
                 }
 
-                if (password.length < 6) {
-                    alert('Mật khẩu phải có ít nhất 6 ký tự!');
+                if (password.length < 8) {
+                    showError('Mật khẩu phải có ít nhất 8 ký tự!');
+                    passwordInput.focus();
+                    return;
+                }
+
+                // Kiểm tra mật khẩu mạnh
+                const hasUpperCase = /[A-Z]/.test(password);
+                const hasLowerCase = /[a-z]/.test(password);
+                const hasNumber = /[0-9]/.test(password);
+                const hasSpecialChar = /[!@#$%^&*(),.?":{}|<>]/.test(password);
+
+                if (!hasUpperCase || !hasLowerCase || !hasNumber || !hasSpecialChar) {
+                    showError('Mật khẩu phải bao gồm chữ hoa, chữ thường, số và ký tự đặc biệt (!@#$%^&*...)');
                     passwordInput.focus();
                     return;
                 }
 
                 if (!confirmPassword) {
-                    alert('Vui lòng xác nhận mật khẩu!');
+                    showError('Vui lòng xác nhận mật khẩu!');
                     confirmPasswordInput.focus();
                     return;
                 }
 
                 if (password !== confirmPassword) {
-                    alert('Mật khẩu xác nhận không khớp!');
+                    showError('Mật khẩu xác nhận không khớp!');
                     confirmPasswordInput.focus();
                     return;
                 }
 
                 if (!termsAccepted) {
-                    alert('Vui lòng đồng ý với Điều khoản dịch vụ và Chính sách bảo mật!');
+                    showWarning('Vui lòng đồng ý với Điều khoản dịch vụ và Chính sách bảo mật!');
                     return;
                 }
 
-                // Nếu validate thành công
-                alert(`Đăng ký thành công!\n\nTên: ${name}\nEmail: ${email}\n\nChào mừng bạn đến với VOCAB!`);
-                
-                // TODO: Gửi request đến server để tạo tài khoản
-                // setTimeout(() => {
-                //     window.location.href = 'dangnhap.html';
-                // }, 1000);
+                // Nếu validate thành công, gửi request đến backend
+                const formData = new FormData();
+                formData.append('name', name);
+                formData.append('email', email);
+                formData.append('password', password);
+                formData.append('confirm_password', confirmPassword);
+                formData.append('terms_accepted', termsAccepted ? '1' : '0');
+
+                // Vô hiệu hóa nút đăng ký
+                registerButton.disabled = true;
+                registerButton.textContent = 'Đang xử lý...';
+
+                // Gửi request
+                fetch('../process/register-process.php', {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(response => {
+                    // Kiểm tra xem có redirect không
+                    if (response.redirected) {
+                        window.location.href = response.url;
+                        return;
+                    }
+                    return response.text();
+                })
+                .then(data => {
+                    if (data) {
+                        console.log(data);
+                    }
+                })
+                .catch(error => {
+                    console.error('Lỗi:', error);
+                    showError('Có lỗi xảy ra. Vui lòng thử lại!');
+                    registerButton.disabled = false;
+                    registerButton.textContent = 'Đăng ký';
+                });
             });
         }
 
@@ -142,6 +186,33 @@
     function validateEmail(email) {
         const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         return re.test(email);
+    }
+
+    // Kiểm tra và điền email từ session
+    function checkAndFillEmail() {
+        // Gọi PHP để lấy email từ session
+        fetch('../process/get-register-email.php', {
+            method: 'GET',
+            cache: 'no-cache'
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success && data.email) {
+                // Điền email vào form
+                if (emailInput) {
+                    emailInput.value = data.email;
+                    emailInput.readOnly = true;
+                    emailInput.style.background = '#f0f0f0';
+                }
+                // Focus vào tên
+                if (nameInput) {
+                    nameInput.focus();
+                }
+            }
+        })
+        .catch(error => {
+            console.error('Lỗi khi lấy email:', error);
+        });
     }
 
     // Hiển thị modal Điều khoản dịch vụ

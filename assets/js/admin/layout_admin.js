@@ -12,4 +12,16 @@ document.addEventListener('DOMContentLoaded', function() {
             document.body.classList.toggle('menu-open');
         });
     }
+    
+    // Xử lý logout cho admin
+    const logoutLink = document.querySelector('#logout a');
+    
+    if(logoutLink){
+        logoutLink.addEventListener('click', function(e){
+            if(!confirm('Bạn có chắc chắn muốn đăng xuất?')){
+                e.preventDefault();
+            }
+        });
+        console.log('✓ Đã thiết lập logout button cho admin');
+    }
 });
