@@ -1,20 +1,39 @@
 <?php
 /**
- * API TẠO KHÓA HỌC MỚI
+ * API TẠO KHÓA HỌC MỚI (Full CORS Support)
  * Endpoint: api/create-course.php
  * Method: POST
  */
 
-// 1. Cấu hình Header chuẩn
+// --- BẮT ĐẦU: CẤU HÌNH CORS CHUẨN ---
+// Cho phép tất cả nguồn truy cập
+header('Access-Control-Allow-Origin: *');
+
+// Cho phép các method được sử dụng
+header('Access-Control-Allow-Methods: GET, POST, OPTIONS, PUT, DELETE');
+
+// Cho phép các headers tùy chỉnh (như Content-Type gửi JSON)
+header('Access-Control-Allow-Headers: Content-Type, Access-Control-Allow-Headers, Authorization, X-Requested-With');
+
+// Xử lý Preflight Request (Trình duyệt hỏi đường trước khi gửi dữ liệu thật)
+if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
+    http_response_code(200);
+    exit(); // Dừng ngay, không chạy tiếp code bên dưới
+}
+// --- KẾT THÚC: CẤU HÌNH CORS CHUẨN ---
+
+
+// Tắt lỗi rác HTML
 error_reporting(0);
 ini_set('display_errors', 0);
+
+// Set header JSON cho response
 header('Content-Type: application/json; charset=utf-8');
-header('Access-Control-Allow-Origin: *');
-header('Access-Control-Allow-Methods: POST');
 
 require_once '../config/database.php';
 
 try {
+    // Chỉ nhận POST
     if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
         throw new Exception('Method Not Allowed');
     }
@@ -35,8 +54,7 @@ try {
     // Bắt đầu Transaction
     $conn->begin_transaction();
 
-    // 2. Insert Khóa học
-    // Lưu ý: Đảm bảo bảng course đã có AUTO_INCREMENT
+    // 1. Insert vào bảng course
     $sql = "INSERT INTO course (course_name, description, visibility, create_by, created_at, hide) VALUES (?, ?, ?, ?, NOW(), 0)";
     $stmt = $conn->prepare($sql);
     
@@ -46,14 +64,13 @@ try {
     
     if (!$stmt->execute()) throw new Exception("Lỗi thực thi: " . $stmt->error);
     
-    // --- QUAN TRỌNG: LẤY ID VỪA TẠO ---
     $new_course_id = $stmt->insert_id;
 
     if ($new_course_id == 0) {
         throw new Exception("Tạo thành công nhưng ID trả về bằng 0. Hãy kiểm tra AUTO_INCREMENT trong Database.");
     }
 
-    // 3. Xử lý Tags (nếu có)
+    // 2. Xử lý Tags
     if (!empty($tags)) {
         $tags = array_unique(array_filter($tags));
         
@@ -66,7 +83,7 @@ try {
             if (empty($tagName)) continue;
 
             $tagId = 0;
-            // Kiểm tra tag tồn tại
+            // Kiểm tra tag
             $stmtCheck->bind_param("s", $tagName);
             $stmtCheck->execute();
             $resTag = $stmtCheck->get_result();
@@ -74,7 +91,7 @@ try {
             if ($row = $resTag->fetch_assoc()) {
                 $tagId = $row['tag_id'];
             } else {
-                // Tạo mới nếu chưa có
+                // Tạo mới
                 $stmtInsTag->bind_param("s", $tagName);
                 if ($stmtInsTag->execute()) {
                     $tagId = $stmtInsTag->insert_id;
@@ -91,11 +108,11 @@ try {
 
     $conn->commit();
 
-    // 4. Trả về kết quả JSON có chứa course_id
+    // 3. Trả về kết quả JSON
     echo json_encode([
         'success' => true, 
         'message' => 'Tạo khóa học thành công!',
-        'course_id' => $new_course_id // Đây là biến quan trọng nhất
+        'course_id' => $new_course_id 
     ]);
 
 } catch (Exception $e) {

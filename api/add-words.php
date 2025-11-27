@@ -2,14 +2,22 @@
 /**
  * API THÊM DANH SÁCH TỪ VỰNG
  */
+// --- BẮT ĐẦU: CẤU HÌNH CORS CHUẨN ---
+header('Access-Control-Allow-Origin: *');
+header('Access-Control-Allow-Methods: GET, POST, OPTIONS, PUT, DELETE');
+header('Access-Control-Allow-Headers: Content-Type, Access-Control-Allow-Headers, Authorization, X-Requested-With');
+
+if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
+    http_response_code(200);
+    exit();
+}
+// --- KẾT THÚC: CẤU HÌNH CORS CHUẨN ---
 
 // 1. BẬT BÁO LỖI ĐỂ DEBUG (Sau khi chạy ngon thì comment lại dòng này)
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
 header('Content-Type: application/json; charset=utf-8');
-header('Access-Control-Allow-Origin: *'); // Cẩn thận khi deploy thật
-header('Access-Control-Allow-Methods: POST');
 
 require_once '../config/database.php';
 
