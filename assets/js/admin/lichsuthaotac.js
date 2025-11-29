@@ -1,95 +1,72 @@
-let logsList = [];
+document.addEventListener("DOMContentLoaded", function() {
+    fetchLogs();
 
-document.addEventListener('DOMContentLoaded', function() {
-    loadData();
+    const searchBox = document.getElementById('searchLogBox');
+    if (searchBox) {
+        searchBox.addEventListener('keyup', searchLogs);
+    }
 });
 
-// 1. Load dữ liệu từ API thật
-function loadData() {
-    const tbody = document.getElementById('log_table_body');
+let allLogsData = [];
 
-    // Hiển thị loading
-    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding: 20px;">Đang tải dữ liệu...</td></tr>';
+// --- HÀM 1: LẤY DANH SÁCH LOGS ---
+async function fetchLogs() {
+    const apiUrl = '../../api/admin/log_get_list.php';
+    const tableBody = document.getElementById('log_table_body');
+    tableBody.innerHTML = `<tr><td colspan="5" style="text-align: center; padding: 20px;">Đang tải lịch sử...</td></tr>`;
 
-    // Gọi API
-    fetch('../../api/admin/log_get_list.php')
-        .then(response => {
-            // Kiểm tra xem phản hồi có OK không
-            if (!response.ok) {
-                throw new Error('Lỗi kết nối mạng hoặc đường dẫn API sai');
-            }
-            return response.json();
-        })
-        .then(res => {
-            console.log("Dữ liệu nhận được:", res); // Log để debug kiểm tra
+    try {
+        const response = await fetch(apiUrl);
+        const result = await response.json();
 
-            if (res.status === 'success') {
-                logsList = res.data;
-                renderTable(logsList);
-            } else {
-                // Trường hợp API trả về lỗi logic (ví dụ: lỗi truy vấn SQL)
-                tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; color: red;">Lỗi: ${res.message}</td></tr>`;
-            }
-        })
-        .catch(err => {
-            console.error("Lỗi fetch:", err);
-            tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color: red;">Không thể tải dữ liệu. Vui lòng thử lại sau.</td></tr>';
-        });
+        if (result.status === 'success') {
+            allLogsData = result.data;
+            renderLogTable(allLogsData);
+        } else {
+            tableBody.innerHTML = `<tr><td colspan="5" style="text-align:center; color:red;">Lỗi API: ${result.message || 'Không có dữ liệu'}</td></tr>`;
+        }
+    } catch (error) {
+        console.error("Lỗi Fetch Logs:", error);
+        tableBody.innerHTML = `<tr><td colspan="5" style="text-align:center; color:red;">Lỗi kết nối server</td></tr>`;
+    }
 }
 
-// 2. Render bảng (Hiển thị dữ liệu)
-function renderTable(data) {
-    const tbody = document.getElementById('log_table_body');
-    let html = '';
-
-    // Kiểm tra nếu không có dữ liệu
-    if (!data || data.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center">Chưa có lịch sử thao tác nào.</td></tr>';
+// --- HÀM 2: VẼ BẢNG LOGS ---
+function renderLogTable(logs) {
+    const tableBody = document.getElementById('log_table_body');
+    if (!logs || logs.length === 0) {
+        tableBody.innerHTML = `<tr><td colspan="5" style="text-align:center; padding: 20px; color: #666;">Không tìm thấy lịch sử thao tác nào.</td></tr>`;
         return;
     }
 
-    data.forEach((log, index) => {
-        // Xử lý hiển thị trạng thái (Nếu API trả về status, dùng nó. Nếu không, mặc định là success/thành công)
-        let statusClass = 'status-green';
-        let statusText = 'Thành công';
-
-        // Logic màu sắc (Tùy chỉnh theo dữ liệu thực tế của bạn)
-        if (log.status === 'failed') {
-            statusClass = 'status-red';
-            statusText = 'Thất bại';
-        }
-
-        // Xử lý hiển thị tên Admin (nếu null thì hiện ẩn danh/đã xóa)
-        const adminName = log.admin_name ? log.admin_name : 'Admin (Đã xóa)';
-
-        // Xử lý hiển thị Target ID
-        const targetDisplay = log.target_id ? log.target_id : '-';
+    let html = '';
+    logs.forEach((item, index) => {
+        const adminName = item.admin_name || `Admin (ID: ${item.admin_id})`;
+        const target = item.target_id || 'N/A';
+        const formattedDate = new Date(item.created_at).toLocaleString('vi-VN');
 
         html += `
             <tr>
-                <td style="text-align:center">${index + 1}</td>
-                <td><strong>${adminName}</strong></td>
-                <td>${log.action}</td>
-                <td style="color: #666;">ID: ${targetDisplay}</td>
-                <td>${log.created_at}</td>
-                <td><span class="status-pill ${statusClass}">${statusText}</span></td>
+                <td style="text-align: center;">${index + 1}</td>
+                <td>${item.action}</td>
+                <td style="text-align: center;">${target}</td>
+                <td>${adminName}</td>
+                <td>${formattedDate}</td>
             </tr>
         `;
     });
-    tbody.innerHTML = html;
+    tableBody.innerHTML = html;
 }
 
-// 3. Tìm kiếm (Filter ngay trên máy client)
-function searchTable() {
-    const val = document.getElementById('searchBox').value.toLowerCase();
+// --- HÀM 3: TÌM KIẾM LOGS ---
+function searchLogs() {
+    const input = document.getElementById('searchLogBox');
+    const filter = input.value.toLowerCase();
 
-    const filtered = logsList.filter(log => {
-        const name = log.admin_name ? log.admin_name.toLowerCase() : '';
-        const action = log.action ? log.action.toLowerCase() : '';
-        const target = log.target_id ? log.target_id.toString() : '';
-
-        return name.includes(val) || action.includes(val) || target.includes(val);
+    const filteredData = allLogsData.filter(item => {
+        const action = (item.action || "").toLowerCase();
+        const targetId = (item.target_id || "").toString();
+        return action.includes(filter) || targetId.includes(filter);
     });
-
-    renderTable(filtered);
+    renderLogTable(filteredData);
 }
