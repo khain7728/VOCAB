@@ -1,257 +1,212 @@
-/* =========================================
-   TRANG CHU STYLES (trangchu.css)
-   ========================================= */
+/* --- 1. CẤU TRÚC CHUNG --- */
 
-.trangchu-page .welcome-header {
-    margin-bottom: 2rem;
+.trangchu-page {
+    padding: 24px;
+    width: 100%;
+    box-sizing: border-box;
 }
 
-.trangchu-page .welcome-header p {
-    font-size: 1rem;
-    color: var(--text-secondary);
-    margin: 0.25rem 0;
+.welcome-header {
+    position: sticky;
+    top: 64px;
+    z-index: 800;
+    background-color: #F5F7FA;
+    padding: 10px 0 20px 0;
+    margin-bottom: 10px;
+}
+
+.welcome-header h1 {
+    margin: 0 0 4px 0;
+    font-size: 22px;
+    color: #111;
+}
+
+.welcome-header p {
+    margin: 0;
+    color: #666;
+    font-size: 14px;
 }
 
 
-/* --- Lưới thống kê --- */
+/* --- 2. THẺ THỐNG KÊ (STATS) --- */
 
-.trangchu-page .stats-grid {
+.stats-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-    gap: 1.5rem;
-    margin-bottom: 2rem;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 20px;
+    margin-bottom: 24px;
 }
 
-.trangchu-page .stat-card {
-    background: var(--bg-widget);
-    border-radius: 0.75rem;
-    padding: 1.5rem;
+.stat-card {
+    background: #fff;
+    padding: 20px;
+    border-radius: 8px;
     display: flex;
     align-items: center;
-    gap: 1.5rem;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    gap: 16px;
+    border: 1px solid #E5E7EB;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
 }
 
-.trangchu-page .stat-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
-}
-
-.trangchu-page .stat-card .card-icon {
-    width: 3.5rem;
-    height: 3.5rem;
+.icon-box {
+    width: 48px;
+    height: 48px;
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
+    font-size: 20px;
     flex-shrink: 0;
 }
 
-.trangchu-page .stat-card .card-icon i {
-    font-size: 1.5rem;
-    color: #fff;
+.icon-box.blue {
+    background: #EFF6FF;
+    color: #3B82F6;
 }
 
-
-/* Màu icon */
-
-.trangchu-page .icon-users {
-    background: #5B9BD5;
+.icon-box.green {
+    background: #ECFDF5;
+    color: #10B981;
 }
 
-.trangchu-page .icon-courses {
-    background: #5CB85C;
+.icon-box.orange {
+    background: #FFF7ED;
+    color: #F97316;
 }
 
-.trangchu-page .icon-activity {
-    background: #F5A623;
-}
-
-.trangchu-page .card-content .card-title {
-    display: block;
-    font-size: 0.9rem;
-    color: var(--text-secondary);
-    margin-bottom: 0.25rem;
-}
-
-.trangchu-page .card-content .card-value {
-    display: block;
-    font-size: 1.75rem;
+.stat-card h2 {
+    margin: 0;
+    font-size: 24px;
     font-weight: 700;
-    color: var(--text-primary);
+    color: #111;
+}
+
+.stat-card .label {
+    font-size: 13px;
+    color: #6B7280;
 }
 
 
-/* --- Lưới nội dung chính --- */
+/* --- 3. BỐ CỤC CHÍNH (FIX LỖI LAYOUT) --- */
 
-.trangchu-page .dashboard-main-grid {
+.dashboard-grid {
     display: grid;
-    grid-template-columns: 2fr 1fr;
-    /* Cột trái 66%, Cột phải 33% */
-    gap: 1.5rem;
+    /* Cột trái cố định 360px | Cột phải chiếm phần còn lại */
+    grid-template-columns: 360px 1fr;
+    gap: 24px;
+    /* QUAN TRỌNG: Làm cho 2 cột cao bằng nhau */
+    align-items: stretch;
+}
+
+@media (max-width: 1200px) {
+    .dashboard-grid {
+        grid-template-columns: 1fr;
+    }
 }
 
 
-/* * THAY ĐỔI CHÍNH:
- * Biến các widget bên trong (column-left/right) thành item trực tiếp của grid.
- * Điều này làm cho các widget ở hàng trên (hoạt động, khóa học) 
- * tự động co giãn để có chiều cao bằng nhau (align-items: stretch).
- */
+/* WIDGET CHUNG */
 
-.trangchu-page .dashboard-column-left,
-.trangchu-page .dashboard-column-right {
-    display: contents;
+.widget {
+    background: #fff;
+    padding: 20px;
+    border-radius: 8px;
+    border: 1px solid #E5E7EB;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+    display: flex;
+    flex-direction: column;
+    /* QUAN TRỌNG: Để widget co giãn được bên trong grid mà không phá bố cục */
+    min-width: 0;
+    height: 100%;
+    /* Chiếm full chiều cao của dòng grid */
+    box-sizing: border-box;
 }
 
-.trangchu-page .widget {
-    background: var(--bg-widget);
-    border-radius: 0.75rem;
-    padding: 1.5rem;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-    margin-bottom: 0;
-    /* Xóa margin-bottom mặc định (grid 'gap' sẽ xử lý) */
+.widget.full-width {
+    grid-column: 1 / -1;
+    margin-top: 0;
 }
 
-
-/* * ĐÃ XÓA: không cần nữa vì grid 'gap' đã xử lý.
- * .trangchu-page .dashboard-column-left .widget,
- * .trangchu-page .dashboard-column-right .widget {
- * margin-bottom: 1.5rem;
- * }
- */
-
-.trangchu-page .widget .widget-title {
-    font-size: 1.2rem;
+.widget h3 {
+    margin-top: 0;
+    margin-bottom: 16px;
+    font-size: 14px;
     font-weight: 700;
-    margin-top: 0;
-    margin-bottom: 0.5rem;
-}
-
-.trangchu-page .widget .widget-subtitle {
-    font-size: 0.9rem;
-    color: var(--text-secondary);
-    margin-top: 0;
-    margin-bottom: 1.5rem;
+    color: #374151;
+    text-transform: uppercase;
+    border-bottom: 1px solid #F3F4F6;
+    padding-bottom: 12px;
 }
 
 
-/* --- Danh sách hoạt động --- */
+/* --- 4. LIST HOẠT ĐỘNG (FIX LỖI VỠ HÌNH) --- */
 
-.trangchu-page .activity-list {
+.activity-list {
     list-style: none;
+    /* Xóa dấu chấm tròn mặc định */
     padding: 0;
     margin: 0;
+    flex-grow: 1;
+    /* Đẩy nội dung cho đều */
 }
 
-.trangchu-page .activity-item {
+.activity-item {
     display: flex;
-    gap: 1rem;
-    padding: 1rem 0;
-    border-bottom: 1px solid var(--border-color);
+    /* Bắt buộc dàn ngang */
+    align-items: flex-start;
+    /* Căn trên cùng */
+    gap: 12px;
+    padding: 12px 0;
+    border-bottom: 1px solid #F3F4F6;
 }
 
-.trangchu-page .activity-item:last-child {
+.activity-item:last-child {
     border-bottom: none;
-    padding-bottom: 0;
 }
 
-.trangchu-page .activity-item:first-child {
-    padding-top: 0;
-}
-
-.trangchu-page .activity-icon {
-    width: 2.5rem;
-    height: 2.5rem;
+.icon-box-small {
+    width: 32px;
+    height: 32px;
+    background: #F3F4F6;
+    color: #6B7280;
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
+    font-size: 14px;
     flex-shrink: 0;
-    background: #f0f0f0;
+    /* QUAN TRỌNG: Icon không bị bóp méo */
 }
 
-.trangchu-page .activity-icon i {
-    font-size: 1rem;
+.activity-text {
+    flex-grow: 1;
 }
 
-
-/* Màu icon hoạt động */
-
-.trangchu-page .icon-lock {
-    background: var(--status-red-bg);
-    color: var(--status-red);
-}
-
-.trangchu-page .icon-add {
-    background: var(--status-green-bg);
-    color: var(--status-green);
-}
-
-.trangchu-page .icon-edit {
-    background: #EBF2FA;
-    color: var(--accent);
-}
-
-.trangchu-page .activity-text p {
-    margin: 0 0 0.25rem 0;
-    font-size: 0.9rem;
+.activity-text p {
+    margin: 0 0 4px 0;
+    font-size: 13px;
+    color: #374151;
     line-height: 1.4;
 }
 
-.trangchu-page .activity-text .activity-time {
-    font-size: 0.8rem;
-    color: var(--text-secondary);
+.activity-text strong {
+    color: #111;
+    font-weight: 600;
+}
+
+.activity-text span {
+    font-size: 11px;
+    color: #9CA3AF;
 }
 
 
-/* --- Vùng chứa biểu đồ --- */
+/* --- 5. BIỂU ĐỒ --- */
 
-.trangchu-page .chart-container {
+.chart-box {
     width: 100%;
-    /* Thêm CSS cho biểu đồ thật tại đây */
-    background: #FAFAFA;
-    border: 1px dashed var(--border-color);
-    padding: 1rem;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    min-height: 300px;
-    color: var(--text-secondary);
-}
-
-.trangchu-page .chart-container img {
-    max-width: 100%;
-    height: auto;
-    object-fit: contain;
-}
-
-
-/* =========================================
-   CSS CHO WIDGET FULL-WIDTH
-   ========================================= */
-
-.trangchu-page .widget.widget-full-width {
-    /* Quan trọng: Bắt widget này chiếm 1 hàng mới và kéo dài từ cột 1 đến cột cuối cùng */
-    grid-column: 1 / -1;
-}
-
-
-/* Responsive cho grid */
-
-@media (max-width: 1200px) {
-    .trangchu-page .dashboard-main-grid {
-        grid-template-columns: 1fr;
-        /* Chuyển thành 1 cột */
-    }
-    /* Reset lại grid-column khi chỉ có 1 cột */
-    .trangchu-page .widget.widget-full-width {
-        grid-column: auto;
-    }
-    /* * ĐÃ XÓA: không cần nữa vì grid 'gap' đã xử lý.
-     * .trangchu-page .dashboard-column-left .widget,
-     * .trangchu-page .dashboard-column-right .widget {
-     * margin-bottom: 1.5rem;
-     * }
-     */
+    position: relative;
+    flex-grow: 1;
+    /* Chiếm hết chiều cao còn lại của widget */
+    min-height: 350px;
+    /* Chiều cao tối thiểu, làm chuẩn cho cột bên cạnh cao theo */
 }

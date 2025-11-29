@@ -1,247 +1,159 @@
-:root {
-    --accent: #7BB7EE;
-    --bg: #ffffff;
-    --text: #111111;
-    --width-collapsed: 4.5rem;
-    /* ~72px */
-    --width-expanded: 15rem;
-    /* chiều rộng khi mở rộng */
+/* --- 1. SETUP BODY --- */
+
+body#app-container {
+    display: flex;
+    margin: 0;
+    min-height: 100vh;
+    font-family: 'Roboto', sans-serif;
+    background-color: #F5F7FA;
+    font-size: 14px;
+    overflow-x: hidden;
+    /* Chặn thanh cuộn ngang của toàn trang */
 }
 
 
-/* Khung chính của menu bên */
+/* --- 2. MENU SIDEBAR --- */
 
-#menu_admin {
-    font-family: 'Roboto', sans-serif;
-    background: var(--bg);
-    color: var(--text);
-    width: var(--width-collapsed);
-    box-shadow: 0 0.25rem 0.5rem rgba(0, 0, 0, 0.05);
+#placeholder-menu {
+    width: 250px;
+    background: #fff;
+    border-right: 1px solid #E0E0E0;
+    flex-shrink: 0;
+    height: 100vh;
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+    transition: width 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+    overflow: hidden;
+    white-space: nowrap;
+}
+
+
+/* === COLLAPSED STATE (KHI ẨN MENU) === */
+
+body.menu-collapsed #placeholder-menu {
+    width: 64px !important;
+}
+
+
+/* Ẩn chữ */
+
+body.menu-collapsed .menu-item span,
+body.menu-collapsed #logo p,
+body.menu-collapsed #logout span {
+    display: none !important;
+    opacity: 0;
+}
+
+
+/* Căn giữa icon */
+
+body.menu-collapsed #menu_admin #logo,
+body.menu-collapsed .menu-item a,
+body.menu-collapsed #logout a {
+    justify-content: center !important;
+    padding: 0 !important;
+}
+
+body.menu-collapsed .menu-item a i,
+body.menu-collapsed #logout a i {
+    margin-right: 0 !important;
+}
+
+
+/* Mở rộng nội dung chính */
+
+body.menu-collapsed .main-wrapper {
+    width: calc(100% - 64px) !important;
+}
+
+
+/* ===================================== */
+
+
+/* --- 3. WRAPPER NỘI DUNG --- */
+
+.main-wrapper {
+    flex-grow: 1;
     display: flex;
     flex-direction: column;
-    align-items: center;
-    padding: 0.75rem 0;
-    border-right: #D9D9D9 1px solid;
-    box-sizing: border-box;
-    transition: width 220ms ease, font-size 220ms ease;
-    min-height: 100vh;
-    /* đảm bảo logout có thể đẩy xuống dưới */
-    /* collapsed trick: set base font-size 0 so text nodes are hidden by default */
-    font-size: 0;
-    overflow: hidden;
+    /* QUAN TRỌNG: width phải tính toán trừ đi menu */
+    width: calc(100% - 250px);
+    transition: width 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+    /* QUAN TRỌNG: Ngăn Grid bên trong phá vỡ Flexbox */
+    min-width: 0;
 }
 
 
-/* Khi menu được mở bằng click (class menu-open trên body) — mở rộng và cho phép chữ hiển thị */
-
-body.menu-open #menu_admin {
-    width: var(--width-expanded);
-    font-size: 1rem;
-    /* bật lại font-size để chữ hiện lên */
-    align-items: stretch;
-}
-
-
-/* Logo */
+/* --- 4. CÁC THÀNH PHẦN CON MENU (Giữ nguyên style đẹp) --- */
 
 #menu_admin #logo {
+    height: 64px;
     display: flex;
     align-items: center;
-    gap: 0.5rem;
-    width: 100%;
-    padding: 0rem 0.5rem 1rem 0.3rem;
-    box-sizing: border-box;
-    border-bottom: #D9D9D9 1px solid;
+    padding-left: 20px;
+    border-bottom: 1px solid #f0f0f0;
+    gap: 12px;
 }
-
-
-/* Kích cỡ khung logo: 40px = 2.5rem */
-
-#menu_admin #logo svg,
-#menu_admin #logo img {
-    width: 2.5rem;
-    height: 2.5rem;
-    flex: 0 0 2.5rem;
-    padding-left: 0.5rem;
-}
-
-
-/* Tiêu đề logo (VOCAB) — ẩn khi collapsed, hiện khi hover */
 
 #menu_admin #logo p {
-    margin: 0;
     font-weight: 700;
-    font-size: 1.125rem;
-    /* ~18px */
-    color: var(--text);
-    display: none;
-    margin-left: 0.5rem;
+    font-size: 18px;
+    color: #5B9BD5;
+    margin: 0;
 }
 
-body.menu-open #menu_admin #logo {
-    justify-content: flex-start;
-    padding-left: 1rem;
+#menu_admin #logo svg {
+    width: 32px;
+    height: 32px;
+    flex-shrink: 0;
 }
-
-body.menu-open #menu_admin #logo p {
-    display: block;
-}
-
-
-/* Frame chứa các mục menu chính */
 
 #frame_menu {
+    padding: 15px 10px;
+    flex-grow: 1;
     display: flex;
     flex-direction: column;
-    gap: 0.25rem;
-    margin-top: 0.75rem;
-    align-items: center;
-    padding-right: 1rem;
-    padding-left: 0.5rem;
+    gap: 4px;
 }
 
-
-/* Với cấu trúc HTML hiện tại mỗi mục có id="main_menu" (lặp lại). Chọn trực tiếp phần a bên trong */
-
-#frame_menu>#main_menu {
-    width: 100%;
-}
-
-#frame_menu>#main_menu a {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    /* collapsed: icon centered to match logo */
-    gap: 0.75rem;
-    width: calc(100% - 0.5rem);
-    margin: 0.3rem 0.25rem;
-    padding: 0.5rem 0.6rem;
-    box-sizing: border-box;
-    text-decoration: none;
-    color: var(--text);
-    border-radius: 0.5rem;
-    transition: background 180ms ease, color 180ms ease, transform 120ms ease, font-size 180ms ease, padding-left 180ms ease;
-    /* Khi collapsed: ẩn chữ bằng cách để font-size base = 0; icon sẽ có kích thước riêng */
-    overflow: hidden;
-}
-
-
-/* Icon luôn hiển thị */
-
-#frame_menu>#main_menu a i {
-    display: inline-block;
-    color: var(--text);
-    font-size: 1.25rem;
-    /* ~20px */
-    width: 1.75rem;
-    text-align: center;
-}
-
-
-/* Văn bản menu (text node) sẽ kế thừa font-size của #menu_admin khi mở rộng; khi collapsed (font-size:0) sẽ bị ẩn */
-
-#frame_menu>#main_menu a {
-    font-size: inherit;
-    /* khi mở rộng sẽ có 1rem; khi collapsed sẽ là 0 */
-}
-
-
-/* =========================================
- * PHẦN SỬA LỖI (TÁCH QUY TẮC)
- * ========================================= */
-
-
-/* Active state: nền xanh, chữ trắng, in đậm */
-
-#frame_menu>#main_menu a.active {
-    background: var(--accent);
-    color: #fff;
-    font-weight: 700;
-}
-
-#frame_menu>#main_menu a.active i {
-    color: #fff;
-}
-
-/* Hover chỉ hoạt động khi menu mở */
-
-body.menu-open #menu_admin #frame_menu>#main_menu a:hover {
-    background: var(--accent);
-    color: #fff;
-    font-weight: 700;
-    font-size: 1.2rem;
-    /* 24px */
-}
-
-body.menu-open #menu_admin #frame_menu>#main_menu a:hover i {
-    color: #fff;
-}
-
-
-/* =========================================
- * KẾT THÚC SỬA LỖI
- * ========================================= */
-
-
-/* Logout luôn nằm ở dưới cùng */
-
-#logout {
-    width: 100%;
-    margin-top: auto;
-    /* đẩy xuống đáy */
-    padding-bottom: 0.75rem;
-}
-
+.menu-item a,
 #logout a {
     display: flex;
     align-items: center;
-    gap: 0.75rem;
-    width: calc(100% - 0.5rem);
-    margin: 0.125rem 0.25rem;
-    padding: 0.5rem 0.6rem;
+    padding: 10px 15px;
     text-decoration: none;
-    color: var(--text);
-    border-radius: 0.5rem;
-    transition: background 180ms ease, color 180ms ease;
-    font-size: inherit;
+    color: #4b5563;
+    font-weight: 500;
+    font-size: 14px;
+    border-radius: 6px;
+    height: 40px;
+    transition: all 0.2s;
+    box-sizing: border-box;
 }
 
+.menu-item a:hover {
+    background-color: #f3f4f6;
+    color: #111;
+}
+
+.menu-item a.active {
+    background-color: #EBF5FF;
+    color: #2563EB;
+}
+
+.menu-item a i,
 #logout a i {
-    font-size: 1.25rem;
-    width: 1.75rem;
+    font-size: 18px;
+    width: 24px;
     text-align: center;
+    margin-right: 12px;
+    color: #9ca3af;
+    flex-shrink: 0;
+    transition: margin 0.3s;
 }
 
-#logout a:hover {
-    background: #f6f6f6;
+#logout {
+    padding: 10px;
+    border-top: 1px solid #f0f0f0;
 }
-
-
-/* Khi menu được mở rộng, canh lề cho phần anchor căn trái */
-
-
-/* Khi click icon: mở rộng menu, căn trái nội dung và đẩy icon + chữ vào vị trí bình thường */
-
-body.menu-open #menu_admin #frame_menu>#main_menu a {
-    justify-content: flex-start;
-    padding-left: 1rem;
-}
-
-body.menu-open #menu_admin #logout a {
-    justify-content: flex-start;
-    padding-left: 1rem;
-}
-
-
-
-
-/* Responsive nhỏ: nếu container quá nhỏ, thu gọn hơn */
-
-@media (max-width: 420px) {
-     :root {
-        --width-expanded: 12rem;
-    }
-}
-
-
-/* Kết thúc file */

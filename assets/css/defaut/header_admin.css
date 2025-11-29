@@ -1,116 +1,110 @@
-/**
- * assets/css/defaut/header_admin.css
- * - Styles cho header của trang Admin
- * - Tương ứng với includes/header_admin.html
- */
+/* Placeholder giữ chỗ để tránh nhảy layout khi load */
 
-/*
- * Đảm bảo font-family được áp dụng nếu chưa có
- * (Mặc dù đã link trong HTML, đặt ở đây cho chắc chắn)
- */
-#header_admin {
-    font-family: 'Roboto', sans-serif;
-}
-
-/* * 1. Main header container 
- * - Sử dụng flex để căn chỉnh 2 bên (space-between)
- * - (Trái: icon menu, Phải: setting + profile)
- */
-#header_admin {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    
-    /* Chiều cao cố định cho header (bạn có thể điều chỉnh) */
-    height: 70px; 
-    
-    /* Padding hai bên */
-    padding: 0 1.5rem;
-    
-    /* Đảm bảo padding không làm tăng kích thước */
-    box-sizing: border-box; 
-    
-    /* Nền trắng */
-    background-color: #ffffff; 
-    
-    /* Thêm bóng mờ (shadow) tinh tế để tách biệt với content */
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-    
-    /* Giữ header dính ở trên cùng (sticky) khi cuộn */
+#placeholder-header {
+    width: 100%;
     position: sticky;
     top: 0;
-    z-index: 50; /* Đảm bảo header nằm trên content nhưng dưới menu (nếu menu có z-index 100) */
+    z-index: 900;
 }
 
-/* * 2. Wrapper cho các item bên phải (setting + profile) 
- * Cấu trúc HTML: header > div:last-child
- */
-#header_admin > div:last-child {
+
+/* --- HEADER CHÍNH --- */
+
+#header_admin {
+    height: 64px;
+    /* Chiều cao chuẩn */
+    background-color: #fff;
+    border-bottom: 1px solid #E5E7EB;
     display: flex;
     align-items: center;
-    /* Khoảng cách giữa các item (setting và profile) */
-    gap: 1.5rem; 
+    justify-content: space-between;
+    padding: 0 24px;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
 }
 
-/* * 3. Icon Menu (toggle) và Setting (filter) 
- */
-#header_admin #menu,
-#header_admin #setting {
+
+/* Nút Toggle Menu (Bên trái) */
+
+#header_admin #menu {
+    font-size: 18px;
+    color: #6B7280;
     cursor: pointer;
-    color: #555; /* Màu icon xám đậm */
-    font-size: 1.25rem; /* Kích thước icon (có thể điều chỉnh) */
-    
-    /* Tăng vùng click cho icon */
-    padding: 0.5rem;
+    padding: 8px;
+    border-radius: 4px;
+    transition: background 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+#header_admin #menu:hover {
+    background-color: #f3f4f6;
+    color: #111;
+}
+
+
+/* Khu vực bên phải (Setting + User) */
+
+.header-right {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+
+/* Nút Setting */
+
+#setting {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: #6B7280;
+    font-size: 18px;
+    padding: 8px;
     border-radius: 50%;
-    
-    /* Hiệu ứng chuyển động mượt */
-    transition: background-color 0.2s ease, color 0.2s ease;
-}
-
-/* Hiệu ứng hover cho icon */
-#header_admin #menu:hover,
-#header_admin #setting:hover {
-    background-color: #f4f4f4; /* Nền xám nhạt khi hover */
-    color: #111; /* Màu icon đậm hơn khi hover */
-}
-
-/* * 4. Khối Profile (avatar + tên) 
- * Cấu trúc HTML: header > div:last-child > div:last-child
- */
-#header_admin > div:last-child > div:last-child {
+    transition: all 0.2s;
     display: flex;
     align-items: center;
-    /* Khoảng cách giữa avatar và tên */
-    gap: 0.75rem; 
+    justify-content: center;
+}
+
+#setting:hover {
+    background-color: #f3f4f6;
+    color: #5B9BD5;
+}
+
+
+/* Thông tin Admin */
+
+#user-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
     cursor: pointer;
-    padding: 0.5rem;
-    border-radius: 8px;
-    transition: background-color 0.2s ease;
+    padding: 4px 8px;
+    border-radius: 6px;
+    transition: background 0.2s;
+    margin-left: 8px;
+    border-left: 1px solid #E5E7EB;
+    /* Đường gạch ngăn cách nhẹ */
+    padding-left: 16px;
 }
 
-#header_admin > div:last-child > div:last-child:hover {
-     background-color: #f9f9f9; /* Hiệu ứng hover nhẹ */
+#user-info:hover {
+    background-color: #f9fafb;
 }
 
-/* * 5. Avatar Admin 
- */
-#header_admin img {
-    width: 40px;
-    height: 40px;
-    /* Bo tròn avatar */
-    border-radius: 50%; 
-    /* Đảm bảo ảnh không bị méo */
-    object-fit: cover; 
-    /* Viền nhẹ cho avatar */
-    border: 1px solid #eee; 
+#user-info img {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 1px solid #E5E7EB;
 }
 
-/* * 6. Tên Admin (hoặc User)
- */
-#header_admin p {
+#user-info p {
     margin: 0;
-    font-weight: 500; /* In đậm vừa */
-    color: #333;
-    font-size: 0.95rem;
+    font-weight: 500;
+    font-size: 14px;
+    color: #374151;
 }
