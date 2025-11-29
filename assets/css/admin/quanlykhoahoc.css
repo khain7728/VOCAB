@@ -1,272 +1,195 @@
-/* ==========================================================================
-   FILE: assets/css/admin/quanlykhoahoc.css
-   ========================================================================== */
+/* Layout chung */
 
-
-/* --- 1. FIX LAYOUT (CẤU TRÚC FLEXBOX CHUẨN) --- */
-
-* {
-    box-sizing: border-box;
+.page-content {
+    padding: 24px;
 }
-
-body {
-    display: flex !important;
-    /* Bắt buộc để Menu và Nội dung nằm ngang */
-    min-height: 100vh;
-    margin: 0;
-    background-color: #f4f7f6;
-    font-family: 'Roboto', sans-serif;
-    overflow-x: hidden;
-}
-
-
-/* Cột Trái: Menu */
-
-#menu_admin {
-    position: sticky !important;
-    top: 0;
-    height: 100vh;
-    flex-shrink: 0;
-    /* Không co lại */
-    z-index: 1000;
-    /* Thấp hơn Modal */
-    background: #fff;
-    border-right: 1px solid #ddd;
-    width: auto;
-    min-width: 72px;
-}
-
-
-/* Cột Phải: Khung Nội dung */
-
-.main-wrapper {
-    flex-grow: 1;
-    /* Chiếm hết phần còn lại */
-    display: flex;
-    flex-direction: column;
-    min-width: 0;
-    width: 100%;
-}
-
-
-/* Header (Dính trên cùng cột phải) */
-
-#header_admin {
-    position: sticky;
-    top: 0;
-    z-index: 900;
-    width: 100%;
-    background: #fff;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
-}
-
-
-/* Nội dung chính */
-
-#content {
-    padding: 20px;
-    flex-grow: 1;
-}
-
-
-/* Mobile Responsive */
-
-@media (max-width: 768px) {
-    body {
-        display: block;
-    }
-    #menu_admin {
-        display: none;
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 240px;
-    }
-    body.menu-open #menu_admin {
-        display: flex;
-    }
-}
-
-
-/* --- 2. GIAO DIỆN TRANG KHÓA HỌC --- */
-
-
-/* Header trang: Tiêu đề trái - Nút phải */
 
 .page-header {
+    margin-bottom: 24px;
     display: flex;
     justify-content: space-between;
-    /* Đẩy 2 phần tử ra 2 đầu */
     align-items: center;
-    margin-bottom: 20px;
 }
 
 .page-title {
+    margin: 0 0 5px 0;
+    font-size: 22px;
+    color: #111;
+}
+
+.page-header p {
     margin: 0;
-    font-size: 1.75rem;
-    font-weight: 700;
-    color: #333;
+    color: #666;
+    font-size: 14px;
 }
 
 
-/* Nút Thêm mới */
+/* Nút bấm */
 
 .btn-primary {
-    background: #007bff;
-    color: #fff;
-    padding: 10px 20px;
+    background-color: #5B9BD5;
+    color: white;
     border: none;
-    border-radius: 5px;
+    padding: 10px 16px;
+    border-radius: 6px;
+    font-weight: 500;
     cursor: pointer;
-    font-weight: 600;
     display: flex;
     align-items: center;
     gap: 8px;
-    transition: 0.2s;
 }
 
 .btn-primary:hover {
-    background: #0056b3;
+    background-color: #4A8AC9;
 }
 
 
-/* Thanh tìm kiếm */
+/* Toolbar & Table */
+
+.toolbar {
+    background: #fff;
+    padding: 15px 20px;
+    border-radius: 8px 8px 0 0;
+    border: 1px solid #E5E7EB;
+    border-bottom: none;
+}
 
 .search-bar {
-    margin-bottom: 20px;
-    background: #fff;
-    padding: 10px 15px;
-    border-radius: 8px;
-    border: 1px solid #eee;
-    display: flex;
-    width: fit-content;
+    position: relative;
+    width: 350px;
 }
 
 .search-bar i {
-    color: #888;
-    margin-right: 10px;
-    display: flex;
-    align-items: center;
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #9CA3AF;
 }
 
 .search-bar input {
-    border: none;
+    width: 100%;
+    padding: 10px 10px 10px 36px;
+    border: 1px solid #D1D5DB;
+    border-radius: 6px;
     outline: none;
-    width: 250px;
+    box-sizing: border-box;
 }
 
+.search-bar input:focus {
+    border-color: #5B9BD5;
+}
 
-/* Bảng dữ liệu */
-
-.admin-table-container {
+.table-container {
     background: #fff;
-    border-radius: 8px;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+    border: 1px solid #E5E7EB;
+    border-radius: 0 0 8px 8px;
     overflow-x: auto;
 }
 
-table {
+.admin-table {
     width: 100%;
     border-collapse: collapse;
+    min-width: 800px;
 }
 
-th,
-td {
-    padding: 12px 15px;
+.admin-table th {
+    background-color: #F9FAFB;
+    color: #374151;
+    padding: 12px 16px;
+    border-bottom: 1px solid #E5E7EB;
     text-align: left;
-    border-bottom: 1px solid #eee;
-    white-space: nowrap;
+    font-size: 13px;
 }
 
-th {
-    background-color: #f8f9fa;
-    font-weight: 700;
-    color: #555;
+.admin-table td {
+    padding: 14px 16px;
+    border-bottom: 1px solid #F3F4F6;
+    color: #4B5563;
+    font-size: 14px;
+}
+
+.admin-table tr:hover {
+    background-color: #F9FAFB;
 }
 
 
-/* Trạng thái & Icon */
+/* Status Badges */
 
-.status-pill {
-    padding: 5px 10px;
-    border-radius: 15px;
-    font-size: 0.8rem;
-    font-weight: bold;
+.status-badge {
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 500;
 }
 
-.status-green {
-    background: #EAF7E9;
-    color: #28a745;
+.status-badge.public {
+    background-color: #DEF7EC;
+    color: #03543F;
 }
 
-.status-red {
-    background: #FCE8E6;
-    color: #dc3545;
+
+/* Màu xanh lá */
+
+.status-badge.private {
+    background-color: #F3F4F6;
+    color: #6B7280;
 }
 
-.table-actions i {
+
+/* Màu xám */
+
+
+/* Buttons Actions */
+
+.btn-action {
+    border: none;
+    background: transparent;
     cursor: pointer;
     padding: 6px;
-    font-size: 1.1rem;
-    margin: 0 2px;
+    font-size: 16px;
+    margin: 0 4px;
 }
 
-.table-actions i:hover {
-    transform: scale(1.2);
+.btn-edit {
+    color: #5B9BD5;
 }
 
-.fa-pen {
-    color: #007bff;
-}
-
-.fa-lock {
-    color: #ffc107;
-}
-
-.fa-lock-open {
-    color: #28a745;
-}
-
-.fa-trash {
-    color: #dc3545;
+.btn-delete {
+    color: #EF4444;
 }
 
 
-/* --- 3. MODAL HỘP THOẠI (POPUP) --- */
+/* Modal */
 
-
-/* CSS này giúp modal nổi lên trên cùng */
-
-.modal-overlay {
+.modal {
     display: none;
-    /* Mặc định ẩn */
     position: fixed;
-    /* Ghim chặt vào màn hình */
-    top: 0;
+    z-index: 1000;
     left: 0;
+    top: 0;
     width: 100%;
     height: 100%;
     background-color: rgba(0, 0, 0, 0.5);
-    /* Nền tối mờ */
-    z-index: 9999;
-    /* Số rất cao để đè lên Menu và Header */
-    justify-content: center;
     align-items: center;
+    justify-content: center;
+}
+
+.modal.show {
+    display: flex;
 }
 
 .modal-content {
-    background: #fff;
-    width: 500px;
-    padding: 25px;
+    background-color: #fff;
+    width: 450px;
+    max-width: 90%;
     border-radius: 8px;
-    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
-    position: relative;
     animation: slideDown 0.3s ease-out;
 }
 
 @keyframes slideDown {
     from {
-        transform: translateY(-50px);
+        transform: translateY(-30px);
         opacity: 0;
     }
     to {
@@ -276,21 +199,15 @@ th {
 }
 
 .modal-header {
+    padding: 15px 20px;
+    border-bottom: 1px solid #eee;
     display: flex;
     justify-content: space-between;
-    margin-bottom: 20px;
-    border-bottom: 1px solid #eee;
-    padding-bottom: 10px;
+    align-items: center;
 }
 
-.close-btn {
-    font-size: 28px;
-    cursor: pointer;
-    color: #aaa;
-}
-
-.close-btn:hover {
-    color: #000;
+.modal-body {
+    padding: 20px;
 }
 
 .form-group {
@@ -299,41 +216,40 @@ th {
 
 .form-group label {
     display: block;
-    margin-bottom: 5px;
-    font-weight: 600;
+    margin-bottom: 6px;
+    font-weight: 500;
 }
 
-.form-group input {
+.form-group input,
+.form-group select {
     width: 100%;
-    padding: 10px;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    outline: none;
-}
-
-.form-group input:focus {
-    border-color: #007bff;
+    padding: 8px 12px;
+    border: 1px solid #D1D5DB;
+    border-radius: 6px;
+    box-sizing: border-box;
 }
 
 .modal-footer {
+    padding: 15px 20px;
+    background: #F9FAFB;
     text-align: right;
-    margin-top: 20px;
+    border-top: 1px solid #eee;
 }
 
 .btn-cancel {
-    background: #eee;
-    padding: 10px 20px;
-    border: none;
+    background: #fff;
+    border: 1px solid #D1D5DB;
+    padding: 8px 16px;
     border-radius: 4px;
     cursor: pointer;
     margin-right: 10px;
 }
 
 .btn-save {
-    background: #007bff;
-    color: #fff;
-    padding: 10px 20px;
+    background: #5B9BD5;
     border: none;
+    padding: 8px 16px;
     border-radius: 4px;
     cursor: pointer;
+    color: white;
 }

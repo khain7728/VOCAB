@@ -1,188 +1,230 @@
-let coursesList = [];
+document.addEventListener("DOMContentLoaded", function() {
+    fetchCourses();
 
-document.addEventListener('DOMContentLoaded', function() {
-    loadData();
+    const searchBox = document.getElementById('searchBox');
+    if (searchBox) {
+        searchBox.addEventListener('keyup', searchTable);
+    }
 });
 
-// 1. LOAD DỮ LIỆU
-function loadData() {
-    const tbody = document.getElementById('course_table_body');
-    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center">Đang tải dữ liệu...</td></tr>';
+let allCoursesData = [];
 
-    fetch('../../api/admin/course_get_list.php')
-        .then(res => {
-            if (!res.ok) throw new Error("Lỗi kết nối HTTP: " + res.status);
-            return res.json();
-        })
-        .then(data => {
-            if (data.status === 'success') {
-                coursesList = data.data;
-                renderTable(coursesList);
-            } else {
-                tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; color:red">${data.message || 'Không có dữ liệu'}</td></tr>`;
-            }
-        })
-        .catch(err => {
-            console.error(err);
-            tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:red">Lỗi kết nối server! Kiểm tra file course_get_list.php</td></tr>';
-        });
+// --- HÀM 1: LẤY DANH SÁCH (Fetch) ---
+async function fetchCourses() {
+    // Đường dẫn API lấy danh sách
+    const apiUrl = '../../api/admin/course_get_list.php';
+    const tableBody = document.getElementById('course_table_body');
+    tableBody.innerHTML = `<tr><td colspan="6" style="text-align: center; padding: 20px;">Đang tải dữ liệu...</td></tr>`;
+
+    try {
+        const response = await fetch(apiUrl);
+        if (!response.ok) throw new Error("Lỗi HTTP: " + response.status);
+
+        const responseText = await response.text();
+        let result;
+        try {
+            result = JSON.parse(responseText);
+        } catch (e) {
+            console.error("Lỗi phân tích JSON từ course_get_list.php:", responseText.trim());
+            tableBody.innerHTML = `<tr><td colspan="6" style="text-align:center; color:red;">Lỗi phân tích dữ liệu từ Server (Xem F12 Console).</td></tr>`;
+            return;
+        }
+
+        if (result.status === 'success') {
+            allCoursesData = result.data;
+            renderTable(allCoursesData);
+        } else {
+            tableBody.innerHTML = `<tr><td colspan="6" style="text-align:center; color:red;">${result.message || 'Không có dữ liệu'}</td></tr>`;
+        }
+    } catch (error) {
+        console.error("Lỗi Fetch/Kết nối:", error);
+        tableBody.innerHTML = `<tr><td colspan="6" style="text-align:center; color:red;">Lỗi kết nối server</td></tr>`;
+    }
 }
 
-// 2. RENDER BẢNG
-function renderTable(data) {
-    const tbody = document.getElementById('course_table_body');
-    let html = '';
-
-    if (data.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center">Chưa có khóa học nào.</td></tr>';
+// --- HÀM 2: VẼ BẢNG (Render) ---
+function renderTable(courses) {
+    const tableBody = document.getElementById('course_table_body');
+    if (!courses || courses.length === 0) {
+        tableBody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding: 20px; color: #666;">Không tìm thấy khóa học nào.</td></tr>`;
         return;
     }
 
-    data.forEach((item, index) => {
-        // Trạng thái public/private
-        const isPrivate = item.status === 'private';
-        const statusClass = isPrivate ? 'status-red' : 'status-green';
-        const statusText = isPrivate ? 'Đã khóa' : 'Công khai';
+    let html = '';
+    courses.forEach((item, index) => {
+        const id = item.id;
+        const code = item.code || "---";
+        const name = item.name || "Chưa đặt tên";
+        const author = item.author || "Admin";
+        const status = item.status; // Giá trị: 'public' hoặc 'private'
 
-        const lockIcon = isPrivate ? 'fa-lock' : 'fa-lock-open';
-        const lockTitle = isPrivate ? 'Mở khóa' : 'Khóa lại';
+        const statusBadge = (status === 'public') ?
+            `<span class="status-badge public">Công khai</span>` :
+            `<span class="status-badge private">Đang ẩn</span>`;
 
         html += `
             <tr>
-                <td style="text-align:center">${index + 1}</td>
-                <td>${item.code}</td>
-                <td><strong>${item.name}</strong></td>
-                <td>${item.author}</td>
-                <td><span class="status-pill ${statusClass}">${statusText}</span></td>
-                <td class="table-actions" style="text-align:center">
-                    <i class="fa-solid fa-pen" title="Sửa" onclick="editCourse(${item.id})"></i>
-                    <i class="fa-solid ${lockIcon}" 
-                       title="${lockTitle}" 
-                       style="cursor: pointer;"
-                       onclick="toggleLock(${item.id}, '${item.status}')"></i>
-                    <i class="fa-solid fa-trash" title="Xóa" onclick="deleteCourse(${item.id})"></i>
+                <td style="text-align: center;">${index + 1}</td>
+                <td><strong>${code}</strong></td>
+                <td>${name}</td>
+                <td>${author}</td>
+                <td style="text-align: center;">${statusBadge}</td>
+                <td style="text-align: center;">
+                    <button class="btn-action btn-edit" onclick="openModal('edit', ${id})" title="Chỉnh sửa"><i class="fa-solid fa-pen"></i></button>
+                    <button class="btn-action btn-delete" onclick="deleteCourse(${id})" title="Xóa"><i class="fa-solid fa-trash"></i></button>
                 </td>
             </tr>
         `;
     });
-    tbody.innerHTML = html;
+    tableBody.innerHTML = html;
 }
 
-// 3. MODAL (POPUP)
-function openModal() {
-    document.getElementById('modalTitle').innerText = 'Thêm khóa học mới';
-    document.getElementById('courseId').value = '';
-    document.getElementById('courseCode').value = '';
-    document.getElementById('courseName').value = '';
-    document.getElementById('courseModal').style.display = 'flex';
+// --- HÀM 3: TÌM KIẾM ---
+function searchTable() {
+    const input = document.getElementById('searchBox');
+    const filter = input.value.toLowerCase();
+
+    const filteredData = allCoursesData.filter(item => {
+        const name = (item.name || "").toLowerCase();
+        const code = (item.code || "").toLowerCase();
+        return name.includes(filter) || code.includes(filter);
+    });
+    renderTable(filteredData);
 }
 
+// --- HÀM 4: MỞ MODAL ---
+function openModal(mode, id = null) {
+    const modal = document.getElementById('courseModal');
+    const title = document.getElementById('modalTitle');
+    const inpId = document.getElementById('courseId');
+    const inpCode = document.getElementById('courseCode');
+    const inpName = document.getElementById('courseName');
+    const inpStatus = document.getElementById('courseStatus');
+
+    if (mode === 'add') {
+        title.innerText = "Thêm khóa học mới";
+        inpId.value = "";
+        inpCode.value = "";
+        inpName.value = "";
+        inpStatus.value = "active";
+    } else {
+        title.innerText = "Cập nhật khóa học";
+        const item = allCoursesData.find(c => c.id == id);
+        if (item) {
+            inpId.value = id;
+            inpCode.value = item.code;
+            inpName.value = item.name;
+            // Map từ DB 'public' -> select 'active'
+            inpStatus.value = (item.status === 'public') ? 'active' : 'hidden';
+        }
+    }
+
+    modal.classList.add('show');
+}
+
+// --- HÀM 5: ĐÓNG MODAL ---
 function closeModal() {
-    document.getElementById('courseModal').style.display = 'none';
-}
-
-function editCourse(id) {
-    const course = coursesList.find(c => c.id == id);
-    if (course) {
-        document.getElementById('modalTitle').innerText = 'Cập nhật khóa học';
-        document.getElementById('courseId').value = course.id;
-        document.getElementById('courseCode').value = course.code;
-        document.getElementById('courseName').value = course.name;
-        document.getElementById('courseModal').style.display = 'flex';
+    const modal = document.getElementById('courseModal');
+    if (modal) {
+        modal.classList.remove('show');
     }
 }
 
+// --- HÀM 6: ĐÓNG MODAL KHI CLICK NGOÀI ---
 window.onclick = function(event) {
-    if (event.target == document.getElementById('courseModal')) {
-        closeModal();
-    }
+    const modal = document.getElementById('courseModal');
+    if (event.target == modal) closeModal();
 }
 
-// 4. LƯU (THÊM/SỬA)
-function saveCourse() {
+
+// --- HÀM 7: LƯU DỮ LIỆU (THÊM / SỬA) ---
+// Code này được bạn cung cấp, đã được thêm vào đây
+async function saveCourse() {
+    // 1. Lấy giá trị từ Form
     const id = document.getElementById('courseId').value;
     const code = document.getElementById('courseCode').value.trim();
     const name = document.getElementById('courseName').value.trim();
+    const status = document.getElementById('courseStatus').value;
 
-    if (!code || !name) { alert('Vui lòng nhập đủ thông tin!'); return; }
+    // 2. Validate dữ liệu
+    if (!code || !name) {
+        alert("Vui lòng nhập đầy đủ Mã và Tên khóa học!");
+        return;
+    }
 
-    const apiUrl = id ? '../../api/admin/course_update.php' : '../../api/admin/course_create.php';
-    let payload = { code: code, name: name };
-    if (id) payload.id = id;
+    // 3. Xác định API cần gọi
+    const url = id ? '../../api/admin/course_update.php' : '../../api/admin/course_create.php';
 
-    fetch(apiUrl, {
+    // 4. Chuẩn bị dữ liệu gửi đi
+    const payload = {
+        id: id,
+        code: code,
+        name: name,
+        status: status
+    };
+
+    console.log("Đang gửi dữ liệu:", payload); // Debug: Xem gửi gì đi
+
+    try {
+        const response = await fetch(url, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload)
-        })
-        .then(res => res.json())
-        .then(data => {
-            if (data.status === 'success') {
-                alert(data.message);
-                closeModal();
-                loadData();
-            } else {
-                alert('Lỗi: ' + data.message);
-            }
-        })
-        .catch(err => {
-            console.error(err);
-            alert('Lỗi kết nối server!');
         });
-}
 
-// 5. XÓA
-function deleteCourse(id) {
-    if (confirm('Bạn có chắc chắn muốn xóa khóa học này?')) {
-        fetch('../../api/admin/course_delete.php', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ id: id })
-            })
-            .then(res => res.json())
-            .then(data => {
-                if (data.status === 'success') {
-                    alert(data.message);
-                    loadData();
-                } else {
-                    alert('Lỗi: ' + data.message);
-                }
-            })
-            .catch(err => console.error(err));
+        // Kiểm tra xem phản hồi có phải JSON không
+        const responseText = await response.text();
+        console.log("Server trả về:", responseText); // Debug: Xem server trả gì về
+
+        let result;
+        try {
+            // Thử parse JSON
+            result = JSON.parse(responseText);
+        } catch (e) {
+            console.error("Lỗi phân tích JSON:", e);
+            alert("Lỗi server: Phản hồi không đúng định dạng JSON. Xem console (F12) để biết thêm.");
+            return;
+        }
+
+        // 5. Xử lý kết quả
+        if (result.status === 'success') {
+            alert(result.message || "Thao tác thành công!");
+
+            // --- QUAN TRỌNG: ĐÓNG MODAL TẠI ĐÂY ---
+            closeModal();
+
+            // Tải lại danh sách
+            fetchCourses();
+        } else {
+            alert("Thất bại: " + (result.message || "Lỗi không xác định"));
+        }
+
+    } catch (error) {
+        console.error("Lỗi hệ thống:", error);
+        alert("Lỗi kết nối server hoặc lỗi Javascript! Hãy nhấn F12 chọn tab Console để xem.");
     }
 }
 
-// 6. KHÓA/MỞ KHÓA
-function toggleLock(id, currentStatus) {
-    const action = currentStatus === 'public' ? 'KHÓA' : 'MỞ KHÓA';
-    if (confirm(`Bạn có muốn ${action} khóa học này không?`)) {
-        fetch('../../api/admin/course_update_status.php', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ id: id, status: currentStatus })
-            })
-            .then(res => res.json())
-            .then(data => {
-                if (data.status === 'success') {
-                    alert(data.message);
-                    loadData();
-                } else {
-                    alert('Lỗi: ' + data.message);
-                }
-            })
-            .catch(err => {
-                console.error(err);
-                alert('Lỗi kết nối server!');
-            });
-    }
-}
+// --- HÀM 8: XÓA ---
+async function deleteCourse(id) {
+    if (!confirm("Bạn có chắc chắn muốn xóa khóa học này?")) return;
 
-// 7. TÌM KIẾM
-function searchTable() {
-    const val = document.getElementById('searchBox').value.toLowerCase();
-    const filtered = coursesList.filter(c =>
-        c.name.toLowerCase().includes(val) ||
-        c.code.toLowerCase().includes(val)
-    );
-    renderTable(filtered);
+    try {
+        const response = await fetch('../../api/admin/course_delete.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id: id })
+        });
+        const result = await response.json();
+
+        if (result.status === 'success') {
+            alert("Đã xóa khóa học!");
+            fetchCourses();
+        } else {
+            alert("Lỗi: " + result.message);
+        }
+    } catch (error) {
+        console.error(error);
+        alert("Lỗi kết nối server!");
+    }
 }
