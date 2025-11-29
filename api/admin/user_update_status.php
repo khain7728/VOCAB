@@ -1,9 +1,14 @@
 <?php
-error_reporting(0);
+// Bật báo lỗi để debug
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
+
 header('Content-Type: application/json; charset=utf-8');
-$rootPath = dirname(__DIR__);
-require_once $rootPath .  '/../../config/database.php';
-require_once $rootPath . '/../includes/log_helper.php';
+
+// __DIR__ là thư mục api/admin
+// __DIR__ . '/../../' nghĩa là lùi ra api, rồi lùi ra root
+require_once __DIR__ . '/../../config/database.php';
 
 $input = json_decode(file_get_contents("php://input"), true);
 if (isset($input['user_id']) && isset($input['status'])) {
