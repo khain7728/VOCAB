@@ -1,327 +1,299 @@
 document.addEventListener('DOMContentLoaded', function() {
 
-    //DỮ LIỆU MẪU
+    // ============================================================
+    // 1. CẤU HÌNH & KHỞI TẠO
+    // ============================================================
+    
+    // ⚠️ Đảm bảo đường dẫn API đúng với project của bạn
+    const API_BASE_URL = 'http://localhost/VOCAB/api'; 
+    
+    const urlParams = new URLSearchParams(window.location.search);
+    const COURSE_ID = urlParams.get('id');
+    const USER_ID = urlParams.get('user_id') || 1;
 
-    const CURRENT_USER_NAME = "User";
+    if (!COURSE_ID) {
+        alert("Không tìm thấy ID khóa học!");
+        window.location.href = 'khoa_hoc_cua_toi.html';
+        return;
+    }
 
-    const ALL_COURSES_DB = {
-        // Trạng thái 1: Chủ sở hữu (ID 1)
-        "1": {
-            id: 1,
-            tieuDe: 'Tiếng Anh cơ bản',
-            nguoiTao: 'User',
-            soLanOn: 2,
-            tienDo: 100, //100%
-            words: [
-                { id: 101, tiengAnh: 'Hello', nghia: 'Xin chào', mota: 'Mô tả cho từ Hello', linkAm: '' },
-                { id: 102, tiengAnh: 'Goodbye', nghia: 'Tạm biệt', mota: 'Mô tả cho từ Goodbye', linkAm: '' },
-                { id: 103, tiengAnh: 'Thank you', nghia: 'Cảm ơn', mota: 'Mô tả cho từ Thank you', linkAm: '' }
-            ]
-        },
-        // Trạng thái 2: Người lạ (ID 2)
-        "2": {
-            id: 2,
-            tieuDe: 'Khóa của Mino (Chưa tham gia)',
-            nguoiTao: 'Mino',
-            soLanOn: 0,
-            tienDo: 0, // <-- Tiến độ 0
-            words: [
-                { id: 201, tiengAnh: 'Apple', nghia: 'Quả táo', mota: '', linkAm: '' },
-                { id: 202, tiengAnh: 'Banana', nghia: 'Quả chuối', mota: '', linkAm: '' }
-            ],
-            // Giả lập user chưa tham gia khóa này
-            daThamGia: false 
-        },
-        // Trạng thái 3: Thành viên (ID 4)
-        "4": {
-            id: 4,
-            tieuDe: 'Khóa của Singer (Đã tham gia)',
-            nguoiTao: 'Singer',
-            soLanOn: 3,
-            tienDo: 60, 
-            words: [
-                { id: 401, tiengAnh: 'Dog', nghia: 'Con chó', mota: '', linkAm: '' },
-                { id: 402, tiengAnh: 'Fish', nghia: 'Con cá', mota: '', linkAm: '' }
-            ],
-            // Giả lập user ĐÃ tham gia khóa này
-            daThamGia: true 
-        }
-    };
-
-    let currentCourseData; // Dữ liệu khóa học sẽ được tìm
-    let currentWordList; // Danh sách từ của khóa học đó
-    let currentViewState; // Trạng thái (owner, member, non-member)
-
+    // --- DOM ELEMENTS ---
     const btnTroVe = document.getElementById('btn-tro-ve');
-    const btnThemTuVung = document.getElementById('btn-them-tu-vung');
-    const btnThemKhoaHoc = document.getElementById('btn-them-khoa-hoc');
-    const btnXoaKhoaHoc = document.getElementById('btn-xoa-khoa-hoc');
     const tieuDeChinh = document.getElementById('tieu-de-khoa-hoc-chinh');
+    
+    // Thông số
     const giatriTacGia = document.getElementById('giatri-tac-gia');
-    const giatriTienBo = document.getElementById('giatri-tien-bo');
-    const giatriSoLanOn = document.getElementById('giatri-so-lan-on');
+    
+    // [QUAN TRỌNG] Đã sửa ID từ 'giatri-tien-bo' thành 'giatri-tien-do' cho khớp với HTML
+    const giatriTienBo = document.getElementById('giatri-tien-do'); 
+    
+    const giatriTongTu = document.getElementById('giatri-so-lan-on'); 
+    
+    // Nút hành động
+    const btnThemTuVung = document.getElementById('btn-them-tu-vung');
+    const btnThemKhoaHoc = document.getElementById('btn-them-khoa-hoc'); // Nút Tham gia
+    const btnXoaKhoaHoc = document.getElementById('btn-xoa-khoa-hoc');   // Nút Xóa/Rời
+
+    // Container
     const danhSachContainer = document.getElementById('danh-sach-tu-vung-container');
-    const audioPlayer = document.getElementById('audio-player-an');
+    const khungNutHoc = document.getElementById('khung-nut-hoc');
+    
     const btnHoc = document.getElementById('btn-hoc');
     const btnOnTap = document.getElementById('btn-on-tap');
     const btnKiemTra = document.getElementById('btn-kiem-tra');
-    const khungCheMo = document.getElementById('khung-che-mo');
-    const modalHoanThanhHoc = document.getElementById('modal-hoan-thanh-hoc');
-    const btnModalTiepTuc = document.getElementById('btn-modal-tiep-tuc');
-    const btnModalHocLai = document.getElementById('btn-modal-hoc-lai');
 
+    const audioPlayer = document.getElementById('audio-player-an');
 
-    //Hàm chức năng
+    let courseData = null;
 
-    function initializePage() {
-        // 1. Đọc ID từ URL
-        // (Ví dụ: ...chi_tiet_khoa_hoc.html?id=2)
-        const urlParams = new URLSearchParams(window.location.search);
-        const khoaHocIdFromUrl = urlParams.get('id');
+    // ============================================================
+    // 2. GỌI API LẤY DỮ LIỆU
+    // ============================================================
 
-        if (!khoaHocIdFromUrl) {
-            alert('Không tìm thấy ID khóa học.');
-            window.location.href = 'khoa_hoc_cua_toi.html';
-            return;
+    async function fetchCourseDetails() {
+        try {
+            console.log(`Đang tải chi tiết khóa học ID: ${COURSE_ID}...`);
+            const response = await fetch(`${API_BASE_URL}/get-course-details.php?course_id=${COURSE_ID}&user_id=${USER_ID}`);
+            const text = await response.text();
+            
+            try {
+                const result = JSON.parse(text);
+                if (result.success) {
+                    courseData = result.data;
+                    renderPage(courseData);
+                } else {
+                    alert("Lỗi API: " + result.error);
+                    danhSachContainer.innerHTML = `<p class="thong-bao-rong">Lỗi: ${result.error}</p>`;
+                }
+            } catch (e) {
+                console.error("Lỗi JSON:", e);
+                console.log("Raw Response:", text);
+            }
+        } catch (error) {
+            console.error("Lỗi mạng:", error);
+            danhSachContainer.innerHTML = '<p class="thong-bao-rong">Lỗi kết nối server.</p>';
         }
-
-        // 2. Tìm dữ liệu trong "database"
-        currentCourseData = ALL_COURSES_DB[khoaHocIdFromUrl];
-        
-        if (!currentCourseData) {
-            alert('Khóa học không tồn tại!');
-            window.location.href = 'khoa_hoc_cua_toi.html';
-            return;
-        }
-        
-        currentWordList = currentCourseData.words;
-
-        // 3. Xác định trạng thái
-        if (currentCourseData.nguoiTao === CURRENT_USER_NAME) {
-            currentViewState = 'owner';
-        } else if (currentCourseData.daThamGia) {
-            currentViewState = 'member';
-        } else {
-            currentViewState = 'non-member';
-        }
-
-        // 4. Tải dữ liệu lên UI
-        loadCourseDetails(currentCourseData, currentViewState);
-        renderWordList(currentWordList, currentViewState === 'owner');
     }
 
-    function loadCourseDetails(course, viewState) {
-        tieuDeChinh.textContent = course.tieuDe;
-        giatriTacGia.textContent = course.nguoiTao;
-        giatriTienBo.textContent = `${course.tienDo}%`;
-        giatriSoLanOn.textContent = course.soLanOn;
+    // ============================================================
+    // 3. HÀM HIỂN THỊ (RENDER)
+    // ============================================================
 
-        // Reset
-        btnThemTuVung.classList.add('an');
-        btnThemKhoaHoc.classList.add('an');
-        btnXoaKhoaHoc.classList.add('an');
+    function renderPage(data) {
+        const info = data.info;
+        const words = data.words;
 
-        // Hiển thị nút dựa trên viewState
-        switch (viewState) {
-            case 'owner':
-                btnThemTuVung.classList.remove('an');
+        // A. Hiển thị thông tin chung
+        if(tieuDeChinh) tieuDeChinh.textContent = info.tieuDe;
+        if(giatriTacGia) giatriTacGia.textContent = info.nguoiTao;
+        
+        // Cập nhật Tiến độ (Nếu biến giatriTienBo tìm thấy element)
+        if(giatriTienBo) {
+            giatriTienBo.textContent = info.tienDo + '%';
+        }
+        
+        if(giatriTongTu) giatriTongTu.textContent = info.soTu;
+
+        // B. Xử lý ẩn/hiện nút bấm dựa trên quyền hạn
+        if(btnThemTuVung) btnThemTuVung.classList.add('an');
+        if(btnThemKhoaHoc) btnThemKhoaHoc.classList.add('an');
+        if(btnXoaKhoaHoc) btnXoaKhoaHoc.classList.add('an');
+        if(khungNutHoc) khungNutHoc.classList.add('an'); 
+
+        if (info.isOwner) {
+            // --- LÀ CHỦ SỞ HỮU ---
+            if(btnThemTuVung) btnThemTuVung.classList.remove('an');
+            if(btnXoaKhoaHoc) {
                 btnXoaKhoaHoc.classList.remove('an');
                 btnXoaKhoaHoc.innerHTML = '<i class="fa-solid fa-trash-can"></i> Xóa khóa học';
-                break;
-            case 'non-member':
-                btnThemKhoaHoc.classList.remove('an');
-                break;
-            case 'member':
-                btnXoaKhoaHoc.classList.remove('an');
-                btnXoaKhoaHoc.innerHTML = '<i class="fa-solid fa-sign-out-alt"></i> Rời khóa học';
-                break;
-        }
-        
-        //Ẩn/hiện nút học tập
-        if (course.tienDo === 100) {
-            //Hiện Học, Kiểm tra. Ẩn Ôn tập.
-            btnHoc.classList.remove('an');
-            btnKiemTra.classList.remove('an');
-            btnOnTap.classList.add('an');
+            }
+            if(khungNutHoc) khungNutHoc.classList.remove('an'); 
         } else {
-            // Chưa hoàn thành: Hiện cả 3 nút
-            btnHoc.classList.remove('an');
-            btnKiemTra.classList.remove('an');
-            btnOnTap.classList.remove('an');
+            // --- LÀ NGƯỜI KHÁC ---
+            if (info.isJoined) {
+                // Đã tham gia
+                if(btnXoaKhoaHoc) {
+                    btnXoaKhoaHoc.classList.remove('an');
+                    btnXoaKhoaHoc.innerHTML = '<i class="fa-solid fa-sign-out-alt"></i> Rời khóa học';
+                }
+                if(khungNutHoc) khungNutHoc.classList.remove('an'); 
+            } else {
+                // Chưa tham gia
+                if(btnThemKhoaHoc) btnThemKhoaHoc.classList.remove('an');
+            }
         }
+
+        // C. Logic hiển thị nút Ôn tập / Kiểm tra
+        // Chỉ hiện khi đã học > 0%, hoặc nếu muốn luôn hiện thì bỏ điều kiện if
+        if (info.tienDo > 0) {
+            if(btnOnTap) btnOnTap.style.display = 'inline-block';
+            if(btnKiemTra) btnKiemTra.style.display = 'inline-block';
+        } else {
+            if(btnOnTap) btnOnTap.style.display = 'none';
+            if(btnKiemTra) btnKiemTra.style.display = 'none';
+        }
+
+        // D. Hiển thị danh sách từ vựng
+        renderWordList(words, info.isOwner);
     }
 
-    function renderWordList(wordList, canDeleteWords) {
+    function renderWordList(words, canEdit) {
+        if(!danhSachContainer) return;
         danhSachContainer.innerHTML = '';
-        if (!wordList || wordList.length === 0) {
-            danhSachContainer.innerHTML = '<p class="thong-bao-rong">Chưa có từ vựng nào.</p>';
+        
+        if (words.length === 0) {
+            danhSachContainer.innerHTML = '<p class="thong-bao-rong" style="text-align:center; padding:20px; color:#666">Chưa có từ vựng nào trong khóa học này.</p>';
             return;
         }
 
-        wordList.forEach((tu, index) => {
-            const theTuVung = document.createElement('div');
-            theTuVung.className = 'the-tu-vung-chi-tiet';
-            theTuVung.setAttribute('data-index', index);
+        words.forEach(word => {
+            const div = document.createElement('div');
+            div.className = 'the-tu-vung-chi-tiet';
+            
+            const audioSrc = word.audio_file ? word.audio_file : '';
+            
+            const btnXoaHtml = canEdit 
+                ? `<button class="nut-icon nut-xoa-tu" title="Xóa từ" onclick="deleteWord(${word.word_id})"><i class="fa-solid fa-times"></i></button>` 
+                : '';
 
-            const nutXoaHtml = canDeleteWords
-                ? `<button class="nut-icon nut-xoa-tu" data-action="xoa-tu" title="Xóa từ">
-                       <i class="fa-solid fa-times"></i>
-                   </button>`
-                : ''; 
-
-            theTuVung.innerHTML = `
+            div.innerHTML = `
                 <div class="thong-tin-tu-chi-tiet">
-                    <p class="tu-vung-chinh">${tu.tiengAnh}</p>
-                    <p class="nghia-tu">${tu.nghia}</p>
-                    <p class="mota-tu">${tu.mota}</p>
+                    <p class="tu-vung-chinh">${word.word_en} <span style="font-size:0.8em; font-weight:normal; color:#666">(${word.part_of_speech || ''})</span></p>
+                    <p class="phien-am-tu" style="font-size:0.9em; color:#888">${word.pronunciation || ''}</p>
+                    <p class="nghia-tu">${word.word_vi}</p>
+                    <p class="mota-tu">${word.definition || ''}</p>
                 </div>
                 <div class="hanh-dong-tu-chi-tiet">
-                    <button class="nut-icon nut-phat-am" data-action="phat-am" title="Phát âm">
+                    <button class="nut-icon nut-phat-am" onclick="playAudio('${word.word_en}', '${audioSrc}')" title="Phát âm">
                         <i class="fa-solid fa-volume-high"></i>
                     </button>
-                    ${nutXoaHtml}
+                    ${btnXoaHtml}
                 </div>
             `;
-            danhSachContainer.appendChild(theTuVung);
+            danhSachContainer.appendChild(div);
         });
     }
 
-    /**
-     * Xử lý click trong danh sách (Phát âm, Xóa)
-     */
-    function handleDanhSachClick(event) {
-        const nut = event.target.closest('.nut-icon');
-        if (!nut) return;
-
-        const theTuVung = nut.closest('.the-tu-vung-chi-tiet');
-        const index = parseInt(theTuVung.getAttribute('data-index'), 10);
-        const tu = currentWordList[index]; // Lấy từ 'currentWordList'
-        const hanhDong = nut.getAttribute('data-action');
-
-        if (hanhDong === 'phat-am') {
-            handlePhatAm(tu);
-        }
-        
-        if (hanhDong === 'xoa-tu') {
-            if (confirm(`Bạn có chắc muốn xóa từ "${tu.tiengAnh}" không?`)) {
-                currentWordList.splice(index, 1);
-                renderWordList(currentWordList, true); 
-            }
-        }
-    }
-
-    function handlePhatAm(tu) {
-        if (tu.linkAm) {
-            audioPlayer.src = tu.linkAm;
-            audioPlayer.play().catch(e => phatAmBangAPI(tu.tiengAnh));
-        } else if (tu.tiengAnh && 'speechSynthesis' in window) {
-            phatAmBangAPI(tu.tiengAnh);
+    // ============================================================
+    // 4. CÁC HÀM XỬ LÝ (Global)
+    // ============================================================
+    
+    window.playAudio = function(text, fileSrc) {
+        if (fileSrc && fileSrc.trim() !== '') {
+            audioPlayer.src = fileSrc;
+            audioPlayer.play().catch(e => {
+                console.warn("File lỗi, dùng TTS thay thế");
+                speakTTS(text);
+            });
         } else {
-            alert('Không có dữ liệu âm thanh.');
+            speakTTS(text);
+        }
+    };
+
+    function speakTTS(text) {
+        if ('speechSynthesis' in window) {
+            window.speechSynthesis.cancel();
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.lang = 'en-US';
+            window.speechSynthesis.speak(utterance);
+        } else {
+            alert("Trình duyệt không hỗ trợ phát âm.");
         }
     }
-    
-    function phatAmBangAPI(text) {
-        window.speechSynthesis.cancel();
-        const utterance = new SpeechSynthesisUtterance(text);
-        utterance.lang = 'en-US';
-        window.speechSynthesis.speak(utterance);
-    }
-    
-    function moModalHoanThanh() {
-        if (khungCheMo) khungCheMo.classList.remove('an');
-        if (modalHoanThanhHoc) modalHoanThanhHoc.classList.remove('an');
-    }
-    
-    function dongModalHoanThanh() {
-        if (khungCheMo) khungCheMo.classList.add('an');
-        if (modalHoanThanhHoc) modalHoanThanhHoc.classList.add('an');
-    }
-    //Hành động
-    if (btnTroVe) {
-        btnTroVe.addEventListener('click', () => {
-            window.location.href = 'khoa_hoc_cua_toi.html';
-        });
-    }
 
-    if (btnHoc) {
-        btnHoc.addEventListener('click', () => {
-            // Logic nút Học
-            if (currentCourseData.tienDo === 100) {
-                moModalHoanThanh();
+    window.deleteWord = async function(wordId) {
+        if (!confirm("Bạn có chắc chắn muốn xóa từ này?")) return;
+        
+        try {
+            const response = await fetch(`${API_BASE_URL}/delete-word.php`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ user_id: USER_ID, word_id: wordId })
+            });
+
+            const result = await response.json();
+
+            if (result.success) {
+                alert("Đã xóa từ vựng!");
+                fetchCourseDetails(); 
             } else {
-                alert(`Chuyển đến trang Học (Flashcard) cho ID: ${currentCourseData.id}...`);
-                // window.location.href = `user_hoc_tu_vung.html?id=${currentCourseData.id}`;
+                alert("Lỗi: " + result.error);
             }
-        });
-    }
-    if (btnOnTap) {
-        btnOnTap.addEventListener('click', () => alert('Chức năng Ôn tập đang phát triển...'));
-    }
-    if (btnKiemTra) {
-        btnKiemTra.addEventListener('click', () => alert('Chức năng Kiểm tra đang phát triển...'));
-    }
-    
+        } catch (e) {
+            console.error(e);
+            alert("Lỗi kết nối server.");
+        }
+    };
+
+    // ============================================================
+    // 5. SỰ KIỆN NÚT BẤM
+    // ============================================================
+
+    if (btnTroVe) btnTroVe.addEventListener('click', () => window.location.href = 'khoa_hoc_cua_toi.html');
+
     if (btnThemTuVung) {
         btnThemTuVung.addEventListener('click', () => {
-            // Gửi ID đi
-            window.location.href = `them_tu_vung.html?id=${currentCourseData.id}`;
+            window.location.href = `them_tu_vung.html?id=${COURSE_ID}&user_id=${USER_ID}`;
         });
     }
-    if (btnThemKhoaHoc) {
-        btnThemKhoaHoc.addEventListener('click', () => {
-            alert('Đã thêm khóa học vào danh sách của bạn!');
-            // Giả lập chuyển sang trạng thái "Thành viên"
-            currentViewState = 'member';
-            currentCourseData.daThamGia = true; // Cập nhật CSDL giả
-            loadCourseDetails(currentCourseData, currentViewState);
-        });
-    }
+
     if (btnXoaKhoaHoc) {
-        btnXoaKhoaHoc.addEventListener('click', () => {
-            let message = (currentViewState === 'owner') 
-                ? 'Bạn có chắc muốn XÓA VĨNH VIỄN khóa học này không?'
-                : 'Bạn có chắc muốn RỜI KHỎI khóa học này không?';
+        btnXoaKhoaHoc.addEventListener('click', async () => {
+            const isOwner = courseData.info.isOwner;
+            const action = isOwner ? 'delete' : 'leave';
+            const msg = isOwner ? 'Xóa vĩnh viễn khóa học này?' : 'Rời khỏi khóa học này?';
             
-            if (confirm(message)) {
-                alert('Đã thực hiện (giả lập)!');
-                window.location.href = 'khoa_hoc_cua_toi.html';
+            if (confirm(msg)) {
+                try {
+                    const response = await fetch(`${API_BASE_URL}/delete-course.php`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ user_id: USER_ID, course_id: COURSE_ID, action: action })
+                    });
+                    const res = await response.json();
+                    if (res.success) {
+                        alert(res.message);
+                        window.location.href = 'khoa_hoc_cua_toi.html';
+                    } else {
+                        alert("Lỗi: " + res.error);
+                    }
+                } catch (e) {
+                    console.error(e);
+                }
             }
         });
     }
 
-    if (danhSachContainer) {
-        danhSachContainer.addEventListener('click', handleDanhSachClick);
-    }
-    
-    if (khungCheMo) {
-        khungCheMo.addEventListener('click', (e) => {
-            if (e.target === khungCheMo) {
-                dongModalHoanThanh();
+    if (btnThemKhoaHoc) {
+        btnThemKhoaHoc.addEventListener('click', async () => {
+            if (confirm("Bạn có muốn tham gia khóa học này?")) {
+                try {
+                    const response = await fetch(`${API_BASE_URL}/join-course.php`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ user_id: USER_ID, course_id: COURSE_ID })
+                    });
+                    const res = await response.json();
+                    if (res.success) {
+                        alert("Tham gia thành công!");
+                        fetchCourseDetails(); 
+                    } else {
+                        alert(res.error);
+                    }
+                } catch (e) {
+                    console.error(e);
+                }
             }
         });
     }
-    if (btnModalTiepTuc) {
-        // "Tiếp tục học" = "Ôn tập"
-        btnModalTiepTuc.addEventListener('click', () => {
-            alert('Chuyển đến chức năng Ôn tập...');
-            dongModalHoanThanh();
-        });
-    }
-    if (btnModalHocLai) {
-        // "Học lại" = Reset tiến độ và đi học
-        btnModalHocLai.addEventListener('click', () => {
-            alert('Đã reset tiến độ (giả lập)! Bắt đầu học lại...');
-            // Logic reset (giả lập):
-            currentCourseData.tienDo = 0;
-            loadCourseDetails(currentCourseData, currentViewState);
-            dongModalHoanThanh();
-        });
-    }
 
-    // --- 6. Khởi tạo ban đầu ---
-    // (CẬP NHẬT) Chạy hàm khởi tạo chính
-    initializePage(); 
-    
-    console.log("Trang Chi tiết khóa học (chi_tiet_khoa_hoc.js) đã tải thành công.");
+    const gotoStudy = (page) => {
+        window.location.href = `${page}?course_id=${COURSE_ID}&user_id=${USER_ID}`;
+    };
+    if (btnHoc) btnHoc.addEventListener('click', () => gotoStudy('user_hoc_tu_vung.html'));
+    if (btnOnTap) btnOnTap.addEventListener('click', () => gotoStudy('user_hinh_thuc_on_tap.html'));
+    if (btnKiemTra) btnKiemTra.addEventListener('click', () => gotoStudy('user_kiem_tra.html'));
+
+    // --- INIT ---
+    fetchCourseDetails();
 });
