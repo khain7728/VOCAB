@@ -253,3 +253,141 @@
     cursor: pointer;
     color: white;
 }
+
+
+/* --- Bổ sung CSS cho Modal Quản lý Khóa học theo giao diện User --- */
+
+
+/* Thêm mô tả cho modal */
+
+.modal-description {
+    margin-bottom: 15px;
+    font-size: 14px;
+    /* Phù hợp với font size của admin */
+    color: #4B5563;
+    /* Màu chữ hơi xám */
+}
+
+
+/* Bố cục cho hàng form hai cột */
+
+.form-row {
+    display: flex;
+    gap: 20px;
+    /* Khoảng cách giữa hai cột */
+    margin-bottom: 15px;
+}
+
+.form-group.half-width {
+    flex: 1;
+    /* Chiếm 50% chiều rộng */
+    margin-bottom: 0;
+}
+
+
+/* Kiểu cho link "Hoặc chọn tag có sẵn" */
+
+.link-modal {
+    display: block;
+    margin-top: 5px;
+    font-size: 13px;
+    color: #5B9BD5;
+    /* Màu xanh primary */
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.link-modal:hover {
+    text-decoration: underline;
+}
+
+
+/* Kiểu cho textarea */
+
+.form-group textarea {
+    width: 100%;
+    padding: 8px 12px;
+    border: 1px solid #D1D5DB;
+    border-radius: 6px;
+    box-sizing: border-box;
+    resize: vertical;
+    /* Cho phép thay đổi kích thước theo chiều dọc */
+}
+
+
+/* --- Bổ sung CSS cho Modal Tag (#tagModal) --- */
+
+
+/* Đảm bảo modal Tag hiển thị trên modal chính */
+
+#tagModal {
+    z-index: 1050;
+    /* Cao hơn modal chính (z-index: 1000) */
+}
+
+.modal-content.small-modal {
+    width: 400px;
+    /* Giảm chiều rộng cho modal Tag */
+    max-width: 90%;
+}
+
+.small-title {
+    font-size: 14px;
+    font-weight: 600;
+    /* Hơi đậm hơn */
+    margin-top: 15px;
+    margin-bottom: 8px;
+    color: #374151;
+}
+
+
+/* Vùng hiển thị tags */
+
+.tag-list-container {
+    padding: 10px;
+    border: 1px solid #E5E7EB;
+    border-radius: 6px;
+    min-height: 50px;
+    display: flex;
+    flex-wrap: wrap;
+    align-content: flex-start;
+}
+
+
+/* Styling cho từng tag */
+
+.tag-item {
+    display: inline-block;
+    background-color: #DEF7EC;
+    /* Xanh lá nhạt (giống public status) */
+    color: #03543F;
+    padding: 5px 10px;
+    margin: 4px;
+    border-radius: 15px;
+    cursor: pointer;
+    font-size: 13px;
+    transition: background-color 0.2s;
+}
+
+.tag-item:hover {
+    background-color: #BEE3F8;
+    /* Màu xanh primary nhạt */
+    color: #1E40AF;
+}
+
+
+/* Chân modal chỉ có 1 nút (cho modal Tag) */
+
+.modal-footer.one-button {
+    display: flex;
+    justify-content: flex-end;
+    /* Căn nút sang phải */
+    padding: 15px 20px;
+    background: #F9FAFB;
+    border-top: 1px solid #eee;
+}
+
+.modal-footer.one-button .btn-save {
+    margin: 0;
+    /* Bỏ margin-right 10px */
+}

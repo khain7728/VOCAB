@@ -1,68 +1,90 @@
 <?php
-error_reporting(0);
+// FILE: api/admin/course_update.php
+ob_start();
+error_reporting(E_ALL);
+ini_set('display_errors', 0);
+header('Access-Control-Allow-Origin: *');
 header('Content-Type: application/json; charset=utf-8');
 
-// Định nghĩa đường dẫn gốc
-$basePath = dirname(dirname(__DIR__)); 
-
-require_once $basePath . '/config/database.php'; 
-require_once $basePath . '/includes/log_helper.php'; 
+require_once '../../config/database.php';
+if (file_exists('../../includes/log_helper.php')) {
+    require_once '../../includes/log_helper.php';
+}
 
 $input = json_decode(file_get_contents('php://input'), true);
-$admin_id = 1;
+$admin_id = 2; // ID Admin cố định
 
-if (!isset($input['id']) || !isset($input['code']) || !isset($input['name'])) {
-    echo json_encode(['status' => 'error', 'message' => 'Dữ liệu đầu vào không đủ.']);
-    exit;
-}
+try {
+    if (!$conn) throw new Exception("Mất kết nối Database.");
 
-// ------------------------------------
-// Chuẩn bị biến và logic
-// ------------------------------------
-$course_id = $input['id'];
-$course_code = $input['code'];
-$course_name = $input['name'];
+    // Kiểm tra dữ liệu đầu vào
+    if (!isset($input['id']) || !isset($input['name'])) {
+        throw new Exception("Thiếu dữ liệu ID hoặc Tên.");
+    }
 
-// Logic xử lý trạng thái (visibility)
-$update_visibility_sql = "";
-$bind_types = "ssi"; // default: code, name, id
-$bind_params = [&$course_code, &$course_name, &$course_id];
-
-if (isset($input['status'])) {
-    // Ánh xạ trạng thái từ JS ('active', 'hidden') sang DB ('public', 'private')
-    $db_visibility = ($input['status'] === 'active') ? 'public' : 'private'; 
+    $id = (int)$input['id'];
+    $name = trim($input['name']);
+    $desc = isset($input['description']) ? trim($input['description']) : '';
+    // Status từ client gửi lên là 'active'/'hidden' -> DB là 'public'/'private'
+    $visibility = (isset($input['status']) && $input['status'] === 'active') ? 'public' : 'private';
     
-    // Sửa tên cột thành 'visibility'
-    $update_visibility_sql = ", visibility = ?";
-    $bind_types = "sssi"; // code, name, visibility, id
-    $bind_params = [&$course_code, &$course_name, &$db_visibility, &$course_id];
-}
-
-// ------------------------------------
-// Thực thi SQL
-// ------------------------------------
-
-// Câu lệnh SQL đã được sửa để sử dụng 'visibility'
-$sql = "UPDATE course SET course_code = ?, course_name = ?{$update_visibility_sql} WHERE course_id = ?";
-$stmt = $conn->prepare($sql);
-
-if ($stmt) {
-    // Gắn tham số động (sử dụng dấu ... cho mảng tham số)
-    $stmt->bind_param($bind_types, ...$bind_params);
+    // Tags xử lý sau nếu cần, ở đây update bảng course trước
+    // Lưu ý: Cột mô tả của bạn là `description` (theo SQL đã check)
+    $stmt = $conn->prepare("UPDATE course SET 
+        course_name = ?, 
+        description = ?, 
+        visibility = ?
+        WHERE course_id = ?");
     
+    $stmt->bind_param("sssi", $name, $desc, $visibility, $id);
+
     if ($stmt->execute()) {
-        if(function_exists('writeAdminLog')) {
-            writeAdminLog($conn, $admin_id, "Sửa khóa học: ".$course_code, $course_id);
+        
+        // Cập nhật Tags (nếu có gửi lên)
+        if (isset($input['tags'])) {
+            // Xóa tags cũ
+            $conn->query("DELETE FROM course_tag WHERE course_id = $id");
+            
+            // Thêm tags mới
+            $tagsRaw = $input['tags'];
+            $tags = is_string($tagsRaw) ? explode(',', $tagsRaw) : $tagsRaw;
+            $tags = array_unique(array_filter(array_map('trim', $tags)));
+
+            $stmtChk = $conn->prepare("SELECT tag_id FROM tag WHERE tag_name = ?");
+            $stmtIns = $conn->prepare("INSERT INTO tag (tag_name) VALUES (?)");
+            $stmtLnk = $conn->prepare("INSERT IGNORE INTO course_tag (course_id, tag_id) VALUES (?, ?)");
+
+            foreach ($tags as $t) {
+                if(!$t) continue;
+                $tid = 0;
+                $stmtChk->bind_param("s", $t); $stmtChk->execute();
+                $res = $stmtChk->get_result();
+                if($row = $res->fetch_assoc()) $tid = $row['tag_id'];
+                else {
+                    $stmtIns->bind_param("s", $t);
+                    if($stmtIns->execute()) $tid = $stmtIns->insert_id;
+                }
+                if($tid) {
+                    $stmtLnk->bind_param("ii", $id, $tid);
+                    $stmtLnk->execute();
+                }
+            }
         }
+
+        // --- GHI LOG ---
+        if (function_exists('writeAdminLog')) {
+            writeAdminLog($conn, $admin_id, "Cập nhật khóa học: " . $name, $id);
+        }
+        // ---------------
+
+        ob_clean();
         echo json_encode(['status' => 'success', 'message' => 'Cập nhật thành công!']);
     } else {
-        echo json_encode(['status' => 'error', 'message' => 'Lỗi truy vấn: ' . $conn->error]);
+        throw new Exception("Lỗi SQL: " . $stmt->error);
     }
-    $stmt->close();
 
-} else {
-    echo json_encode(['status' => 'error', 'message' => 'Lỗi prepare SQL: ' . $conn->error]);
+} catch (Exception $e) {
+    ob_clean();
+    echo json_encode(['status' => 'error', 'message' => $e->getMessage()]);
 }
-
-$conn->close();
 ?>

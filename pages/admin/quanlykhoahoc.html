@@ -2,13 +2,14 @@
 <html lang="vi">
 
 <head>
+
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Quản lý khóa học - Admin</title>
 
+
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-
     <link rel="stylesheet" href="../../assets/css/defaut/menu_admin.css">
     <link rel="stylesheet" href="../../assets/css/defaut/header_admin.css">
     <link rel="stylesheet" href="../../assets/css/admin/quanlykhoahoc.css">
@@ -16,44 +17,68 @@
 
 <body id="app-container">
 
+
     <div id="placeholder-menu"></div>
 
+
     <div class="main-wrapper">
+
         <div id="placeholder-header"></div>
 
+
         <div id="content">
+
             <main class="page-content">
+
                 <div class="page-header">
+
                     <div>
+
                         <h1 class="page-title">Quản lý khóa học</h1>
+
                         <p>Danh sách các khóa học hiện có trong hệ thống</p>
                     </div>
                     <button class="btn-primary" onclick="openModal('add')">
-                        <i class="fa-solid fa-plus"></i> Thêm khóa học
-                    </button>
+                        <i class="fa-solid fa-plus"></i> Tạo khóa học
+                    </button>
                 </div>
 
+
                 <div class="toolbar">
+
                     <div class="search-bar">
                         <i class="fa-solid fa-magnifying-glass"></i>
                         <input type="text" id="searchBox" placeholder="Tìm kiếm tên hoặc mã khóa học...">
                     </div>
                 </div>
 
+
                 <div class="table-container">
+
                     <table class="admin-table">
+
                         <thead>
+
                             <tr>
+
                                 <th style="width: 50px; text-align: center;">STT</th>
+
                                 <th>Mã KH</th>
+
                                 <th>Tên khóa học</th>
+
                                 <th>Người tạo</th>
+
                                 <th style="text-align: center;">Trạng thái</th>
+
                                 <th style="text-align: center;">Hành động</th>
                             </tr>
                         </thead>
+
                         <tbody id="course_table_body">
+
                             <tr>
+
                                 <td colspan="6" style="text-align: center; padding: 20px;">Đang tải dữ liệu...</td>
                             </tr>
                         </tbody>
@@ -63,43 +88,101 @@
         </div>
     </div>
 
+
     <div id="courseModal" class="modal">
+
         <div class="modal-content">
+
             <div class="modal-header">
-                <h3 id="modalTitle">Thêm khóa học mới</h3>
+
+                <h3 id="modalTitle">Thông tin khóa học</h3>
                 <span class="close-btn" onclick="closeModal()">&times;</span>
             </div>
 
-            <div class="modal-body">
-                <input type="hidden" id="courseId">
 
+            <div class="modal-body">
+
+                <p class="modal-description">Nhập đầy đủ thông tin và những ô có dấu (*)</p>
+                <input type="hidden" id="courseId">
                 <div class="form-group">
                     <label>Mã khóa học <span style="color:red">*</span></label>
                     <input type="text" id="courseCode" placeholder="VD: ENG01">
                 </div>
 
-                <div class="form-group">
-                    <label>Tên khóa học <span style="color:red">*</span></label>
-                    <input type="text" id="courseName" placeholder="Nhập tên khóa học...">
-                </div>
 
                 <div class="form-group">
-                    <label>Trạng thái</label>
-                    <select id="courseStatus">
-                        <option value="active">Công khai (Public)</option>
-                        <option value="hidden">Ẩn (Private)</option>
-                    </select>
+                    <label>Tên khóa học <span style="color:red">*</span></label>
+                    <input type="text" id="courseName" placeholder="Nhập tên khóa học">
+                </div>
+
+
+                <div class="form-row">
+
+                    <div class="form-group half-width">
+                        <label>Trạng thái</label>
+                        <select id="courseStatus">
+                            <option value="active">Công khai</option>
+                            <option value="hidden">Riêng tư</option>
+                        </select>
+                    </div>
+
+
+                    <div class="form-group half-width">
+                        <label>Tag <span style="color:red">*</span></label>
+                        <input type="text" id="courseTag" placeholder="Nhập tag cách nhau bởi dấu ','">
+                        <a href="#" id="btn-chon-tag" class="link-modal" onclick="openTagModal(event)">Hoặc chọn tag có sẵn</a>
+                    </div>
+                </div>
+
+
+                <div class="form-group">
+                    <label>Mô tả khóa học</label>
+                    <textarea id="courseDescription" rows="3" placeholder="Nhập mô tả khóa học tại đây"></textarea>
+                </div>
+
+            </div>
+
+
+            <div class="modal-footer">
+                <button class="btn-cancel" onclick="closeModal()">Hủy</button>
+                <button class="btn-save" id="saveCourseBtn" type="button">Thêm khóa học</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="tagModal" class="modal">
+
+        <div class="modal-content small-modal">
+
+            <div class="modal-header">
+
+                <h3 class="modalTitle">Thêm Tag</h3>
+                <span class="close-btn" onclick="closeTagModal()">&times;</span>
+            </div>
+
+
+            <div class="modal-body">
+
+                <p class="small-title">Tag đã chọn</p>
+
+                <div class="tag-list-container" id="khung-tag-da-chon">
+                </div>
+
+
+                <p class="small-title">Tag gợi ý</p>
+
+                <div class="tag-list-container" id="khung-tag-goi-y">
                 </div>
             </div>
 
-            <div class="modal-footer">
-                <button class="btn-cancel" onclick="closeModal()">Hủy bỏ</button>
-                <button class="btn-save" onclick="saveCourse()">Lưu lại</button>
+            <div class="modal-footer one-button">
+                <button type="button" id="btn-xac-nhan-tag" class="btn-save" onclick="confirmTagSelection()">Xác nhận</button>
             </div>
         </div>
     </div>
 
     <script src="../../assets/js/admin/layout_admin.js"></script>
+
     <script src="../../assets/js/admin/quanlykhoahoc.js"></script>
 </body>
 
