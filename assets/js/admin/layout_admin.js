@@ -1,5 +1,5 @@
 document.addEventListener("DOMContentLoaded", async function() {
-    // 1. Định nghĩa đường dẫn
+    // 1. Định nghĩa đường dẫn (Giữ nguyên)
     const basePath = "../../includes/";
 
     try {
@@ -30,21 +30,39 @@ async function loadComponent(elementId, filePath) {
 }
 
 /**
- * XỬ LÝ SỰ KIỆN GLOBAL (MENU TOGGLE & LOGOUT)
- * Dùng Event Delegation (lắng nghe từ document) để bắt sự kiện cho các element được load động
+ * XỬ LÝ SỰ KIỆN GLOBAL (MENU, CLICK OUTSIDE, LOGOUT)
+ * Sử dụng Event Delegation để bắt sự kiện cho các element được load động
  */
 document.addEventListener('click', function(e) {
-    // 1. Xử lý Toggle Menu (Thu nhỏ/Mở rộng)
-    const menuBtn = e.target.closest('#menu');
-    if (menuBtn) {
-        document.body.classList.toggle('menu-collapsed');
-    }
+    const body = document.body;
 
-    // 2. Xử lý nút Logout
-    const logoutBtn = e.target.closest('#btn_logout');
+    // Tìm các phần tử mục tiêu
+    const toggleBtn = e.target.closest('#menu'); // Nút 3 gạch
+    const sidebar = e.target.closest('#placeholder-menu'); // Thanh menu bên trái
+    const logoutBtn = e.target.closest('#btn_logout'); // Nút đăng xuất
+
+    // --- 1. Xử lý Nút Logout ---
     if (logoutBtn) {
         if (!confirm('Bạn có chắc chắn muốn đăng xuất?')) {
             e.preventDefault();
+        }
+        return; // Dừng xử lý
+    }
+
+    // --- 2. Xử lý Toggle Menu (Nút 3 gạch) ---
+    if (toggleBtn) {
+        // Ngăn chặn sự kiện lan ra ngoài (để không bị tính là click outside)
+        e.stopPropagation();
+        body.classList.toggle('menu-collapsed');
+        return;
+    }
+
+    // --- 3. Xử lý Click Outside (Thu nhỏ menu khi bấm ra ngoài) ---
+    // Logic: Nếu click KHÔNG phải vào Menu VÀ Menu đang mở to -> Thu nhỏ lại
+    if (!sidebar && !toggleBtn) {
+        // Kiểm tra: Nếu chưa có class 'menu-collapsed' nghĩa là đang mở to
+        if (!body.classList.contains('menu-collapsed')) {
+            body.classList.add('menu-collapsed');
         }
     }
 });
@@ -54,9 +72,14 @@ document.addEventListener('click', function(e) {
  */
 function activeCurrentMenu() {
     const currentPath = window.location.pathname;
+    // Tìm tất cả thẻ a trong menu
+    // Lưu ý: Cần đợi DOM load xong menu mới tìm được (đã xử lý ở trên bằng await)
     const links = document.querySelectorAll(".menu-item a");
+
     links.forEach(link => {
-        if (link.getAttribute("href") && currentPath.includes(link.getAttribute("href"))) {
+        const href = link.getAttribute("href");
+        // So sánh tương đối để active đúng
+        if (href && currentPath.includes(href)) {
             link.classList.add("active");
         }
     });
