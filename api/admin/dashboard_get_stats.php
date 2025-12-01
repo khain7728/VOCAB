@@ -20,7 +20,8 @@ try {
     $response['total_courses'] = $res ? $res->fetch_assoc()['total'] : 0;
 
     // Đếm log hôm nay
-    $res = $conn->query("SELECT COUNT(*) as total FROM admin_log WHERE DATE(created_at) = CURDATE()");
+    $sqlToday = "SELECT COUNT(*) as total FROM user WHERE role = 'user' AND DATE(created_at) = CURDATE()";
+    $res = $conn->query($sqlToday);
     $response['today_activity'] = $res ? $res->fetch_assoc()['total'] : 0;
 
     // --- B. HOẠT ĐỘNG GẦN ĐÂY (Sửa lại admin_id thành user_id cho đúng bảng log) ---
