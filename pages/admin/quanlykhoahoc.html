@@ -48,6 +48,7 @@
                                 <th>Mã KH</th>
                                 <th>Tên khóa học</th>
                                 <th>Người tạo</th>
+                                <th>Ngày tạo</th>
                                 <th class="text-center">Trạng thái</th>
                                 <th class="text-center">Hành động</th>
                             </tr>
@@ -61,58 +62,58 @@
     </div>
 
     <div id="courseModal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3 id="modalTitle">Thông tin khóa học</h3>
+        <div class="modal-content modern-modal">
+            <div class="modal-header no-border">
+                <div class="header-text">
+                    <h3 id="modalTitle" class="modal-title-bold">Thêm Khóa học Mới</h3>
+                    <p class="modal-subtitle">Nhập đầy đủ thông tin và những ô có dấu (*)</p>
+                </div>
                 <span class="close-btn" id="btnCloseCourseModal">&times;</span>
             </div>
 
             <div class="modal-body">
-                <p class="modal-description">Nhập đầy đủ thông tin và những ô có dấu (*)</p>
                 <input type="hidden" id="courseId">
-                <div class="form-group">
-                    <label>Mã khóa học <span class="text-gray">(Tự động sinh)</span></label>
-                    <input type="text" id="courseCode" placeholder="Hệ thống tự tạo sau khi lưu" readonly class="input-readonly">
-                </div>
+                <input type="hidden" id="courseCode">
 
                 <div class="form-group">
                     <label>Tên khóa học <span class="text-red">*</span></label>
-                    <input type="text" id="courseName" placeholder="Nhập tên khóa học">
+                    <input type="text" id="courseName" class="input-modern" placeholder="Nhập tên khóa học">
                 </div>
 
                 <div class="form-row">
                     <div class="form-group half-width">
                         <label>Trạng thái</label>
-                        <select id="courseStatus">
+                        <div class="select-wrapper">
+                            <select id="courseStatus" class="input-modern">
                             <option value="active">Công khai</option>
                             <option value="hidden">Riêng tư</option>
                         </select>
+                        </div>
                     </div>
 
                     <div class="form-group half-width">
                         <label>Tag <span class="text-red">*</span></label>
-                        <input type="text" id="courseTag" placeholder="Chọn tag...">
-                        <a href="#" id="btnOpenTagModal" class="link-modal">Hoặc chọn tag có sẵn</a>
+                        <input type="text" id="courseTag" class="input-modern" placeholder="Chọn tag...">
+                        <a href="#" id="btnOpenTagModal" class="link-modal text-blue">Hoặc chọn tag có sẵn</a>
                     </div>
                 </div>
 
                 <div class="form-group">
                     <label>Mô tả khóa học</label>
-                    <textarea id="courseDescription" rows="3" placeholder="Nhập mô tả khóa học tại đây"></textarea>
+                    <textarea id="courseDescription" rows="4" class="input-modern" placeholder="Nhập mô tả khóa học tại đây"></textarea>
                 </div>
             </div>
 
-            <div class="modal-footer">
-                <button class="btn-cancel" id="btnCancelCourseModal">Hủy</button>
-                <button class="btn-save" id="saveCourseBtn" type="button">Lưu lại</button>
+            <div class="modal-footer no-border footer-right">
+                <button class="btn-cancel-gray" id="btnCancelCourseModal">Hủy</button>
+                <button class="btn-save-blue" id="saveCourseBtn" type="button">Thêm từ vựng</button>
             </div>
         </div>
     </div>
-
     <div id="tagModal" class="modal">
         <div class="modal-content small-modal">
             <div class="modal-header">
-                <h3 class="modalTitle">Thêm Tag</h3>
+                <h3 class="modalTitle" style="font-size: 16px; font-weight: 700;">Thêm Tag</h3>
                 <span class="close-btn" id="btnCloseTagModal">&times;</span>
             </div>
 
@@ -120,16 +121,15 @@
                 <p class="small-title">Tag đã chọn</p>
                 <div class="tag-list-container" id="khung-tag-da-chon"></div>
 
-                <p class="small-title">Tag gợi ý</p>
+                <p class="small-title" style="margin-top: 15px;">Tag gợi ý</p>
                 <div class="tag-list-container" id="khung-tag-goi-y"></div>
             </div>
 
             <div class="modal-footer one-button">
-                <button type="button" id="btnConfirmTag" class="btn-save">Xác nhận</button>
+                <button type="button" id="btnConfirmTag" class="btn-save" style="margin: 0;">Xác nhận</button>
             </div>
         </div>
     </div>
-
     <script src="../../assets/js/admin/layout_admin.js"></script>
     <script src="../../assets/js/admin/quanlykhoahoc.js"></script>
 </body>

@@ -2,7 +2,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // --- CẤU HÌNH ---
     // Thay 'VOCAB' bằng tên thư mục dự án của bạn
-    const API_BASE_URL = 'http://localhost/VOCAB/api/admin';
+    const API_BASE_URL = 'http://localhost/VOCAB/api';
 
     // Lấy ID khóa học từ URL (ví dụ: them_tu_vung.html?id=10)
     const urlParams = new URLSearchParams(window.location.search);
@@ -11,7 +11,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Kiểm tra nếu không có ID thì cảnh báo và quay về
     if (!COURSE_ID) {
         alert("Không tìm thấy ID khóa học. Vui lòng quay lại trang danh sách.");
-        window.location.href = 'quanlykhoahoc.html';
+        window.location.href = 'khoa_hoc_cua_toi.html';
         return;
     }
 
@@ -153,7 +153,7 @@ document.addEventListener('DOMContentLoaded', function() {
             btnLuuVaThoat.textContent = "Đang lưu...";
             btnLuuVaThoat.disabled = true;
 
-            const response = await fetch(`${API_BASE_URL}/../add-words.php`, {
+            const response = await fetch(`${API_BASE_URL}/add-words.php`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -166,7 +166,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
             if (result.success) {
                 alert("Lưu thành công! Đang quay về danh sách khóa học.");
-                window.location.href = `quanlykhoahoc.html?user_id=2`; // Có thể thay user_id động sau này
+                window.location.href = `khoa_hoc_cua_toi.html?user_id=1`; // Có thể thay user_id động sau này
             } else {
                 alert("Lỗi: " + result.error);
             }
