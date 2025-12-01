@@ -25,20 +25,46 @@
         <div id="main">
             
             <div class="khung-tieu-de-va-loc">
-                <div class="bo-loc-hien-tai" id="bo-loc-hien-tai">
-                    <h2 id="tieu-de-loc">Tất cả khóa học</h2>
-                    <i class="fa-solid fa-filter"></i>
-                </div>
-                
-                <div class="menu-loc-dropdown an" id="menu-loc-dropdown">
-                    <div class="lua-chon-loc active" data-filter="tat-ca">
-                        <i class="fa-solid fa-check"></i> Tất cả khóa học
+                <div class="khung-bo-loc">
+                    <!-- Dropdown 1: Nguồn gốc -->
+                    <div style="position: relative;">
+                        <div class="bo-loc-hien-tai" id="bo-loc-nguon-goc">
+                            <span id="tieu-de-nguon-goc">Tất cả khóa học</span>
+                            <i class="fa-solid fa-caret-down"></i>
+                        </div>
+                        <div class="menu-loc-dropdown an" id="menu-loc-nguon-goc">
+                            <div class="lua-chon-loc active" data-source="tat-ca">
+                                <i class="fa-solid fa-check"></i> Tất cả khóa học
+                            </div>
+                            <div class="lua-chon-loc" data-source="da-tao">
+                                <i class="fa-solid fa-check"></i> Khóa học đã tạo
+                            </div>
+                            <div class="lua-chon-loc" data-source="da-tham-gia">
+                                <i class="fa-solid fa-check"></i> Khóa học đã tham gia
+                            </div>
+                        </div>
                     </div>
-                    <div class="lua-chon-loc" data-filter="da-tao">
-                        <i class="fa-solid fa-check"></i> Khóa học đã tạo
-                    </div>
-                    <div class="lua-chon-loc" data-filter="da-tham-gia">
-                        <i class="fa-solid fa-check"></i> Khóa học đã tham gia
+                    
+                    <!-- Dropdown 2: Trạng thái học tập -->
+                    <div style="position: relative;">
+                        <div class="bo-loc-hien-tai" id="bo-loc-trang-thai">
+                            <span id="tieu-de-trang-thai">Tất cả trạng thái</span>
+                            <i class="fa-solid fa-caret-down"></i>
+                        </div>
+                        <div class="menu-loc-dropdown an" id="menu-loc-trang-thai">
+                            <div class="lua-chon-loc active" data-status="tat-ca">
+                                <i class="fa-solid fa-check"></i> Tất cả trạng thái
+                            </div>
+                            <div class="lua-chon-loc" data-status="chua-hoc">
+                                <i class="fa-solid fa-check"></i> Chưa học
+                            </div>
+                            <div class="lua-chon-loc" data-status="dang-hoc">
+                                <i class="fa-solid fa-check"></i> Đang học
+                            </div>
+                            <div class="lua-chon-loc" data-status="hoan-thanh">
+                                <i class="fa-solid fa-check"></i> Hoàn thành
+                            </div>
+                        </div>
                     </div>
                 </div>
 
