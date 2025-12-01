@@ -330,3 +330,93 @@
 .btn-secondary:hover {
     background: #f1f1f1;
 }
+
+
+/* --- HELPER CLASSES (Thay thế Inline Style) --- */
+
+.text-center {
+    text-align: center !important;
+}
+
+.text-left {
+    text-align: left !important;
+}
+
+.w-60 {
+    width: 60px;
+}
+
+
+/* Status Badge Colors */
+
+.status-badge.active {
+    background-color: #DEF7EC;
+    color: #03543F;
+}
+
+.status-badge.locked {
+    background-color: #FDE8E8;
+    color: #9B1C1C;
+}
+
+
+/* User Info Cell Styling */
+
+.user-info-cell {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.user-avatar {
+    width: 36px;
+    height: 36px;
+    background-color: #EBF5FF;
+    color: #1C64F2;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 16px;
+}
+
+.user-details div {
+    font-weight: 500;
+    color: #111;
+}
+
+.user-details span {
+    font-size: 13px;
+    color: #666;
+}
+
+
+/* Modal Styling */
+
+.large-avatar {
+    width: 60px;
+    height: 60px;
+    background: #EBF5FF;
+    color: #1C64F2;
+    font-size: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    margin-right: 15px;
+}
+
+.user-profile-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 20px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid #eee;
+}
+
+.profile-info-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+}

@@ -391,3 +391,65 @@
     margin: 0;
     /* Bỏ margin-right 10px */
 }
+
+
+/* Thay thế cho style="color:red" */
+
+.text-red {
+    color: #EF4444;
+    font-weight: bold;
+}
+
+
+/* Thay thế cho style="text-align: center" */
+
+.text-center {
+    text-align: center !important;
+}
+
+
+/* Thay thế cho style="width: 50px" */
+
+.w-50 {
+    width: 50px;
+}
+
+
+/* Ẩn input file (nếu có dùng sau này) */
+
+.hidden {
+    display: none;
+}
+
+.text-red {
+    color: #EF4444;
+    font-weight: bold;
+    margin-left: 3px;
+}
+
+.text-gray {
+    color: #9CA3AF;
+    font-size: 0.9em;
+    font-style: italic;
+}
+
+.text-center {
+    text-align: center !important;
+}
+
+.w-50 {
+    width: 50px;
+}
+
+.input-readonly {
+    background-color: #F3F4F6;
+    color: #6B7280;
+    cursor: not-allowed;
+}
+
+
+/* Đảm bảo modal Tag nằm trên modal Course */
+
+#tagModal {
+    z-index: 1050;
+}

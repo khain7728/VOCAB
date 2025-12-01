@@ -39,11 +39,11 @@
                     <table class="admin-table">
                         <thead>
                             <tr>
-                                <th style="width: 60px; text-align: center;">STT</th>
-                                <th style="text-align: left;">Thông tin người dùng</th>
-                                <th style="text-align: center;">Ngày tham gia</th>
-                                <th style="text-align: center;">Trạng thái</th>
-                                <th style="text-align: center;">Hành động</th>
+                                <th class="w-60 text-center">STT</th>
+                                <th class="text-left">Thông tin người dùng</th>
+                                <th class="text-center">Ngày tham gia</th>
+                                <th class="text-center">Trạng thái</th>
+                                <th class="text-center">Hành động</th>
                             </tr>
                         </thead>
                         <tbody id="user_table_body">
@@ -58,7 +58,7 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h2>Hồ sơ người dùng</h2>
-                <span class="close-btn" onclick="closeModal()">&times;</span>
+                <span class="close-btn" id="btnCloseModalHeader">&times;</span>
             </div>
             <div class="modal-body">
                 <div class="user-profile-header">
@@ -81,7 +81,7 @@
                 </div>
             </div>
             <div class="modal-footer">
-                <button class="btn-secondary" onclick="closeModal()">Đóng</button>
+                <button class="btn-secondary" id="btnCloseModalFooter">Đóng</button>
             </div>
         </div>
     </div>
