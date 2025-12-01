@@ -12,10 +12,12 @@ document.addEventListener('DOMContentLoaded', function() {
     const danhSachContainer = document.getElementById('danh-sach-khoa-hoc');
     const khungPhanTrang = document.getElementById('khung-phan-trang');
     const thanhTimKiem = document.getElementById('thanh-tim-kiem');
-    const boLocHienTaiBtn = document.getElementById('bo-loc-hien-tai');
-    const tieuDeLoc = document.getElementById('tieu-de-loc');
-    const menuLocDropdown = document.getElementById('menu-loc-dropdown');
-    const cacLuaChonLoc = document.querySelectorAll('.lua-chon-loc');
+    const boLocNguonGocBtn = document.getElementById('bo-loc-nguon-goc');
+    const tieuDeNguonGoc = document.getElementById('tieu-de-nguon-goc');
+    const menuLocNguonGoc = document.getElementById('menu-loc-nguon-goc');
+    const boLocTrangThaiBtn = document.getElementById('bo-loc-trang-thai');
+    const tieuDeTrangThai = document.getElementById('tieu-de-trang-thai');
+    const menuLocTrangThai = document.getElementById('menu-loc-trang-thai');
 
     // MODAL
     const btnTaoKhoaHoc = document.getElementById('btn-tao-khoa-hoc'); 
@@ -37,7 +39,9 @@ document.addEventListener('DOMContentLoaded', function() {
     // STATE
     let coursesData = [];    
     let filteredData = [];   
-    let boLocHienTai = 'tat-ca';
+    let boLocNguonGoc = 'tat-ca'; // Đã tạo / Đã tham gia
+    let boLocTrangThai = 'tat-ca'; // Chưa học / Đang học / Hoàn thành
+    let currentTab = 'my-courses'; // Thêm biến theo dõi tab
     let tuKhoaTimKiem = '';
     let trangHienTai = 1;
     const soMucTrenTrang = 5;
@@ -117,16 +121,32 @@ document.addEventListener('DOMContentLoaded', function() {
         if (!danhSachContainer) return;
 
         filteredData = coursesData.filter(kh => {
-            let matchFilter = true;
-            if (boLocHienTai === 'da-tao') matchFilter = kh.isOwner;
-            if (boLocHienTai === 'da-tham-gia') matchFilter = !kh.isOwner;
+            // Filter 1: Nguồn gốc
+            let matchNguonGoc = true;
+            if (boLocNguonGoc === 'da-tao') {
+                matchNguonGoc = kh.isOwner;
+            } else if (boLocNguonGoc === 'da-tham-gia') {
+                matchNguonGoc = !kh.isOwner;
+            }
             
+            // Filter 2: Trạng thái học tập
+            let matchTrangThai = true;
+            if (boLocTrangThai === 'chua-hoc') {
+                matchTrangThai = kh.trangThai === 'Chưa học';
+            } else if (boLocTrangThai === 'dang-hoc') {
+                matchTrangThai = kh.trangThai === 'Đang học';
+            } else if (boLocTrangThai === 'hoan-thanh') {
+                matchTrangThai = kh.trangThai === 'Hoàn thành';
+            }
+            
+            // Filter 3: Tìm kiếm
             let matchSearch = true;
             if (tuKhoaTimKiem) {
                 const k = tuKhoaTimKiem.toLowerCase();
                 matchSearch = kh.tieuDe.toLowerCase().includes(k) || (kh.mota && kh.mota.toLowerCase().includes(k));
             }
-            return matchFilter && matchSearch;
+            
+            return matchNguonGoc && matchTrangThai && matchSearch;
         });
 
         const tongSoMuc = filteredData.length;
@@ -153,7 +173,7 @@ document.addEventListener('DOMContentLoaded', function() {
         div.setAttribute('data-id', kh.id);
 
         let classTrangThai = kh.trangThai === 'Hoàn thành' ? 'trang-thai-hoan-thanh' : (kh.trangThai === 'Đang học' ? 'trang-thai-dang-hoc' : 'trang-thai-chua-hoc');
-        let btnAction = kh.tienDo === 100 ? { text: 'Kiểm tra', action: 'kiem-tra' } : (kh.tienDo > 0 ? { text: 'Ôn tập', action: 'on-tap' } : { text: 'Học', action: 'hoc' });
+        let btnAction = kh.tienDo === 100 ? { text: 'Kiểm tra', action: 'kiem-tra', class: 'nut-xanh' } : (kh.tienDo > 0 ? { text: 'Ôn tập', action: 'on-tap', class: 'nut-xanh' } : { text: 'Học', action: 'hoc', class: 'nut-trang-vien-xanh' });
         const btnSua = kh.isOwner ? `<button class="nut-hanh-dong" data-action="sua"><i class="fa-solid fa-pencil"></i></button>` : '';
         const tagsHtml = (kh.tags && kh.tags.length) ? kh.tags.map(t => `<span class="the-tag">${t}</span>`).join('') : '<span class="the-tag" style="opacity:0.5">Không có tag</span>';
 
@@ -175,7 +195,7 @@ document.addEventListener('DOMContentLoaded', function() {
             </div>
             <div class="khung-nut-bam">
                 <button class="nut-bam nut-xanh" data-action="chi-tiet">Xem chi tiết</button>
-                <button class="nut-bam nut-xanh" data-action="${btnAction.action}">${btnAction.text}</button>
+                <button class="nut-bam ${btnAction.class}" data-action="${btnAction.action}">${btnAction.text}</button>
                 <div class="nhom-nut-hanh-dong">
                     ${btnSua}
                     <button class="nut-hanh-dong nut-xoa" data-action="xoa"><i class="fa-solid fa-trash"></i></button>
@@ -338,17 +358,78 @@ document.addEventListener('DOMContentLoaded', function() {
     };
 
     // Filter & Search
-    if(boLocHienTaiBtn) boLocHienTaiBtn.onclick = (e) => { e.stopPropagation(); menuLocDropdown.classList.toggle('an'); };
-    cacLuaChonLoc.forEach(item => item.onclick = () => {
-        boLocHienTai = item.getAttribute('data-filter');
-        tieuDeLoc.textContent = item.textContent.trim();
-        menuLocDropdown.classList.add('an');
-        cacLuaChonLoc.forEach(i => i.classList.remove('active'));
-        item.classList.add('active');
-        renderDanhSach();
-    });
-    if(thanhTimKiem) thanhTimKiem.oninput = (e) => { tuKhoaTimKiem = e.target.value.toLowerCase(); renderDanhSach(); };
-    document.onclick = (e) => { if(boLocHienTaiBtn && !boLocHienTaiBtn.contains(e.target)) menuLocDropdown.classList.add('an'); };
+    // Dropdown Nguồn gốc
+    if(boLocNguonGocBtn) {
+        boLocNguonGocBtn.onclick = (e) => { 
+            e.stopPropagation(); 
+            menuLocNguonGoc.classList.toggle('an');
+            menuLocTrangThai.classList.add('an'); // Đóng dropdown kia
+        };
+    }
+    
+    if(menuLocNguonGoc) {
+        menuLocNguonGoc.querySelectorAll('.lua-chon-loc').forEach(item => {
+            item.onclick = () => {
+                boLocNguonGoc = item.getAttribute('data-source');
+                const nguonGocNames = {
+                    'tat-ca': 'Tất cả nguồn',
+                    'da-tao': 'Đã tạo',
+                    'da-tham-gia': 'Đã tham gia'
+                };
+                tieuDeNguonGoc.textContent = nguonGocNames[boLocNguonGoc];
+                menuLocNguonGoc.classList.add('an');
+                
+                menuLocNguonGoc.querySelectorAll('.lua-chon-loc').forEach(i => i.classList.remove('active'));
+                item.classList.add('active');
+                
+                trangHienTai = 1;
+                renderDanhSach();
+            };
+        });
+    }
+    
+    // Dropdown Trạng thái
+    if(boLocTrangThaiBtn) {
+        boLocTrangThaiBtn.onclick = (e) => { 
+            e.stopPropagation(); 
+            menuLocTrangThai.classList.toggle('an');
+            menuLocNguonGoc.classList.add('an'); // Đóng dropdown kia
+        };
+    }
+    
+    if(menuLocTrangThai) {
+        menuLocTrangThai.querySelectorAll('.lua-chon-loc').forEach(item => {
+            item.onclick = () => {
+                boLocTrangThai = item.getAttribute('data-status');
+                const trangThaiNames = {
+                    'tat-ca': 'Tất cả trạng thái',
+                    'chua-hoc': 'Chưa học',
+                    'dang-hoc': 'Đang học',
+                    'hoan-thanh': 'Hoàn thành'
+                };
+                tieuDeTrangThai.textContent = trangThaiNames[boLocTrangThai];
+                menuLocTrangThai.classList.add('an');
+                
+                menuLocTrangThai.querySelectorAll('.lua-chon-loc').forEach(i => i.classList.remove('active'));
+                item.classList.add('active');
+                
+                trangHienTai = 1;
+                renderDanhSach();
+            };
+        });
+    }
+    
+    if(thanhTimKiem) thanhTimKiem.oninput = (e) => { tuKhoaTimKiem = e.target.value.toLowerCase(); trangHienTai = 1; renderDanhSach(); };
+    
+    // Đóng dropdowns khi click bên ngoài
+    document.onclick = (e) => { 
+        if(boLocNguonGocBtn && !boLocNguonGocBtn.contains(e.target) && !menuLocNguonGoc.contains(e.target)) {
+            menuLocNguonGoc.classList.add('an');
+        }
+        if(boLocTrangThaiBtn && !boLocTrangThaiBtn.contains(e.target) && !menuLocTrangThai.contains(e.target)) {
+            menuLocTrangThai.classList.add('an');
+        }
+    };
 
     // Click Handler cho List
     if(danhSachContainer) danhSachContainer.onclick = (e) => {

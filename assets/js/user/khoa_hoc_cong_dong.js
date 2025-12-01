@@ -10,11 +10,15 @@ document.addEventListener('DOMContentLoaded', function() {
     const danhSachContainer = document.getElementById('danh-sach-khoa-hoc-cong-dong');
     const thanhTimKiem = document.getElementById('thanh-tim-kiem');
     const tabKhoaHocCuaToi = document.getElementById('tab-khoa-hoc-cua-toi');
+    const boLocHienTai = document.getElementById('bo-loc-hien-tai');
+    const menuLocDropdown = document.getElementById('menu-loc-dropdown');
+    const tieuDeLoc = document.getElementById('tieu-de-loc');
 
     // State
     let allCoursesData = [];
     let filteredData = [];
     let tuKhoaTimKiem = '';
+    let boLoc = 'tat-ca'; // tat-ca, da-tham-gia, chua-tham-gia
     
     // ... (Giữ nguyên các phần khai báo biến phân trang cũ) ...
     let trangHienTai = 1;
@@ -81,15 +85,24 @@ document.addEventListener('DOMContentLoaded', function() {
     function renderDanhSach() {
         if (!danhSachContainer) return;
 
-        // Lọc
+        // Lọc theo bộ lọc
+        let tempData = allCoursesData;
+        
+        if (boLoc === 'da-tham-gia') {
+            tempData = tempData.filter(kh => kh.daThamGia === true);
+        } else if (boLoc === 'chua-tham-gia') {
+            tempData = tempData.filter(kh => !kh.daThamGia || kh.daThamGia === false);
+        }
+        
+        // Lọc theo từ khóa tìm kiếm
         if (tuKhoaTimKiem) {
             const k = tuKhoaTimKiem.toLowerCase();
-            filteredData = allCoursesData.filter(kh => 
+            filteredData = tempData.filter(kh => 
                 kh.tieuDe.toLowerCase().includes(k) ||
                 (kh.mota && kh.mota.toLowerCase().includes(k))
             );
         } else {
-            filteredData = allCoursesData;
+            filteredData = tempData;
         }
 
         // Phân trang (Logic giữ nguyên như cũ)
@@ -152,8 +165,8 @@ document.addEventListener('DOMContentLoaded', function() {
             </div>
             <div class="khung-tags">${tagsHtml}</div>
             <div class="khung-nut-bam">
-                <button class="nut-bam nut-xem-chi-tiet" data-action="chi-tiet">Xem chi tiết</button>
                 ${nutThemHtml}
+                <button class="nut-bam nut-xem-chi-tiet" data-action="chi-tiet">Xem chi tiết</button>
             </div>
         `;
         return theDiv;
@@ -211,6 +224,51 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     if (tabKhoaHocCuaToi) tabKhoaHocCuaToi.addEventListener('click', () => window.location.href = `khoa_hoc_cua_toi.html?user_id=${USER_ID}`);
+
+    // Dropdown filter toggle
+    if (boLocHienTai) {
+        boLocHienTai.addEventListener('click', (e) => {
+            e.stopPropagation();
+            menuLocDropdown.classList.toggle('an');
+        });
+    }
+
+    // Đóng dropdown khi click bên ngoài
+    document.addEventListener('click', (e) => {
+        if (!menuLocDropdown.contains(e.target) && !boLocHienTai.contains(e.target)) {
+            menuLocDropdown.classList.add('an');
+        }
+    });
+
+    // Xử lý chọn filter
+    if (menuLocDropdown) {
+        menuLocDropdown.addEventListener('click', (e) => {
+            const luaChon = e.target.closest('.lua-chon-loc');
+            if (!luaChon) return;
+            
+            const filter = luaChon.getAttribute('data-filter');
+            boLoc = filter;
+            
+            // Cập nhật active state
+            menuLocDropdown.querySelectorAll('.lua-chon-loc').forEach(item => {
+                item.classList.remove('active');
+            });
+            luaChon.classList.add('active');
+            
+            // Cập nhật tiêu đề
+            const tieuDe = {
+                'tat-ca': 'Tất cả khóa học',
+                'da-tham-gia': 'Đã tham gia',
+                'chua-tham-gia': 'Chưa tham gia'
+            };
+            tieuDeLoc.textContent = tieuDe[filter] || 'Tất cả khóa học';
+            
+            // Đóng dropdown và render lại
+            menuLocDropdown.classList.add('an');
+            trangHienTai = 1;
+            renderDanhSach();
+        });
+    }
 
     // Init
     fetchCommunityCourses();
