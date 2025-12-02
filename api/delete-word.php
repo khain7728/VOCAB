@@ -22,7 +22,7 @@ error_reporting(0);
 ini_set('display_errors', 0);
 header('Content-Type: application/json; charset=utf-8');
 
-require_once '../config/database.php';
+require_once '../config/config.php';
 
 $response = [];
 
@@ -32,11 +32,13 @@ try {
         throw new Exception('Method Not Allowed');
     }
 
+    // ✅ BẢO MẬT: Lấy user_id từ session
+    $user_id = api_require_login();
+    
     $input = json_decode(file_get_contents('php://input'), true);
-    $user_id = isset($input['user_id']) ? intval($input['user_id']) : 0;
     $word_id = isset($input['word_id']) ? intval($input['word_id']) : 0;
 
-    if ($user_id <= 0 || $word_id <= 0) {
+    if ($word_id <= 0) {
         throw new Exception('Dữ liệu không hợp lệ');
     }
 

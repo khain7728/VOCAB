@@ -13,10 +13,11 @@ if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
 error_reporting(0);
 ini_set('display_errors', 0);
 header('Content-Type: application/json; charset=utf-8');
-require_once '../config/database.php';
+require_once '../config/config.php';
 
 try {
-    $user_id = isset($_GET['user_id']) ? intval($_GET['user_id']) : 1;
+    // BẢO MẬT: Lấy user_id từ session
+    $user_id = api_verify_user_id($_GET['user_id'] ?? null);
 
     // CẬP NHẬT: Dùng bảng user_course
     $sql = "SELECT 

@@ -7,7 +7,7 @@ ini_set('display_errors', 0);
 header('Access-Control-Allow-Origin: *');
 header('Content-Type: application/json; charset=utf-8');
 
-require_once '../../config/database.php';
+require_once '../../config/config.php';
 
 // Nạp file log helper nếu có
 if (file_exists('../../includes/log_helper.php')) {
@@ -15,6 +15,9 @@ if (file_exists('../../includes/log_helper.php')) {
 }
 
 try {
+    // ✅ BẢO MẬT: Chỉ admin mới được tạo khóa học qua admin panel
+    $admin_user_id = api_require_admin();
+    
     if (!$conn) throw new Exception("Mất kết nối Database.");
 
     // Lấy dữ liệu JSON từ client

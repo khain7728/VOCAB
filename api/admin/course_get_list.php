@@ -11,11 +11,14 @@ error_reporting(E_ALL);
 ini_set('display_errors', 0);
 
 try {
-    $db_path = '../../config/database.php'; 
+    $db_path = '../../config/config.php'; 
     if (!file_exists($db_path)) {
         throw new Exception("Không tìm thấy file config database");
     }
     require_once $db_path;
+    
+    // ✅ BẢO MẬT: Chỉ admin mới được truy cập
+    api_require_admin();
 
     if (!$conn) throw new Exception("Mất kết nối Database.");
     $conn->set_charset("utf8mb4");

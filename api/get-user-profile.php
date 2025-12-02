@@ -12,14 +12,15 @@ ini_set('display_errors', 0);
 header('Content-Type: application/json; charset=utf-8');
 header('Access-Control-Allow-Origin: *');
 
-require_once '../config/database.php';
+require_once '../config/config.php';
 
 $response = [];
 
 try {
     if (!isset($conn)) throw new Exception("Lỗi kết nối Database");
 
-    $user_id = isset($_GET['user_id']) ? intval($_GET['user_id']) : 1;
+    // BẢO MẬT: Lấy user_id từ session, chỉ admin mới xem được profile người khác
+    $user_id = api_verify_user_id($_GET['user_id'] ?? null);
 
     // --- A. LẤY THÔNG TIN USER ---
     $sqlUser = "SELECT user_id, name, email, bio, avatar, created_at, role 

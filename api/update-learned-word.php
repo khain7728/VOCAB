@@ -11,19 +11,21 @@ header('Access-Control-Allow-Origin: *');
 header('Access-Control-Allow-Methods: POST');
 header('Access-Control-Allow-Headers: Content-Type');
 
-require_once '../config/database.php';
+require_once '../config/config.php';
 
 try {
+    // BẢO MẬT: Lấy user_id từ session, KHÔNG từ request body
+    $user_id = api_require_login();
+    
     // Lấy dữ liệu JSON từ request body
     $json = file_get_contents('php://input');
     $data = json_decode($json, true);
     
-    // Validate input
-    if (!isset($data['user_id']) || !isset($data['word_id'])) {
-        throw new Exception('Missing required fields: user_id, word_id');
+    // Validate input (CHỈ cần word_id, user_id lấy từ session)
+    if (!isset($data['word_id'])) {
+        throw new Exception('Missing required field: word_id');
     }
     
-    $user_id = intval($data['user_id']);
     $word_id = intval($data['word_id']);
     $learned = isset($data['learned']) ? (bool)$data['learned'] : false;
     $review_mode = isset($data['review_mode']) ? $data['review_mode'] : 'flashcard';

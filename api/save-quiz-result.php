@@ -14,19 +14,21 @@ header('Access-Control-Allow-Origin: *');
 header('Access-Control-Allow-Methods: POST');
 header('Access-Control-Allow-Headers: Content-Type');
 
-require_once '../config/database.php';
+require_once '../config/config.php';
 
 try {
+    // BẢO MẬT: Lấy user_id từ session
+    $user_id = api_require_login();
+    
     // Lấy dữ liệu JSON
     $json = file_get_contents('php://input');
     $data = json_decode($json, true);
     
-    // Validate input
-    if (!isset($data['user_id']) || !isset($data['course_id'])) {
-        throw new Exception('Missing required fields');
+    // Validate input (KHÔNG cần user_id trong body nữa)
+    if (!isset($data['course_id'])) {
+        throw new Exception('Missing required field: course_id');
     }
     
-    $user_id = intval($data['user_id']);
     $course_id = intval($data['course_id']);
     $total_questions = intval($data['total_questions']);
     $correct_count = intval($data['correct_count']);

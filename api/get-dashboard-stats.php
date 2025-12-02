@@ -25,14 +25,14 @@ if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
     exit();
 }
 
-require_once '../config/database.php';
+require_once '../config/config.php';
 
 // Enable error logging for debugging
-error_log("[get-dashboard-stats] Request from user_id: " . ($_GET['user_id'] ?? 'none'));
+error_log("[get-dashboard-stats] Authenticated request");
 
 try {
-    // Lấy user_id từ request
-    $user_id = isset($_GET['user_id']) ? intval($_GET['user_id']) : 0;
+    // BẢO MẬT: Lấy user_id từ session, không tin tưởng URL
+    $user_id = api_verify_user_id($_GET['user_id'] ?? null);
     
     if ($user_id <= 0) {
         throw new Exception('Invalid user_id');

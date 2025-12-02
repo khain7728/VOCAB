@@ -149,6 +149,71 @@ function require_user() {
     }
 }
 
+/**
+ * API Authentication - Kiểm tra session và trả về user_id
+ * Dùng cho API endpoints để đảm bảo user đã đăng nhập
+ * @return int User ID nếu đăng nhập thành công
+ * @throws Exception nếu chưa đăng nhập
+ */
+function api_require_login() {
+    // Khởi động session nếu chưa có
+    if (session_status() === PHP_SESSION_NONE) {
+        session_start();
+    }
+    
+    // Kiểm tra session
+    if (!is_logged_in()) {
+        http_response_code(401);
+        echo json_encode([
+            'success' => false,
+            'error' => 'Unauthorized',
+            'message' => 'Vui lòng đăng nhập để tiếp tục'
+        ]);
+        exit();
+    }
+    
+    return intval($_SESSION['user_id']);
+}
+
+/**
+ * API Authentication cho Admin - Kiểm tra quyền admin
+ * @return int Admin User ID nếu có quyền
+ * @throws Exception nếu không phải admin
+ */
+function api_require_admin() {
+    $user_id = api_require_login();
+    
+    if (!is_admin()) {
+        http_response_code(403);
+        echo json_encode([
+            'success' => false,
+            'error' => 'Forbidden',
+            'message' => 'Bạn không có quyền truy cập API này'
+        ]);
+        exit();
+    }
+    
+    return $user_id;
+}
+
+/**
+ * API Verify User ID - Đảm bảo user chỉ truy cập dữ liệu của chính mình
+ * @param int $requested_user_id User ID được yêu cầu từ request
+ * @return int User ID đã được verify
+ */
+function api_verify_user_id($requested_user_id = null) {
+    $session_user_id = api_require_login();
+    
+    // Nếu là admin, cho phép truy cập dữ liệu của bất kỳ user nào
+    if (is_admin()) {
+        return $requested_user_id ? intval($requested_user_id) : $session_user_id;
+    }
+    
+    // Nếu là user thường, chỉ cho phép truy cập dữ liệu của chính mình
+    // Bỏ qua tham số user_id từ request, luôn dùng session
+    return $session_user_id;
+}
+
 // ========================================
 // HÀM XỬ LÝ SESSION & MESSAGE
 // ========================================

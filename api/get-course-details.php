@@ -12,7 +12,7 @@ ob_start();
 error_reporting(0);
 ini_set('display_errors', 0);
 header('Content-Type: application/json; charset=utf-8');
-require_once '../config/database.php';
+require_once '../config/config.php';
 
 $response = [];
 
@@ -20,7 +20,8 @@ try {
     if (!isset($conn)) throw new Exception("Lỗi kết nối Database");
 
     $course_id = isset($_GET['course_id']) ? intval($_GET['course_id']) : 0;
-    $user_id = isset($_GET['user_id']) ? intval($_GET['user_id']) : 0;
+    // BẢO MẬT: Lấy user_id từ session
+    $user_id = api_verify_user_id($_GET['user_id'] ?? null);
 
     if ($course_id <= 0) throw new Exception('ID khóa học không hợp lệ');
 

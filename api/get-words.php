@@ -7,13 +7,15 @@
 header('Content-Type: application/json; charset=utf-8');
 header('Access-Control-Allow-Origin: *');
 
-// Import database connection
-require_once '../config/database.php';
+// Import config (includes session & functions)
+require_once '../config/config.php';
 
 try {
-    // Lấy parameters từ URL
-    $course_id = isset($_GET['course_id']) ? intval($_GET['course_id']) : 1; // Mặc định khóa học 1
-    $user_id = isset($_GET['user_id']) ? intval($_GET['user_id']) : 1; // Mặc định user 1 (để test)
+    // BẢO MẬT: Lấy user_id từ session
+    $user_id = api_verify_user_id($_GET['user_id'] ?? null);
+    
+    // Lấy course_id từ URL
+    $course_id = isset($_GET['course_id']) ? intval($_GET['course_id']) : 0;
     
     // Validate input
     if ($course_id <= 0 || $user_id <= 0) {

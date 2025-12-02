@@ -9,10 +9,13 @@ error_reporting(E_ALL);
 header('Content-Type: application/json; charset=utf-8');
 header('Access-Control-Allow-Origin: *');
 
-require_once __DIR__ . '/../../config/database.php';
+require_once __DIR__ . '/../../config/config.php';
 
 try {
-    if (!$conn) throw new Exception("Lỗi kết nối CSDL: " . mysqli_connect_error());
+    // ✅ BẢO MẬT: Chỉ admin mới được truy cập
+    api_require_admin();
+    
+    if (!$conn) throw new Exception("Lỗi kết nối CSDỄ: " . mysqli_connect_error());
 
     // Chỉ lấy user thường (role = 'user') hoặc lấy tất cả tùy nhu cầu
     // Ở đây lấy tất cả user có role='user' theo code cũ của bạn

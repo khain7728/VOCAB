@@ -4,11 +4,16 @@
 ini_set('display_errors', 0); // Tắt khi chạy thật
 error_reporting(E_ALL);
 header('Content-Type: application/json; charset=utf-8');
+header('Access-Control-Allow-Origin: *');
 
 try {
     // 1. KẾT NỐI DATABASE
-    require_once __DIR__ . '/../../config/database.php';
-    if (!$conn) throw new Exception("Lỗi kết nối CSDL.");
+    require_once __DIR__ . '/../../config/config.php';
+    
+    // ✅ BẢO MẬT: Chỉ admin mới được truy cập
+    api_require_admin();
+    
+    if (!$conn) throw new Exception("Lỗi kết nối CSDỄ.");
 
     $response = [];
 

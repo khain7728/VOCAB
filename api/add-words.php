@@ -19,13 +19,16 @@ ini_set('display_errors', 1);
 
 header('Content-Type: application/json; charset=utf-8');
 
-require_once '../config/database.php';
+require_once '../config/config.php';
 
 try {
     if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
         throw new Exception('Method Not Allowed');
     }
 
+    // BẢO MẬT: Lấy user_id từ session
+    $user_id = api_require_login();
+    
     // Nhận JSON
     $input = json_decode(file_get_contents('php://input'), true);
     

@@ -11,21 +11,21 @@ header('Access-Control-Allow-Headers: Content-Type');
 
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') { exit(0); }
 
-require_once '../config/database.php';
+require_once '../config/config.php';
 
 try {
     if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
         throw new Exception('Only POST method is allowed');
     }
 
+    // BẢO MẬT: Lấy user_id từ session
+    $user_id = api_require_login();
+    
     $input = json_decode(file_get_contents('php://input'), true);
     if (!$input) { throw new Exception('Invalid JSON input'); }
 
-    $user_id = isset($input['user_id']) ? intval($input['user_id']) : 0;
     $fullname = isset($input['fullname']) ? trim($input['fullname']) : '';
     $bio = isset($input['bio']) ? trim($input['bio']) : '';
-
-    if ($user_id <= 0) { throw new Exception('Invalid user_id'); }
 
     $sql = "UPDATE user SET name = ?, bio = ? WHERE user_id = ?";
     $stmt = $conn->prepare($sql);
