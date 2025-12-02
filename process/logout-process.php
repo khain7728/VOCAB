@@ -24,6 +24,6 @@ session_start();
 set_message('Đăng xuất thành công!', MSG_SUCCESS);
 
 // Redirect về trang chủ
-redirect('/VOCAB/index.php');
+redirect('/VOCAB/index.html');
 
 ?>

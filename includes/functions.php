@@ -145,7 +145,7 @@ function require_user() {
     require_login();
     if (!is_user()) {
         set_message('Bạn không có quyền truy cập trang này!', MSG_ERROR);
-        redirect('/VOCAB/index.php');
+        redirect('/VOCAB/index.html');
     }
 }
 
@@ -286,7 +286,7 @@ function redirect($url) {
  * Redirect về trang trước
  */
 function redirect_back() {
-    $referer = $_SERVER['HTTP_REFERER'] ?? '/VOCAB/index.php';
+    $referer = $_SERVER['HTTP_REFERER'] ?? '/VOCAB/index.html';
     redirect($referer);
 }
 

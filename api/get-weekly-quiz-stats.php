@@ -22,7 +22,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
     exit();
 }
 
-require_once '../config/database.php';
+require_once '../config/config.php';
 
 try {
     $user_id = isset($_GET['user_id']) ? intval($_GET['user_id']) : 0;

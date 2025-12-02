@@ -6,7 +6,7 @@ ini_set('display_errors', 0);
 header('Access-Control-Allow-Origin: *');
 header('Content-Type: application/json; charset=utf-8');
 
-require_once '../../config/database.php';
+require_once '../../config/config.php';
 if (file_exists('../../includes/log_helper.php')) {
     require_once '../../includes/log_helper.php';
 }

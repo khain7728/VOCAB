@@ -3,7 +3,7 @@ error_reporting(0);
 header('Content-Type: application/json; charset=utf-8');
 
 $basePath = dirname(dirname(__DIR__)); 
-require_once $basePath . '/config/database.php';
+require_once $basePath . '/config/config.php';
 
 // Kiểm tra kết nối DB
 if (!$conn) {

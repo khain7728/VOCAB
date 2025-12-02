@@ -13,11 +13,10 @@ header('Content-Type: application/json; charset=utf-8');
 header('Access-Control-Allow-Origin: *');
 header('Access-Control-Allow-Methods: GET, POST, DELETE');
 
-// Import database connection
-require_once '../config/database.php';
+// Import config (bao gồm database và session)
+require_once '../config/config.php';
 
-// Khởi động session để lấy user_id
-session_start();
+// Session đã được khởi động trong config.php
 
 // Lấy user_id từ session (tạm thời dùng default nếu chưa login)
 $user_id = $_SESSION['user_id'] ?? 1; // Mặc định user 1 để test

@@ -10,7 +10,7 @@ ini_set('display_errors', 0);
 header('Content-Type: application/json; charset=utf-8');
 header('Access-Control-Allow-Origin: *');
 
-require_once '../config/database.php';
+require_once '../config/config.php';
 
 try {
     if (!isset($conn)) throw new Exception("Lỗi kết nối Database");

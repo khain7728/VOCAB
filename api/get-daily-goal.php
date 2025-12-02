@@ -25,7 +25,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
     exit();
 }
 
-require_once '../config/database.php';
+require_once '../config/config.php';
 
 // Enable error logging for debugging
 error_log("[get-daily-goal] Request from user_id: " . ($_GET['user_id'] ?? 'none'));

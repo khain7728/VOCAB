@@ -21,7 +21,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
     exit();
 }
 
-require_once '../config/database.php';
+require_once '../config/config.php';
 
 try {
     // Lấy dữ liệu JSON từ request body

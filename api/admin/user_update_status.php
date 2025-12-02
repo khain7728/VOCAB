@@ -8,7 +8,7 @@ ini_set('display_errors', 0); // Tắt lỗi hiển thị
 header('Content-Type: application/json; charset=utf-8');
 
 // 1. Nạp file kết nối và file Log
-require_once __DIR__ . '/../../config/database.php';
+require_once __DIR__ . '/../../config/config.php';
 
 // Kiểm tra và nạp file log
 $logPath = __DIR__ . '/../../includes/log_helper.php';
