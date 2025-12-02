@@ -129,7 +129,7 @@ try {
     // BƯỚC 5: REDIRECT THEO ROLE
     // ========================================
     if ($user['role'] === 'admin') {
-        redirect('/VOCAB/pages/admin/trangchu_admin.php');
+        redirect('/VOCAB/pages/admin/trangchu_admin.html');
     } else {
         redirect('/VOCAB/pages/user/user_Dashboard.html');
     }

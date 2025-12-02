@@ -8,7 +8,7 @@ require_once __DIR__ . '/../config/config.php';
 // Nếu đã đăng nhập, redirect theo role
 if (is_logged_in()) {
     if (is_admin()) {
-        redirect('/VOCAB/pages/admin/trangchu_admin.php');
+        redirect('/VOCAB/pages/admin/trangchu_admin.html');
     } else {
         redirect('/VOCAB/pages/user/user_Dashboard.html');
     }

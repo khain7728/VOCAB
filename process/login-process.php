@@ -110,7 +110,7 @@ try {
     // Redirect theo role
     if ($user['role'] === ROLE_ADMIN) {
         set_message('Chào mừng Admin ' . $user['name'] . '!', MSG_SUCCESS);
-        redirect('/VOCAB/pages/admin/trangchu_admin.php');
+        redirect('/VOCAB/pages/admin/trangchu_admin.html');
     } else {
         set_message('Đăng nhập thành công! Chào mừng ' . $user['name'] . '!', MSG_SUCCESS);
         redirect('/VOCAB/pages/user/user_Dashboard.html');
