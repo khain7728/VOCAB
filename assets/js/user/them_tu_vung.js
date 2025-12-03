@@ -166,7 +166,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
             if (result.success) {
                 alert("Lưu thành công! Đang quay về danh sách khóa học.");
-                window.location.href = `khoa_hoc_cua_toi.html?user_id=1`; // Có thể thay user_id động sau này
+                window.location.href = `khoa_hoc_cua_toi.html`; // user_id sẽ được lấy từ localStorage bởi auth_check.js
             } else {
                 alert("Lỗi: " + result.error);
             }

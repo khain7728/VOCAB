@@ -5,7 +5,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // ============================================================
     const API_BASE_URL = 'http://localhost/VOCAB/api'; 
     const urlParams = new URLSearchParams(window.location.search);
-    const USER_ID = urlParams.get('user_id') || 1;
+    const USER_ID = localStorage.getItem('user_id'); // Lấy từ session đã được lưu bởi auth_check.js
 
     // DOM ELEMENTS
     const tabKhoaHocCongDong = document.getElementById('tab-khoa-hoc-cong-dong');

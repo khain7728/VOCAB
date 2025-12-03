@@ -3,7 +3,7 @@
 // ===========================
 const THEME = '#7BB7EE';
 let COURSE_ID = 1; // Mặc định
-let USER_ID = 1;   // Mặc định
+let USER_ID = localStorage.getItem('user_id'); // Lấy từ session đã được lưu bởi auth_check.js
 let TOTAL_QUESTIONS = 0;
 let currentIndex = 0;
 let quizData = [];

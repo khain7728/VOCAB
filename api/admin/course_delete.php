@@ -12,7 +12,7 @@ if (file_exists('../../includes/log_helper.php')) {
 }
 
 $input = json_decode(file_get_contents('php://input'), true);
-$admin_id = 2; // ID Admin cố định
+$admin_id = $_SESSION['user_id']; // Lấy admin_id từ session đăng nhập
 
 try {
     if (!isset($input['id'])) throw new Exception("Thiếu ID khóa học.");

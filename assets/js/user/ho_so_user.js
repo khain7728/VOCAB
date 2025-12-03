@@ -4,9 +4,9 @@ document.addEventListener('DOMContentLoaded', function() {
     // Đảm bảo đường dẫn này đúng với thư mục dự án của bạn (ví dụ: VOCAB)
     const API_BASE_URL = 'http://localhost/VOCAB/api'; 
     
-    // Lấy ID từ URL
+    // Lấy ID từ localStorage
     const urlParams = new URLSearchParams(window.location.search);
-    const USER_ID = urlParams.get('user_id') || 1; // Mặc định lấy User 1
+    const USER_ID = localStorage.getItem('user_id'); // Lấy từ session đã được lưu bởi auth_check.js
 
     // DOM Elements
     const btnChinhSua = document.getElementById('btn-chinhsua');

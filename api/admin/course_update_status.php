@@ -6,7 +6,7 @@ require_once $rootPath . '/../../config/config.php';
 require_once $rootPath . '/../includes/log_helper.php';
 
 $input = json_decode(file_get_contents('php://input'), true);
-$admin_id = 2; // Giả định admin_id
+$admin_id = $_SESSION['user_id']; // Lấy admin_id từ session đăng nhập
 
 // Kiểm tra đầy đủ dữ liệu cần thiết
 if (isset($input['id']) && isset($input['code']) && isset($input['name']) && isset($input['status']) && isset($input['tags']) && isset($input['description'])) {

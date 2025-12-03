@@ -25,7 +25,7 @@ const API_BASE_URL = '../../api'; // Đường dẫn đến thư mục API
 // Lấy course_id và user_id từ URL hoặc dùng giá trị mặc định
 const urlParams = new URLSearchParams(window.location.search);
 const COURSE_ID = urlParams.get('course_id') || 1; // Mặc định khóa học 1
-const USER_ID = urlParams.get('user_id') || 1; // Mặc định user 1 (để test)
+const USER_ID = localStorage.getItem('user_id'); // Lấy từ session đã được lưu bởi auth_check.js
 
 // =====================================================
 // STATE MANAGEMENT

@@ -20,7 +20,7 @@ try {
     if (!$conn) throw new Exception("Mất kết nối Database.");
 
     $input = json_decode(file_get_contents("php://input"), true);
-    $admin_id = 2; // ID Admin cố định (như đã thống nhất)
+    $admin_id = $_SESSION['user_id']; // Lấy admin_id từ session đăng nhập
 
     if (isset($input['user_id']) && isset($input['status'])) {
         $userId = (int)$input['user_id'];

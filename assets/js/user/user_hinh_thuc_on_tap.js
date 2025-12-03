@@ -7,7 +7,7 @@
  */
 const urlParams = new URLSearchParams(window.location.search);
 const COURSE_ID = urlParams.get('course_id') || 1;
-const USER_ID = urlParams.get('user_id') || 1;
+const USER_ID = localStorage.getItem('user_id'); // Lấy từ session đã được lưu bởi auth_check.js
 
 /**
  * Cập nhật các link với course_id và user_id
