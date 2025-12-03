@@ -121,6 +121,10 @@ document.addEventListener('DOMContentLoaded', function() {
         if (!danhSachContainer) return;
 
         filteredData = coursesData.filter(kh => {
+            // [CẬP NHẬT LOGIC LỌC]: Đồng bộ logic hiển thị, nếu tiến độ 100% thì coi là Hoàn thành khi lọc
+            let hienThiTrangThai = kh.trangThai;
+            if (kh.tienDo === 100) hienThiTrangThai = 'Hoàn thành';
+
             // Filter 1: Nguồn gốc
             let matchNguonGoc = true;
             if (boLocNguonGoc === 'da-tao') {
@@ -132,11 +136,11 @@ document.addEventListener('DOMContentLoaded', function() {
             // Filter 2: Trạng thái học tập
             let matchTrangThai = true;
             if (boLocTrangThai === 'chua-hoc') {
-                matchTrangThai = kh.trangThai === 'Chưa học';
+                matchTrangThai = hienThiTrangThai === 'Chưa học';
             } else if (boLocTrangThai === 'dang-hoc') {
-                matchTrangThai = kh.trangThai === 'Đang học';
+                matchTrangThai = hienThiTrangThai === 'Đang học';
             } else if (boLocTrangThai === 'hoan-thanh') {
-                matchTrangThai = kh.trangThai === 'Hoàn thành';
+                matchTrangThai = hienThiTrangThai === 'Hoàn thành';
             }
             
             // Filter 3: Tìm kiếm
@@ -168,6 +172,12 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function taoTheKhoaHoc(kh) {
+        // [CẬP NHẬT MỚI] Logic override: Nếu tiến độ 100% thì gán cứng trạng thái là Hoàn thành
+        if (kh.tienDo === 100) {
+            kh.trangThai = 'Hoàn thành';
+        }
+        // ---------------------------------------------------------------------------------
+
         const div = document.createElement('div');
         div.className = 'the-khoa-hoc';
         div.setAttribute('data-id', kh.id);
@@ -321,15 +331,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (isUpdate) {
                     fetchMyCourses();
                 } else {
-                    // --- ĐÂY LÀ ĐOẠN QUAN TRỌNG ĐỂ SỬA LỖI ---
-                    // Lấy ID trả về từ PHP
                     const newId = res.course_id; 
 
                     if (newId && newId > 0) {
-                        // Chuyển sang trang thêm từ vựng với ID chuẩn
                         window.location.href = `them_tu_vung.html?id=${newId}&user_id=${USER_ID}`;
                     } else {
-                        // Trường hợp tạo được nhưng ID = 0 (Lỗi DB)
                         alert("Cảnh báo: Không lấy được ID khóa học mới. Vui lòng tải lại trang danh sách.");
                         fetchMyCourses();
                     }
