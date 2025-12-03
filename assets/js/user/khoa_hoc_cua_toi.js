@@ -173,7 +173,8 @@ document.addEventListener('DOMContentLoaded', function() {
         div.setAttribute('data-id', kh.id);
 
         let classTrangThai = kh.trangThai === 'Hoàn thành' ? 'trang-thai-hoan-thanh' : (kh.trangThai === 'Đang học' ? 'trang-thai-dang-hoc' : 'trang-thai-chua-hoc');
-        let btnAction = kh.tienDo === 100 ? { text: 'Kiểm tra', action: 'kiem-tra', class: 'nut-xanh' } : (kh.tienDo > 0 ? { text: 'Ôn tập', action: 'on-tap', class: 'nut-xanh' } : { text: 'Học', action: 'hoc', class: 'nut-trang-vien-xanh' });
+        // Logic nút: Nếu học 100% -> Kiểm tra, ngược lại -> Học
+        let btnAction = kh.tienDo === 100 ? { text: 'Kiểm tra', action: 'kiem-tra', class: 'nut-xanh' } : { text: 'Học', action: 'hoc', class: 'nut-trang-vien-xanh' };
         const btnSua = kh.isOwner ? `<button class="nut-hanh-dong" data-action="sua"><i class="fa-solid fa-pencil"></i></button>` : '';
         const tagsHtml = (kh.tags && kh.tags.length) ? kh.tags.map(t => `<span class="the-tag">${t}</span>`).join('') : '<span class="the-tag" style="opacity:0.5">Không có tag</span>';
 
@@ -431,6 +432,31 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     };
 
+    // Hàm kiểm tra điều kiện kiểm tra (cần ít nhất 2 từ đã học)
+    async function checkAndNavigateToTest(courseId) {
+        try {
+            const response = await fetch(`${API_BASE_URL}/get-words.php?course_id=${courseId}&user_id=${USER_ID}`);
+            const result = await response.json();
+            
+            if (result.success) {
+                const learnedCount = result.data.statistics.learned;
+                
+                if (learnedCount < 2) {
+                    alert('Bạn cần học ít nhất 2 từ vựng trước khi có thể kiểm tra!\n\nHãy học thêm từ vựng để mở khóa tính năng này.');
+                    return;
+                }
+                
+                // Điều hướng đến trang kiểm tra
+                window.location.href = `user_kiem_tra.html?course_id=${courseId}&user_id=${USER_ID}`;
+            } else {
+                alert('Không thể tải thông tin khóa học. Vui lòng thử lại!');
+            }
+        } catch (error) {
+            console.error('Error checking learned words:', error);
+            alert('Lỗi kết nối. Vui lòng thử lại!');
+        }
+    }
+
     // Click Handler cho List
     if(danhSachContainer) danhSachContainer.onclick = (e) => {
         const nut = e.target.closest('.nut-bam, .nut-hanh-dong');
@@ -441,8 +467,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         if(action === 'chi-tiet') window.location.href = `chi_tiet_khoa_hoc.html?id=${id}&user_id=${USER_ID}`;
         else if(action === 'hoc') window.location.href = `user_hoc_tu_vung.html?course_id=${id}&user_id=${USER_ID}`;
-        else if(action === 'on-tap') window.location.href = `user_hinh_thuc_on_tap.html?course_id=${id}&user_id=${USER_ID}`;
-        else if(action === 'kiem-tra') window.location.href = `user_kiem_tra.html?course_id=${id}&user_id=${USER_ID}`;
+        else if(action === 'kiem-tra') checkAndNavigateToTest(id);
         else if(action === 'sua') openEditModal(course);
         else if(action === 'xoa') deleteOrLeaveCourse(id, course.isOwner);
     };

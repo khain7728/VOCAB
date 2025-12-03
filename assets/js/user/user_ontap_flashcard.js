@@ -36,6 +36,10 @@ let fcTotal = 0;
 let userProgress = []; // Lưu trạng thái của từng thẻ
 let startTime = Date.now();
 
+// Audio management - singleton pattern để tránh conflict
+let currentAudio = null;
+let isSpeaking = false;
+
 // =====================================================
 // HELPER FUNCTIONS
 // =====================================================
@@ -216,6 +220,9 @@ function updateMarkButtonsState() {
  * Render flashcard hiện tại
  */
 function renderFlashcard() {
+    // Stop any playing audio when changing flashcard
+    stopAllAudio();
+    
     const c = flashcards[fcIndex];
     
     fcWord.textContent = c.word;
@@ -247,29 +254,89 @@ function flipCard() {
 }
 
 /**
- * Phát âm từ
+ * Dừng tất cả audio đang phát
+ */
+function stopAllAudio() {
+    // Stop HTML5 Audio
+    if (currentAudio) {
+        currentAudio.pause();
+        currentAudio.currentTime = 0;
+        currentAudio = null;
+    }
+    
+    // Stop Speech Synthesis
+    if (window.speechSynthesis && window.speechSynthesis.speaking) {
+        window.speechSynthesis.cancel();
+    }
+    
+    isSpeaking = false;
+}
+
+/**
+ * Phát âm từ - với audio management để tránh conflict
  */
 async function speakWord() {
+    // Prevent spam click
+    if (isSpeaking) {
+        stopAllAudio();
+        return;
+    }
+    
     const c = flashcards[fcIndex];
+    
+    // Stop previous audio before playing new one
+    stopAllAudio();
+    isSpeaking = true;
 
+    // Try to play audio file first
     if (c.audio) {
         try {
-            const audio = new Audio(c.audio);
-            await audio.play();
+            currentAudio = new Audio(c.audio);
+            
+            currentAudio.addEventListener('ended', () => {
+                currentAudio = null;
+                isSpeaking = false;
+            });
+            
+            currentAudio.addEventListener('error', () => {
+                console.log('Audio file failed, fallback to TTS');
+                currentAudio = null;
+                useTTS(c.word);
+            });
+            
+            await currentAudio.play();
             return;
         } catch (error) {
-            console.log('Audio file failed, fallback to TTS:', error);
+            console.log('Audio playback error, fallback to TTS:', error);
+            currentAudio = null;
         }
     }
 
+    // Fallback to Text-to-Speech
+    useTTS(c.word);
+}
+
+/**
+ * Sử dụng Text-to-Speech
+ */
+function useTTS(text) {
     if ('speechSynthesis' in window) {
-        window.speechSynthesis.cancel();
-        const utterance = new SpeechSynthesisUtterance(c.word);
+        const utterance = new SpeechSynthesisUtterance(text);
         utterance.lang = 'en-US';
         utterance.rate = 0.9;
+        
+        utterance.onend = () => {
+            isSpeaking = false;
+        };
+        
+        utterance.onerror = () => {
+            isSpeaking = false;
+        };
+        
         window.speechSynthesis.speak(utterance);
     } else {
         alert('Trình duyệt không hỗ trợ phát âm!');
+        isSpeaking = false;
     }
 }
 

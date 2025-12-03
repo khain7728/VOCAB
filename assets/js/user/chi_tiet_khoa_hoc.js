@@ -124,12 +124,14 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         // C. Logic hiển thị nút Ôn tập / Kiểm tra
-        // Chỉ hiện khi đã học > 0%, hoặc nếu muốn luôn hiện thì bỏ điều kiện if
-        if (info.tienDo > 0) {
-            if(btnOnTap) btnOnTap.style.display = 'inline-block';
+        // Luôn hiện nút, nhưng sẽ check điều kiện khi click
+        if (info.tienDo >= 100) {
+            // Nếu học 100% -> chỉ hiện nút Kiểm tra
+            if(btnOnTap) btnOnTap.style.display = 'none';
             if(btnKiemTra) btnKiemTra.style.display = 'inline-block';
         } else {
-            if(btnOnTap) btnOnTap.style.display = 'none';
+            // Nếu chưa 100% -> hiện nút Ôn tập
+            if(btnOnTap) btnOnTap.style.display = 'inline-block';
             if(btnKiemTra) btnKiemTra.style.display = 'none';
         }
 
@@ -290,9 +292,34 @@ document.addEventListener('DOMContentLoaded', function() {
     const gotoStudy = (page) => {
         window.location.href = `${page}?course_id=${COURSE_ID}&user_id=${USER_ID}`;
     };
+    
+    // Hàm kiểm tra điều kiện ôn tập/kiểm tra
+    async function checkAndNavigate(page) {
+        try {
+            const response = await fetch(`${API_BASE_URL}/get-words.php?course_id=${COURSE_ID}&user_id=${USER_ID}`);
+            const result = await response.json();
+            
+            if (result.success) {
+                const learnedCount = result.data.statistics.learned;
+                
+                if (learnedCount < 2) {
+                    alert('Bạn cần học ít nhất 2 từ vựng trước khi có thể ôn tập hoặc kiểm tra!\n\nHãy học thêm từ vựng để mở khóa tính năng này.');
+                    return;
+                }
+                
+                gotoStudy(page);
+            } else {
+                alert('Không thể tải thông tin khóa học. Vui lòng thử lại!');
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            alert('Lỗi kết nối. Vui lòng thử lại!');
+        }
+    }
+    
     if (btnHoc) btnHoc.addEventListener('click', () => gotoStudy('user_hoc_tu_vung.html'));
-    if (btnOnTap) btnOnTap.addEventListener('click', () => gotoStudy('user_hinh_thuc_on_tap.html'));
-    if (btnKiemTra) btnKiemTra.addEventListener('click', () => gotoStudy('user_kiem_tra.html'));
+    if (btnOnTap) btnOnTap.addEventListener('click', () => checkAndNavigate('user_hinh_thuc_on_tap.html'));
+    if (btnKiemTra) btnKiemTra.addEventListener('click', () => checkAndNavigate('user_kiem_tra.html'));
 
     // --- INIT ---
     fetchCourseDetails();

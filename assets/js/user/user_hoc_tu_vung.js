@@ -342,6 +342,13 @@ btnDanhDauDaHoc.addEventListener('click', (e) => {
 // Nút luyện tập
 btnLuyenTap.addEventListener('click', (e) => {
     e.stopPropagation();
+    
+    // Kiểm tra điều kiện: phải học ít nhất 2 từ
+    if (learnedCount < 2) {
+        alert('Bạn cần học ít nhất 2 từ vựng trước khi có thể ôn tập!\n\nHãy đánh dấu thêm từ là "Đã học" để mở khóa tính năng này.');
+        return;
+    }
+    
     window.location.href = `user_hinh_thuc_on_tap.html?course_id=${COURSE_ID}&user_id=${USER_ID}`;
 });
 
