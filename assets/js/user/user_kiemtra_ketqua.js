@@ -4,6 +4,13 @@
 
 console.log('Loading quiz result page...');
 
+// Ngăn người dùng bấm nút Back của trình duyệt
+history.pushState(null, null, location.href);
+window.addEventListener('popstate', function() {
+    history.pushState(null, null, location.href);
+    alert('⚠️ Bạn không thể quay lại trang kiểm tra.\n\nVui lòng sử dụng các nút điều hướng trên trang.');
+});
+
 // Lấy dữ liệu từ sessionStorage
 const resultDataStr = sessionStorage.getItem('quizResult');
 console.log('Raw sessionStorage data:', resultDataStr);
@@ -24,7 +31,10 @@ if (!resultDataStr) {
 }
 
 function displayResult(data) {
-    const { correct_count, incorrect_count, score, course_id } = data;
+    // Lấy course_id từ data hoặc từ URL nếu không có
+    const urlParams = new URLSearchParams(window.location.search);
+    const course_id = data.course_id || urlParams.get('course_id') || sessionStorage.getItem('current_course_id');
+    const { correct_count, incorrect_count, score } = data;
     
     console.log('Displaying result:', { correct_count, incorrect_count, score, course_id });
     
@@ -58,7 +68,7 @@ function displayResult(data) {
     // Cập nhật các link
     const quayLaiLink = document.querySelector('#frame_thaotac a[href="!#"]');
     if (quayLaiLink) {
-        quayLaiLink.href = `chi_tiet_khoa_hoc.html?course_id=${course_id}`;
+        quayLaiLink.href = `chi_tiet_khoa_hoc.html?id=${course_id}`;
     }
     
     const chiTietLink = document.getElementById('chitietketqua');

@@ -442,7 +442,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if(action === 'chi-tiet') window.location.href = `chi_tiet_khoa_hoc.html?id=${id}&user_id=${USER_ID}`;
         else if(action === 'hoc') window.location.href = `user_hoc_tu_vung.html?course_id=${id}&user_id=${USER_ID}`;
         else if(action === 'on-tap') window.location.href = `user_hinh_thuc_on_tap.html?course_id=${id}&user_id=${USER_ID}`;
-        else if(action === 'kiem-tra') window.location.href = `kiem_tra.html?course_id=${id}&user_id=${USER_ID}`;
+        else if(action === 'kiem-tra') window.location.href = `user_kiem_tra.html?course_id=${id}&user_id=${USER_ID}`;
         else if(action === 'sua') openEditModal(course);
         else if(action === 'xoa') deleteOrLeaveCourse(id, course.isOwner);
     };

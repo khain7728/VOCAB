@@ -30,15 +30,19 @@ try {
                     c.course_id, c.course_name, c.description, c.create_by, c.created_at,
                     u.name as creator_name,
                     uc.status as enroll_status,
-                    uc.progress as user_progress,
-                    (SELECT COUNT(*) FROM word w WHERE w.course_id = c.course_id) as total_words
+                    (SELECT COUNT(*) FROM word w WHERE w.course_id = c.course_id) as total_words,
+                    (SELECT COUNT(DISTINCT lw.word_id) 
+                     FROM learned_word lw 
+                     JOIN word w ON lw.word_id = w.word_id 
+                     WHERE lw.user_id = ? AND w.course_id = c.course_id 
+                     AND lw.status IN ('learning', 'reviewing', 'mastered')) as learned_count
                   FROM course c
                   LEFT JOIN user u ON c.create_by = u.user_id
                   LEFT JOIN user_course uc ON c.course_id = uc.course_id AND uc.user_id = ?
                   WHERE c.course_id = ?";
 
     $stmt = $conn->prepare($sqlCourse);
-    $stmt->bind_param("ii", $user_id, $course_id);
+    $stmt->bind_param("iii", $user_id, $user_id, $course_id);
     $stmt->execute();
     $courseInfo = $stmt->get_result()->fetch_assoc();
 
@@ -47,8 +51,10 @@ try {
     $isOwner = ($courseInfo['create_by'] == $user_id);
     $isJoined = !empty($courseInfo['enroll_status']);
     
-    // Nếu chưa tham gia, progress = 0
-    $progress = isset($courseInfo['user_progress']) ? (int)$courseInfo['user_progress'] : 0;
+    // Tính progress từ số từ đã học
+    $totalWords = (int)$courseInfo['total_words'];
+    $learnedCount = (int)$courseInfo['learned_count'];
+    $progress = $totalWords > 0 ? round(($learnedCount / $totalWords) * 100) : 0;
 
     // --- PHẦN 2: LẤY DANH SÁCH TỪ VỰNG ---
     $sqlWords = "SELECT word_id, word_en, word_vi, definition, pronunciation, audio_file, part_of_speech 

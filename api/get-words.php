@@ -57,6 +57,9 @@ try {
     
     $words = [];
     while ($row = $vocabularyResult->fetch_assoc()) {
+        // FIX BUG: Tính learned khi status là learning, reviewing hoặc mastered
+        $isLearned = in_array($row['learned_status'], ['learning', 'reviewing', 'mastered']);
+        
         $words[] = [
             'word_id' => (int)$row['word_id'],
             'word' => $row['word_en'],
@@ -65,7 +68,7 @@ try {
             'ipa' => $row['pronunciation'],
             'audio' => $row['audio_file'],
             'part_of_speech' => $row['part_of_speech'],
-            'learned' => $row['learned_status'] === 'mastered' || $row['learned_status'] === 'reviewing',
+            'learned' => $isLearned,
             'status' => $row['learned_status'],
             'progress' => (int)$row['learning_progress'],
             'position' => (int)$row['current_position']

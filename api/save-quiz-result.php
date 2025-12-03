@@ -103,6 +103,8 @@ try {
     $updateStats->bind_param("ii", $user_id, $user_id);
     $updateStats->execute();
     
+    // KHÔNG CẦN cập nhật user_course.progress vì get-my-courses.php sẽ tính real-time từ learned_word
+    
     // Commit transaction
     $conn->commit();
     

@@ -43,15 +43,24 @@ try {
         $current_progress = $row['learning_progress'];
         $review_count = $row['review_count'];
         
-        // Tính toán trạng thái mới
-        $new_status = $learned ? 'reviewing' : 'learning';
-        $new_progress = $learned ? min(100, $current_progress + 10) : max(0, $current_progress - 5);
-        $new_review_count = $review_count + 1;
-        
-        // Nếu progress = 100, chuyển sang mastered
-        if ($new_progress >= 100) {
-            $new_status = 'mastered';
+        // FIX BUG: Tính toán trạng thái mới
+        if ($learned) {
+            // Khi đánh dấu đã học: tăng progress
+            $new_progress = min(100, $current_progress + 20);
+            if ($new_progress >= 100) {
+                $new_status = 'mastered';
+            } else if ($new_progress >= 50) {
+                $new_status = 'reviewing';
+            } else {
+                $new_status = 'learning';
+            }
+        } else {
+            // Khi bỏ đánh dấu: giảm progress
+            $new_progress = max(0, $current_progress - 20);
+            $new_status = $new_progress > 0 ? 'learning' : 'not_learned';
         }
+        
+        $new_review_count = $review_count + 1;
         
         $updateStmt = $conn->prepare(
             "UPDATE learned_word 
@@ -66,9 +75,9 @@ try {
         $updateStmt->execute();
         
     } else {
-        // Tạo record mới
+        // FIX BUG: Tạo record mới với status phù hợp
         $initial_status = $learned ? 'learning' : 'not_learned';
-        $initial_progress = $learned ? 10 : 0;
+        $initial_progress = $learned ? 20 : 0;
         
         $insertStmt = $conn->prepare(
             "INSERT INTO learned_word 

@@ -2,6 +2,13 @@
 // LOAD & DISPLAY DETAILED RESULT
 // ===========================
 
+// Ngăn người dùng bấm nút Back của trình duyệt
+history.pushState(null, null, location.href);
+window.addEventListener('popstate', function() {
+    history.pushState(null, null, location.href);
+    alert('⚠️ Bạn không thể quay lại trang kiểm tra.\n\nVui lòng sử dụng các nút điều hướng trên trang.');
+});
+
 // Lấy dữ liệu từ sessionStorage
 const resultData = JSON.parse(sessionStorage.getItem('quizResult'));
 
@@ -13,7 +20,10 @@ if (!resultData) {
 }
 
 function displayDetailedResult(data) {
-    const { userAnswers, score, course_id } = data;
+    // Lấy course_id từ data hoặc từ URL nếu không có
+    const urlParams = new URLSearchParams(window.location.search);
+    const course_id = data.course_id || urlParams.get('course_id') || sessionStorage.getItem('current_course_id');
+    const { userAnswers, score } = data;
     
     // Cập nhật tỷ lệ đúng ở header
     document.getElementById('tyledung').textContent = score + '%';
@@ -65,7 +75,7 @@ function displayDetailedResult(data) {
         // Cập nhật link
         const quayLaiLink = document.getElementById('quaylaikhoahoc');
         if (quayLaiLink) {
-            quayLaiLink.href = `chi_tiet_khoa_hoc.html?course_id=${course_id}`;
+            quayLaiLink.href = `chi_tiet_khoa_hoc.html?id=${course_id}`;
         }
         
         const hocLaiLink = document.getElementById('hoclai');
@@ -76,7 +86,7 @@ function displayDetailedResult(data) {
         // Tạo mới phần thaotac nếu không có
         const thaotacHTML = `
             <div id="thaotac">
-                <a href="chi_tiet_khoa_hoc.html?course_id=${course_id}" id="quaylaikhoahoc">Quay lại khóa học</a>
+                <a href="chi_tiet_khoa_hoc.html?id=${course_id}" id="quaylaikhoahoc">Quay lại khóa học</a>
                 <a href="user_hoc_tu_vung.html?course_id=${course_id}" id="hoclai">Học lại với flashcard</a>
             </div>
         `;

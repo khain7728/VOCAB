@@ -135,25 +135,49 @@ function buildQuizDeck(words) {
 // LOAD QUIZ DATA
 // ===========================
 async function loadQuizData() {
+    // Bug #26: Show loading spinner
+    const loadingEl = document.getElementById('kt-loading');
+    if (loadingEl) loadingEl.style.display = 'block';
+    
     try {
         // Lấy course_id từ URL hoặc dùng mặc định
         const urlCourseId = getUrlParam('course_id');
-        if (urlCourseId) COURSE_ID = parseInt(urlCourseId);
-        
-        // TODO: Lấy user_id từ session PHP (tạm thời dùng mặc định)
+        if (urlCourseId) {
+            COURSE_ID = parseInt(urlCourseId);
+            // Lưu vào sessionStorage để fallback
+            sessionStorage.setItem('current_course_id', COURSE_ID);
+        }
         
         const response = await fetch(`../../api/get-quiz-words.php?course_id=${COURSE_ID}`);
         const data = await response.json();
         
+        // Bug #26: Hide loading spinner
+        if (loadingEl) loadingEl.style.display = 'none';
+        
+        // Bug #14 & #28: Specific error handling
         if (!data.success) {
-            throw new Error(data.error || 'Failed to load quiz data');
+            const errorMsg = data.error || '';
+            
+            if (errorMsg.includes('not found') || errorMsg.includes('không tồn tại')) {
+                alert('❌ Không tìm thấy khóa học này.\n\nVui lòng kiểm tra lại hoặc quay về trang chủ.');
+                window.location.href = 'khoa_hoc_cua_toi.html';
+                return;
+            } else if (errorMsg.includes('no words') || errorMsg.includes('không có từ')) {
+                alert('📚 Khóa học này chưa có từ vựng nào.\n\nVui lòng thêm từ vựng trước khi làm bài kiểm tra.');
+                window.location.href = 'chi_tiet_khoa_hoc.html?id=' + COURSE_ID;
+                return;
+            } else {
+                alert('⚠️ Không thể tải bài kiểm tra.\n\n' + errorMsg);
+                window.location.href = 'khoa_hoc_cua_toi.html';
+                return;
+            }
         }
         
         const words = data.data.words;
         
         if (words.length === 0) {
-            alert('Khóa học này chưa có từ vựng!');
-            window.location.href = 'chi_tiet_khoa_hoc.html?course_id=' + COURSE_ID;
+            alert('📚 Khóa học này chưa có từ vựng nào.\n\nVui lòng thêm từ vựng trước khi làm bài kiểm tra.');
+            window.location.href = 'chi_tiet_khoa_hoc.html?id=' + COURSE_ID;
             return;
         }
         
@@ -165,7 +189,13 @@ async function loadQuizData() {
         
     } catch (error) {
         console.error('Error loading quiz:', error);
-        alert('Có lỗi xảy ra khi tải bài kiểm tra!');
+        
+        // Bug #26: Hide loading spinner on error
+        if (loadingEl) loadingEl.style.display = 'none';
+        
+        // Bug #28: User-friendly error message
+        alert('⚠️ Không thể kết nối đến server.\n\nVui lòng kiểm tra kết nối internet và thử lại.');
+        window.location.href = 'khoa_hoc_cua_toi.html';
     }
 }
 
@@ -175,6 +205,25 @@ async function loadQuizData() {
 function updateProgress() {
     progressCount.textContent = `${currentIndex}/${TOTAL_QUESTIONS}`;
     progressInner.style.width = `${(currentIndex / TOTAL_QUESTIONS) * 100}%`;
+}
+
+function renderQuestion() {
+    if (currentIndex >= TOTAL_QUESTIONS) {
+        finishQuiz();
+        return;
+    }
+    
+    // Bug #37: Scroll to top when rendering new question
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    
+    updateProgress();
+    const item = quizData[currentIndex];
+    
+    if (item.type === 'mcq') {
+        renderMCQ(item);
+    } else {
+        renderFill(item);
+    }
 }
 
 function hideAllFrames() {
@@ -385,12 +434,12 @@ async function finishQuiz() {
             session_id: data.session_id || null
         }));
         
-        // Chuyển đến trang kết quả
-        window.location.href = 'user_kiemtra_ketqua.html';
+        // Chuyển đến trang kết quả (dùng replace để không lưu vào history)
+        window.location.replace('user_kiemtra_ketqua.html');
         
     } catch (error) {
         console.error('Error saving quiz result:', error);
-        alert('Có lỗi khi lưu kết quả. Vui lòng thử lại!');
+        alert('⚠️ Không thể lưu kết quả bài kiểm tra.\n\nVui lòng kiểm tra kết nối internet và thử làm lại.');
     }
 }
 

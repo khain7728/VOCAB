@@ -19,13 +19,18 @@ try {
     // BẢO MẬT: Lấy user_id từ session
     $user_id = api_verify_user_id($_GET['user_id'] ?? null);
 
-    // CẬP NHẬT: Dùng bảng user_course
+    // CẬP NHẬT: Tính progress từ learned_word thay vì user_course.progress
     $sql = "SELECT 
                 c.course_id, c.course_name, c.description, c.create_by, c.visibility,
                 u.name as creator_name,
-                uc.progress, uc.status as enroll_status,
+                uc.status as enroll_status,
                 (SELECT COUNT(*) FROM word w WHERE w.course_id = c.course_id) as word_count,
-                (SELECT COUNT(*) FROM user_course uc_count WHERE uc_count.course_id = c.course_id) as student_count
+                (SELECT COUNT(*) FROM user_course uc_count WHERE uc_count.course_id = c.course_id) as student_count,
+                (SELECT COUNT(DISTINCT lw.word_id) 
+                 FROM learned_word lw 
+                 JOIN word w ON lw.word_id = w.word_id 
+                 WHERE lw.user_id = ? AND w.course_id = c.course_id 
+                 AND lw.status IN ('learning', 'reviewing', 'mastered')) as learned_count
             FROM course c
             LEFT JOIN user_course uc ON c.course_id = uc.course_id AND uc.user_id = ?
             LEFT JOIN user u ON c.create_by = u.user_id
@@ -33,7 +38,7 @@ try {
             ORDER BY c.created_at DESC";
 
     $stmt = $conn->prepare($sql);
-    $stmt->bind_param("iii", $user_id, $user_id, $user_id);
+    $stmt->bind_param("iiii", $user_id, $user_id, $user_id, $user_id);
     $stmt->execute();
     $result = $stmt->get_result();
 
@@ -50,12 +55,21 @@ try {
         } catch (Exception $ex) {}
 
         $isOwner = ($row['create_by'] == $user_id);
-        $trangThai = 'Chưa học';
-        $progress = isset($row['progress']) ? (int)$row['progress'] : 0;
+        
+        // Tính progress từ số từ đã học
+        $wordCount = (int)$row['word_count'];
+        $learnedCount = (int)$row['learned_count'];
+        $progress = $wordCount > 0 ? round(($learnedCount / $wordCount) * 100) : 0;
+        
+        // Xác định trạng thái
         $enrollStatus = $row['enroll_status'] ?? '';
-
-        if ($enrollStatus === 'completed' || $progress === 100) $trangThai = 'Hoàn thành';
-        else if ($progress > 0 || $enrollStatus === 'active') $trangThai = 'Đang học';
+        if ($progress === 100) {
+            $trangThai = 'Hoàn thành';
+        } else if ($progress > 0) {
+            $trangThai = 'Đang học';
+        } else {
+            $trangThai = 'Chưa học';
+        }
         
         $courses[] = [
             'id' => $row['course_id'],
