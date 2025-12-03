@@ -22,10 +22,16 @@ const tienDoElement = document.getElementById('tiendo');
 // =====================================================
 const API_BASE_URL = '../../api'; // Đường dẫn đến thư mục API
 
-// Lấy course_id và user_id từ URL hoặc dùng giá trị mặc định
+// FIX #14: Validate course_id từ URL
 const urlParams = new URLSearchParams(window.location.search);
-const COURSE_ID = urlParams.get('course_id') || 1; // Mặc định khóa học 1
-const USER_ID = localStorage.getItem('user_id'); // Lấy từ session đã được lưu bởi auth_check.js
+const COURSE_ID = urlParams.get('course_id');
+const USER_ID = localStorage.getItem('user_id');
+
+// Kiểm tra course_id hợp lệ
+if (!COURSE_ID || isNaN(COURSE_ID) || parseInt(COURSE_ID) <= 0) {
+    alert('Mã khóa học không hợp lệ!');
+    window.location.href = 'khoa_hoc_cua_toi.html?user_id=' + USER_ID;
+}
 
 // =====================================================
 // STATE MANAGEMENT
@@ -35,6 +41,7 @@ let current = 0;
 let total = 0;
 let learnedCount = 0;
 let isLoading = false;
+let currentAudio = null; // FIX #40: Track audio hiện tại để tránh conflict
 
 // =====================================================
 // API FUNCTIONS
@@ -59,11 +66,29 @@ async function fetchVocabulary() {
         const result = await response.json();
 
         if (!result.success) {
+            // FIX #14: Xử lý lỗi khóa học không tồn tại hoặc không có quyền
+            if (result.error === 'COURSE_NOT_FOUND') {
+                alert('Khóa học không tồn tại!');
+                window.location.href = 'khoa_hoc_cua_toi.html?user_id=' + USER_ID;
+                return;
+            }
+            if (result.error === 'ACCESS_DENIED') {
+                alert('Bạn chưa tham gia khóa học này!');
+                window.location.href = 'khoa_hoc_cong_dong.html?user_id=' + USER_ID;
+                return;
+            }
             throw new Error(result.error || 'Failed to fetch vocabulary');
         }
 
         // Lưu dữ liệu
         vocabularyData = result.data.words;
+        
+        // Sắp xếp: Từ chưa học (learned = false) lên đầu, từ đã học (learned = true) xuống cuối
+        vocabularyData.sort((a, b) => {
+            if (a.learned === b.learned) return 0;
+            return a.learned ? 1 : -1; // false lên trước, true xuống sau
+        });
+        
         total = vocabularyData.length;
         learnedCount = result.data.statistics.learned;
 
@@ -75,16 +100,18 @@ async function fetchVocabulary() {
         
         if (total === 0) {
             showError('Khóa học này chưa có từ vựng nào!');
+            isLoading = false; // Reset isLoading trước khi return
             return;
         }
 
+        // FIX: Set isLoading = false TRƯỚC khi updateUI để button không bị disable
+        isLoading = false;
         updateUI();
 
     } catch (error) {
         console.error('Error fetching vocabulary:', error);
         hideLoading();
         showError('Không thể tải dữ liệu từ vựng. Vui lòng thử lại!');
-    } finally {
         isLoading = false;
     }
 }
@@ -162,6 +189,11 @@ function updateUI() {
         btnDanhDauDaHoc.style.backgroundColor = "white";
         btnDanhDauDaHoc.style.color = "black";
     }
+
+    // FIX #34: Enable/Disable button dựa trên isLoading
+    btnDanhDauDaHoc.disabled = isLoading;
+    btnDanhDauDaHoc.style.opacity = isLoading ? '0.5' : '1';
+    btnDanhDauDaHoc.style.cursor = isLoading ? 'not-allowed' : 'pointer';
 
     // Đảm bảo flashcard ở mặt trước
     frame.classList.remove('flipped');
@@ -245,10 +277,13 @@ function prevCard() {
 
 /**
  * Đánh dấu đã học
+ * FIX #6 + #34: Thêm lock để tránh race condition và disable button
  */
 async function toggleLearned() {
     if (isLoading) return;
 
+    // FIX #6: Khóa ngay để tránh race condition
+    isLoading = true;
     const currentVocab = vocabularyData[current];
     const newLearnedState = !currentVocab.learned;
 
@@ -264,8 +299,7 @@ async function toggleLearned() {
     // Gửi request lên server
     const result = await updateLearnedStatus(currentVocab.word_id, newLearnedState);
 
-    if (result) {
-    } else {
+    if (!result) {
         // Rollback nếu lỗi
         currentVocab.learned = !newLearnedState;
         if (newLearnedState) {
@@ -273,31 +307,56 @@ async function toggleLearned() {
         } else {
             learnedCount++;
         }
-        updateUI();
     }
+    
+    // FIX #6: Mở khóa sau khi hoàn thành
+    isLoading = false;
+    updateUI();
 }
 
 /**
  * Phát âm từ (Text-to-Speech hoặc Audio file)
+ * FIX #40: Tránh conflict khi phát nhiều audio cùng lúc
  */
 async function speakWord() {
     const currentVocab = vocabularyData[current];
 
+    // FIX #40: Cancel audio/TTS cũ trước khi phát mới
+    if (currentAudio) {
+        currentAudio.pause();
+        currentAudio.currentTime = 0;
+        currentAudio = null;
+    }
+    
+    if ('speechSynthesis' in window) {
+        window.speechSynthesis.cancel();
+    }
+
     // Nếu có audio file, phát từ file
     if (currentVocab.audio) {
         try {
-            const audio = new Audio(currentVocab.audio);
-            await audio.play();
+            currentAudio = new Audio(currentVocab.audio);
+            
+            // Cleanup khi phát xong
+            currentAudio.addEventListener('ended', () => {
+                currentAudio = null;
+            });
+            
+            // Cleanup nếu có lỗi
+            currentAudio.addEventListener('error', () => {
+                currentAudio = null;
+            });
+            
+            await currentAudio.play();
             return;
         } catch (error) {
             console.log('Audio file failed, fallback to TTS:', error);
+            currentAudio = null;
         }
     }
 
     // Fallback: Dùng Text-to-Speech của browser
     if ('speechSynthesis' in window) {
-        window.speechSynthesis.cancel();
-
         const utterance = new SpeechSynthesisUtterance(currentVocab.word);
         utterance.lang = 'en-US';
         utterance.rate = 0.8;
