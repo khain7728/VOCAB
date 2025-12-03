@@ -2,25 +2,27 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // === CẤU HÌNH ===
     const API_BASE_URL = 'http://localhost/VOCAB/api'; 
-    // Lấy user_id từ localStorage
-    const urlParams = new URLSearchParams(window.location.search);
-    const USER_ID = localStorage.getItem('user_id'); // Lấy từ session đã được lưu bởi auth_check.js
+    const USER_ID = localStorage.getItem('user_id'); 
 
-    // DOM
+    // DOM ELEMENTS
     const danhSachContainer = document.getElementById('danh-sach-khoa-hoc-cong-dong');
     const thanhTimKiem = document.getElementById('thanh-tim-kiem');
     const tabKhoaHocCuaToi = document.getElementById('tab-khoa-hoc-cua-toi');
     const boLocHienTai = document.getElementById('bo-loc-hien-tai');
     const menuLocDropdown = document.getElementById('menu-loc-dropdown');
     const tieuDeLoc = document.getElementById('tieu-de-loc');
+    
+    // [FIX Lỗi #30]: Element hiển thị text kết quả tìm kiếm (cần thêm vào HTML)
+    const textKetQuaTimKiem = document.getElementById('ket-qua-tim-kiem-text');
 
-    // State
+    // STATE
     let allCoursesData = [];
     let filteredData = [];
     let tuKhoaTimKiem = '';
-    let boLoc = 'tat-ca'; // tat-ca, da-tham-gia, chua-tham-gia
-    
-    // ... (Giữ nguyên các phần khai báo biến phân trang cũ) ...
+    let boLoc = 'tat-ca'; 
+    let searchTimeout = null; // [FIX Lỗi #41]: Biến dùng cho Debounce
+
+    // PHÂN TRANG
     let trangHienTai = 1;
     const soMucTrenTrang = 5;
     const khungPhanTrang = document.getElementById('khung-phan-trang');
@@ -33,8 +35,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
             if (result.success) {
                 allCoursesData = result.data;
-                filteredData = allCoursesData;
-                renderDanhSach();
+                // Nếu đang reload sau khi join, cần áp dụng lại bộ lọc hiện tại
+                applyFilterAndRender(); 
             } else {
                 console.error(result.error);
                 danhSachContainer.innerHTML = `<p class="thong-bao-rong">Lỗi: ${result.error}</p>`;
@@ -44,8 +46,8 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    // --- 2. GỌI API THAM GIA KHÓA HỌC (NEW) ---
-    async function joinCourse(courseId) {
+    // --- 2. GỌI API THAM GIA KHÓA HỌC ---
+    async function joinCourse(courseId, buttonElement) {
         try {
             const response = await fetch(`${API_BASE_URL}/join-course.php`, {
                 method: 'POST',
@@ -61,42 +63,45 @@ document.addEventListener('DOMContentLoaded', function() {
             if (result.success) {
                 alert("Đã tham gia khóa học thành công!");
                 
-                // Cập nhật giao diện ngay lập tức (Client-side Update)
-                // Tìm khóa học trong mảng và đổi trạng thái
-                const courseIndex = allCoursesData.findIndex(c => c.id == courseId);
-                if (courseIndex > -1) {
-                    allCoursesData[courseIndex].daThamGia = true;
-                    allCoursesData[courseIndex].hocVien += 1; // Tăng số học viên ảo lên 1
-                    
-                    // Render lại để nút "Thêm" biến mất, hiện "Đã tham gia"
-                    renderDanhSach();
-                }
+                // [FIX Lỗi #4]: Reload data từ server thay vì sửa mảng local
+                // Gọi lại API để lấy dữ liệu mới nhất (số học viên, trạng thái joined)
+                fetchCommunityCourses(); 
+                
             } else {
                 alert("Lỗi: " + result.error);
+                // Nếu lỗi logic (ví dụ đã tham gia rồi), mở lại nút bấm
+                if(buttonElement) {
+                    buttonElement.disabled = false;
+                    buttonElement.innerText = "Thêm";
+                }
             }
 
         } catch (error) {
             console.error(error);
             alert("Lỗi kết nối server khi tham gia khóa học.");
+            // Nếu lỗi mạng, mở lại nút bấm
+            if(buttonElement) {
+                buttonElement.disabled = false;
+                buttonElement.innerText = "Thêm";
+            }
         }
     }
 
-    // --- 3. RENDER & EVENT ---
-    function renderDanhSach() {
-        if (!danhSachContainer) return;
-
-        // Lọc theo bộ lọc
+    // --- 3. LOGIC LỌC DỮ LIỆU ---
+    // Tách logic lọc ra để dùng chung cho việc search và reload data
+    function applyFilterAndRender() {
         let tempData = allCoursesData;
         
+        // 1. Lọc theo trạng thái
         if (boLoc === 'da-tham-gia') {
             tempData = tempData.filter(kh => kh.daThamGia === true);
         } else if (boLoc === 'chua-tham-gia') {
             tempData = tempData.filter(kh => !kh.daThamGia || kh.daThamGia === false);
         }
         
-        // Lọc theo từ khóa tìm kiếm
-        if (tuKhoaTimKiem) {
-            const k = tuKhoaTimKiem.toLowerCase();
+        // 2. Lọc theo từ khóa tìm kiếm
+        if (tuKhoaTimKiem && tuKhoaTimKiem.trim() !== '') {
+            const k = tuKhoaTimKiem.toLowerCase().trim();
             filteredData = tempData.filter(kh => 
                 kh.tieuDe.toLowerCase().includes(k) ||
                 (kh.mota && kh.mota.toLowerCase().includes(k))
@@ -105,7 +110,29 @@ document.addEventListener('DOMContentLoaded', function() {
             filteredData = tempData;
         }
 
-        // Phân trang (Logic giữ nguyên như cũ)
+        renderDanhSach();
+    }
+
+    // --- 4. RENDER GIAO DIỆN ---
+    function renderDanhSach() {
+        if (!danhSachContainer) return;
+
+        // [FIX Lỗi #30]: Hiển thị dòng chữ kết quả tìm kiếm bên dưới thanh search
+        if (textKetQuaTimKiem) {
+            if (tuKhoaTimKiem && tuKhoaTimKiem.trim() !== '') {
+                // Chỉ hiện khi có từ khóa tìm kiếm
+                textKetQuaTimKiem.innerText = `Có ${filteredData.length} khóa học liên quan`;
+                textKetQuaTimKiem.style.display = 'block';
+                textKetQuaTimKiem.style.color = '#6b7280'; // Style nhanh nếu chưa có CSS
+                textKetQuaTimKiem.style.marginBottom = '1rem';
+            } else {
+                // Ẩn đi khi không tìm kiếm
+                textKetQuaTimKiem.innerText = '';
+                textKetQuaTimKiem.style.display = 'none';
+            }
+        }
+
+        // Tính toán phân trang
         const tongSoMuc = filteredData.length;
         const tongSoTrang = Math.ceil(tongSoMuc / soMucTrenTrang);
         if (trangHienTai > tongSoTrang && tongSoTrang > 0) trangHienTai = 1;
@@ -114,8 +141,14 @@ document.addEventListener('DOMContentLoaded', function() {
         const dataTrenTrang = filteredData.slice(batDau, ketThuc);
 
         danhSachContainer.innerHTML = '';
+        
         if (dataTrenTrang.length === 0) {
-            danhSachContainer.innerHTML = '<p class="thong-bao-rong">Không có khóa học nào.</p>';
+            // [FIX Lỗi #27]: Empty state rõ ràng hơn (Thêm icon và style)
+            danhSachContainer.innerHTML = `
+                <div class="thong-bao-rong" style="display:flex; flex-direction:column; align-items:center; opacity:0.7; padding: 2rem 0;">
+                    <i class="fa-solid fa-box-open" style="font-size: 3rem; margin-bottom: 1rem; color:#9ca3af;"></i>
+                    <p>Không tìm thấy khóa học nào phù hợp.</p>
+                </div>`;
         } else {
             dataTrenTrang.forEach(kh => {
                 danhSachContainer.appendChild(taoTheKhoaHoc(kh));
@@ -132,7 +165,6 @@ document.addEventListener('DOMContentLoaded', function() {
         const classTrangThai = kh.daThamGia ? 'trang-thai-da-tham-gia' : 'trang-thai-chua-tham-gia';
         const textTrangThai = kh.daThamGia ? 'Đã tham gia' : 'Chưa tham gia';
         
-        // Chỉ hiện nút Thêm nếu chưa tham gia
         const nutThemHtml = !kh.daThamGia
             ? `<button class="nut-bam nut-them" data-action="them">Thêm</button>`
             : ''; 
@@ -172,7 +204,6 @@ document.addEventListener('DOMContentLoaded', function() {
         return theDiv;
     }
 
-    // Hàm phân trang
     function renderPhanTrang(tongSoTrang) {
         if (!khungPhanTrang) return;
         khungPhanTrang.innerHTML = '';
@@ -183,20 +214,28 @@ document.addEventListener('DOMContentLoaded', function() {
             btn.className = 'nut-phan-trang' + (active ? ' trang-hien-tai' : '');
             btn.innerHTML = text;
             btn.disabled = disabled;
-            btn.addEventListener('click', () => { trangHienTai = page; renderDanhSach(); });
+            btn.addEventListener('click', () => { 
+                trangHienTai = page; 
+                renderDanhSach();
+                
+                // [FIX Lỗi #38]: Smooth scroll lên đầu danh sách khi chuyển trang
+                danhSachContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            });
             return btn;
         };
 
-        khungPhanTrang.appendChild(taoNut('<i class="fa-solid fa-chevron-left"></i> Trang trước', trangHienTai - 1, trangHienTai === 1, false));
+        khungPhanTrang.appendChild(taoNut('<i class="fa-solid fa-chevron-left"></i>', trangHienTai - 1, trangHienTai === 1, false));
+        
         for (let i = 1; i <= tongSoTrang; i++) {
             khungPhanTrang.appendChild(taoNut(i, i, false, i === trangHienTai));
         }
-        khungPhanTrang.appendChild(taoNut('Trang sau <i class="fa-solid fa-chevron-right"></i>', trangHienTai + 1, trangHienTai === tongSoTrang, false));
+        
+        khungPhanTrang.appendChild(taoNut('<i class="fa-solid fa-chevron-right"></i>', trangHienTai + 1, trangHienTai === tongSoTrang, false));
     }
 
-    // --- LISTENERS ---
+    // --- 5. LISTENERS ---
     
-    // Xử lý click nút Thêm
+    // Xử lý click nút Thêm và Chi tiết
     if (danhSachContainer) {
         danhSachContainer.addEventListener('click', (e) => {
             const nut = e.target.closest('.nut-bam');
@@ -208,18 +247,29 @@ document.addEventListener('DOMContentLoaded', function() {
                 window.location.href = `chi_tiet_khoa_hoc.html?id=${id}&user_id=${USER_ID}`;
             } else if (action === 'them') {
                 if (confirm('Bạn có muốn tham gia khóa học này?')) {
-                    // Gọi hàm xử lý tham gia
-                    joinCourse(id);
+                    // [FIX Lỗi #34]: Disable button ngay sau khi click
+                    nut.disabled = true;
+                    nut.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Đang xử lý...';
+                    
+                    // Truyền nút vào hàm joinCourse để xử lý bật lại nếu lỗi
+                    joinCourse(id, nut);
                 }
             }
         });
     }
 
+    // [FIX Lỗi #41]: Debounce search input
     if (thanhTimKiem) {
         thanhTimKiem.addEventListener('input', (e) => {
-            tuKhoaTimKiem = e.target.value.toLowerCase();
-            trangHienTai = 1;
-            renderDanhSach();
+            // Xóa timeout cũ nếu người dùng gõ tiếp
+            if (searchTimeout) clearTimeout(searchTimeout);
+
+            // Đặt timeout mới (chờ 300ms)
+            searchTimeout = setTimeout(() => {
+                tuKhoaTimKiem = e.target.value; // Lấy giá trị gốc
+                trangHienTai = 1;
+                applyFilterAndRender(); // Gọi hàm lọc chung
+            }, 300);
         });
     }
 
@@ -233,7 +283,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // Đóng dropdown khi click bên ngoài
     document.addEventListener('click', (e) => {
         if (!menuLocDropdown.contains(e.target) && !boLocHienTai.contains(e.target)) {
             menuLocDropdown.classList.add('an');
@@ -249,13 +298,11 @@ document.addEventListener('DOMContentLoaded', function() {
             const filter = luaChon.getAttribute('data-filter');
             boLoc = filter;
             
-            // Cập nhật active state
             menuLocDropdown.querySelectorAll('.lua-chon-loc').forEach(item => {
                 item.classList.remove('active');
             });
             luaChon.classList.add('active');
             
-            // Cập nhật tiêu đề
             const tieuDe = {
                 'tat-ca': 'Tất cả khóa học',
                 'da-tham-gia': 'Đã tham gia',
@@ -263,10 +310,10 @@ document.addEventListener('DOMContentLoaded', function() {
             };
             tieuDeLoc.textContent = tieuDe[filter] || 'Tất cả khóa học';
             
-            // Đóng dropdown và render lại
             menuLocDropdown.classList.add('an');
             trangHienTai = 1;
-            renderDanhSach();
+            
+            applyFilterAndRender(); // Dùng hàm chung
         });
     }
 

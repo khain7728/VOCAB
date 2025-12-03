@@ -1,15 +1,16 @@
 <?php
 // api/join-course.php
-// --- BẮT ĐẦU: CẤU HÌNH CORS CHUẨN ---
+// --- CẤU HÌNH CORS ---
 header('Access-Control-Allow-Origin: *');
-header('Access-Control-Allow-Methods: GET, POST, OPTIONS, PUT, DELETE');
-header('Access-Control-Allow-Headers: Content-Type, Access-Control-Allow-Headers, Authorization, X-Requested-With');
+header('Access-Control-Allow-Methods: POST, OPTIONS');
+header('Access-Control-Allow-Headers: Content-Type');
 
 if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
     http_response_code(200);
     exit();
 }
-// --- KẾT THÚC: CẤU HÌNH CORS CHUẨN ---
+// ---------------------
+
 error_reporting(0);
 ini_set('display_errors', 0);
 header('Content-Type: application/json; charset=utf-8');
@@ -18,40 +19,63 @@ require_once '../config/config.php';
 try {
     if ($_SERVER['REQUEST_METHOD'] !== 'POST') throw new Exception('Method Not Allowed');
     
-    // BẢO MẬT: Lấy user_id từ session
-    $user_id = api_require_login();
-    
+    // 1. Lấy dữ liệu từ Client (JSON)
     $input = json_decode(file_get_contents('php://input'), true);
+    
+    // Lấy user_id và course_id từ input (Vì JS gửi dạng JSON body)
+    $user_id = isset($input['user_id']) ? intval($input['user_id']) : 0;
     $course_id = isset($input['course_id']) ? intval($input['course_id']) : 0;
 
-    if ($course_id <= 0) throw new Exception('Dữ liệu không hợp lệ');
+    // Validate dữ liệu đầu vào
+    if ($user_id <= 0 || $course_id <= 0) {
+        throw new Exception('Dữ liệu không hợp lệ (Missing ID)');
+    }
 
-    // 1. Kiểm tra đã tham gia chưa (Bảng user_course)
-    $checkSql = "SELECT 1 FROM user_course WHERE user_id = ? AND course_id = ?";
-    $stmtCheck = $conn->prepare($checkSql);
+    // --- BƯỚC MỚI: KIỂM TRA KHÓA HỌC HỢP LỆ KHÔNG ---
+    // Chỉ cho phép tham gia nếu khóa học Tồn tại + Public + Không bị ẩn
+    $checkCourseSql = "SELECT create_by FROM course WHERE course_id = ? AND visibility = 'public' AND hide = 0";
+    $stmtCourse = $conn->prepare($checkCourseSql);
+    $stmtCourse->bind_param("i", $course_id);
+    $stmtCourse->execute();
+    $resCourse = $stmtCourse->get_result();
+
+    if ($resCourse->num_rows === 0) {
+        throw new Exception('Khóa học không tồn tại hoặc không công khai.');
+    }
+    
+    // (Tùy chọn) Kiểm tra xem người tham gia có phải là người tạo khóa học không?
+    // Nếu muốn chặn người tạo tự tham gia khóa học của mình thì bỏ comment dòng dưới:
+    // $rowCourse = $resCourse->fetch_assoc();
+    // if ($rowCourse['create_by'] == $user_id) throw new Exception('Bạn là người tạo khóa học này.');
+
+    // --- BƯỚC 2: KIỂM TRA ĐÃ THAM GIA CHƯA ---
+    $checkJoinedSql = "SELECT 1 FROM user_course WHERE user_id = ? AND course_id = ?";
+    $stmtCheck = $conn->prepare($checkJoinedSql);
     $stmtCheck->bind_param("ii", $user_id, $course_id);
     $stmtCheck->execute();
     
     if ($stmtCheck->get_result()->num_rows > 0) {
+        // Trả về success = true để JS không báo lỗi, chỉ thông báo nhẹ
         echo json_encode(['success' => true, 'message' => 'Bạn đã tham gia khóa học này rồi']);
         exit;
     }
 
-    // 2. Insert vào user_course
-    // Lưu ý: Kiểm tra file SQL xem cột ngày giờ tên là gì (created_at hay enrolled_at)
-    // Giả sử trong bảng user_course bạn dùng 'created_at'
+    // --- BƯỚC 3: THỰC HIỆN GHI DANH (INSERT) ---
+    // Lưu ý: Cột thời gian là 'enrolled_at' hay 'created_at' tùy vào Database của bạn.
+    // Ở đây mình để enrolled_at theo code cũ của bạn.
     $sql = "INSERT INTO user_course (user_id, course_id, status, progress, enrolled_at) VALUES (?, ?, 'active', 0, NOW())";
+    
     $stmt = $conn->prepare($sql);
     $stmt->bind_param("ii", $user_id, $course_id);
 
     if ($stmt->execute()) {
-        echo json_encode(['success' => true, 'message' => 'Ghi danh thành công!']);
+        echo json_encode(['success' => true, 'message' => 'Tham gia khóa học thành công!']);
     } else {
         throw new Exception('Lỗi Database: ' . $stmt->error);
     }
 
 } catch (Exception $e) {
-    http_response_code(400);
+    http_response_code(400); // Bad Request
     echo json_encode(['success' => false, 'error' => $e->getMessage()]);
 }
 ?>

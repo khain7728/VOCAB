@@ -148,6 +148,17 @@
     color: #9ca3af;
     font-size: 1rem;
 }
+/* Thêm vào cuối file CSS */
+.text-ket-qua-tim-kiem {
+    margin-top: -1rem;    /* Kéo lên gần thanh tìm kiếm hơn một chút */
+    margin-bottom: 1.5rem; /* Đẩy danh sách khóa học xuống */
+    font-size: 0.9rem;
+    color: #6b7280;       /* Màu xám nhẹ */
+    font-style: italic;
+    padding-left: 0.5rem;
+    min-height: 1.25rem;  /* Giữ chỗ để không bị giật layout */
+    font-weight: 500;
+}
 
 /* Hàng 3: Danh sách khóa học */
 #main .danh-sach-khoa-hoc {
