@@ -1,6 +1,6 @@
 <?php
 /**
- * API LẤY CHI TIẾT KHÓA HỌC
+ * API LẤY CHI TIẾT KHÓA HỌC (ĐÃ FIX LỖI #42, #13)
  */
 
 header('Access-Control-Allow-Origin: *');
@@ -20,8 +20,12 @@ try {
     if (!isset($conn)) throw new Exception("Lỗi kết nối Database");
 
     $course_id = isset($_GET['course_id']) ? intval($_GET['course_id']) : 0;
-    // BẢO MẬT: Lấy user_id từ session
     $user_id = api_verify_user_id($_GET['user_id'] ?? null);
+
+    // --- FIX LỖI #42: Thêm tham số phân trang ---
+    $page = isset($_GET['page']) ? max(1, intval($_GET['page'])) : 1;
+    $limit = isset($_GET['limit']) ? max(1, intval($_GET['limit'])) : 20; // Mặc định 20 từ/trang
+    $offset = ($page - 1) * $limit;
 
     if ($course_id <= 0) throw new Exception('ID khóa học không hợp lệ');
 
@@ -51,19 +55,21 @@ try {
     $isOwner = ($courseInfo['create_by'] == $user_id);
     $isJoined = !empty($courseInfo['enroll_status']);
     
-    // Tính progress từ số từ đã học
+    // Fix #22/#25: Tính toán lại progress chuẩn xác
     $totalWords = (int)$courseInfo['total_words'];
     $learnedCount = (int)$courseInfo['learned_count'];
     $progress = $totalWords > 0 ? round(($learnedCount / $totalWords) * 100) : 0;
 
-    // --- PHẦN 2: LẤY DANH SÁCH TỪ VỰNG ---
+    // --- PHẦN 2: LẤY DANH SÁCH TỪ VỰNG (CÓ PHÂN TRANG) ---
+    // Fix #42: Thêm LIMIT và OFFSET
     $sqlWords = "SELECT word_id, word_en, word_vi, definition, pronunciation, audio_file, part_of_speech 
                  FROM word 
                  WHERE course_id = ? 
-                 ORDER BY word_id ASC";
+                 ORDER BY word_id ASC
+                 LIMIT ? OFFSET ?";
     
     $stmtWord = $conn->prepare($sqlWords);
-    $stmtWord->bind_param("i", $course_id);
+    $stmtWord->bind_param("iii", $course_id, $limit, $offset);
     $stmtWord->execute();
     $resWords = $stmtWord->get_result();
 
@@ -80,6 +86,9 @@ try {
         ];
     }
 
+    // Tính tổng số trang
+    $totalPages = ceil($totalWords / $limit);
+
     $response = [
         'success' => true,
         'data' => [
@@ -88,13 +97,19 @@ try {
                 'tieuDe' => $courseInfo['course_name'],
                 'mota' => $courseInfo['description'] ?? 'Không có mô tả',
                 'nguoiTao' => $isOwner ? 'Bạn' : ($courseInfo['creator_name'] ?? 'Unknown'),
-                'soTu' => (int)$courseInfo['total_words'],
+                'soTu' => $totalWords,
+                'daHoc' => $learnedCount,
                 'tienDo' => $progress,
                 'trangThai' => $courseInfo['enroll_status'] ?? 'not_joined',
                 'isOwner' => $isOwner,
                 'isJoined' => $isJoined
             ],
-            'words' => $words
+            'words' => $words,
+            'pagination' => [
+                'current_page' => $page,
+                'total_pages' => $totalPages,
+                'limit' => $limit
+            ]
         ]
     ];
 
