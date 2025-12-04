@@ -4,6 +4,22 @@
  * Include file này trong tất cả trang user/admin
  */
 
+/**
+ * Helper function để lấy đường dẫn đăng nhập phù hợp
+ */
+function getLoginPath() {
+    const currentPath = window.location.pathname;
+    const isAdminPage = currentPath.includes('/pages/admin/');
+    const isUserPage = currentPath.includes('/pages/user/');
+    
+    if (isAdminPage || isUserPage) {
+        return '../dangnhap.html';
+    }
+    
+    // Fallback: thử cả 2 cách
+    return 'dangnhap.html';
+}
+
 (async function checkAuth() {
     try {
         const response = await fetch('/VOCAB/api/get-session-user.php');
@@ -12,7 +28,7 @@
         if (!result.success) {
             // Chưa đăng nhập, redirect về login
             alert('Vui lòng đăng nhập để tiếp tục');
-            window.location.href = '/VOCAB/pages/dangnhap.html';
+            window.location.href = getLoginPath();
             return;
         }
         
@@ -29,14 +45,14 @@
         if (isAdminPage && result.role !== 'admin') {
             // Không phải admin nhưng truy cập trang admin
             alert('Bạn không có quyền truy cập trang này!');
-            window.location.href = '/VOCAB/pages/user/user_Dashboard.html';
+            window.location.href = '../user/user_Dashboard.html';
             return;
         }
         
         if (isUserPage && result.role !== 'user' && result.role !== 'admin') {
             // Không phải user hoặc admin
             alert('Bạn không có quyền truy cập!');
-            window.location.href = '/VOCAB/pages/dangnhap.html';
+            window.location.href = getLoginPath();
             return;
         }
         
@@ -45,6 +61,6 @@
     } catch (error) {
         console.error('Auth check failed:', error);
         alert('Không thể xác thực. Vui lòng đăng nhập lại.');
-        window.location.href = '/VOCAB/pages/dangnhap.html';
+        window.location.href = getLoginPath();
     }
 })();

@@ -52,9 +52,43 @@ try {
         $row = $res->fetch_assoc();
         if ($row['create_by'] != $user_id) throw new Exception('Bạn không phải chủ sở hữu');
 
-        // 2. Xóa dữ liệu liên quan (Foreign Keys)
+        // 2. Xóa dữ liệu liên quan (Foreign Keys) - PHẢI XÓA ĐÚNG THỨ TỰ
+        
+        // Lấy danh sách word_id của khóa học để xóa dữ liệu liên quan
+        $wordIds = [];
+        $getWords = $conn->query("SELECT word_id FROM word WHERE course_id = $course_id");
+        while ($row = $getWords->fetch_assoc()) {
+            $wordIds[] = $row['word_id'];
+        }
+        
+        if (!empty($wordIds)) {
+            $wordIdsStr = implode(',', $wordIds);
+            
+            // Xóa review_session_detail (phải xóa trước review_session)
+            $conn->query("
+                DELETE FROM review_session_detail 
+                WHERE session_id IN (
+                    SELECT session_id FROM review_session WHERE course_id = $course_id
+                )
+            ");
+            
+            // Xóa review_log của các từ trong khóa học
+            $conn->query("DELETE FROM review_log WHERE word_id IN ($wordIdsStr)");
+            
+            // Xóa learned_word của các từ trong khóa học
+            $conn->query("DELETE FROM learned_word WHERE word_id IN ($wordIdsStr)");
+        }
+        
+        // Xóa review_session của khóa học
+        $conn->query("DELETE FROM review_session WHERE course_id = $course_id");
+        
+        // Xóa course_tag
         $conn->query("DELETE FROM course_tag WHERE course_id = $course_id");
-        $conn->query("DELETE FROM user_course WHERE course_id = $course_id"); // Xóa tất cả học viên đang học
+        
+        // Xóa user_course (tất cả học viên)
+        $conn->query("DELETE FROM user_course WHERE course_id = $course_id");
+        
+        // Xóa word (từ vựng)
         $conn->query("DELETE FROM word WHERE course_id = $course_id");
         
         // 3. Xóa khóa học

@@ -25,7 +25,48 @@ try {
         $courseName = $row['course_name'];
     }
 
-    // 2. Thực hiện xóa
+    // 2. Xóa CASCADE tất cả dữ liệu liên quan (FIX BUG #5)
+    
+    // Lấy danh sách word_id để xóa dữ liệu liên quan
+    $wordIds = [];
+    $getWords = $conn->query("SELECT word_id FROM word WHERE course_id = $id");
+    if ($getWords) {
+        while ($row = $getWords->fetch_assoc()) {
+            $wordIds[] = $row['word_id'];
+        }
+    }
+    
+    if (!empty($wordIds)) {
+        $wordIdsStr = implode(',', $wordIds);
+        
+        // Xóa review_session_detail trước (foreign key)
+        $conn->query("
+            DELETE FROM review_session_detail 
+            WHERE session_id IN (
+                SELECT session_id FROM review_session WHERE course_id = $id
+            )
+        ");
+        
+        // Xóa review_log
+        $conn->query("DELETE FROM review_log WHERE word_id IN ($wordIdsStr)");
+        
+        // Xóa learned_word
+        $conn->query("DELETE FROM learned_word WHERE word_id IN ($wordIdsStr)");
+    }
+    
+    // Xóa review_session
+    $conn->query("DELETE FROM review_session WHERE course_id = $id");
+    
+    // Xóa course_tag
+    $conn->query("DELETE FROM course_tag WHERE course_id = $id");
+    
+    // Xóa user_course
+    $conn->query("DELETE FROM user_course WHERE course_id = $id");
+    
+    // Xóa word
+    $conn->query("DELETE FROM word WHERE course_id = $id");
+    
+    // 3. Thực hiện xóa khóa học chính
     $stmt = $conn->prepare("DELETE FROM course WHERE course_id = ?");
     $stmt->bind_param("i", $id);
     
