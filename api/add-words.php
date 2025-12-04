@@ -1,24 +1,24 @@
 <?php
 /**
- * API THÊM DANH SÁCH TỪ VỰNG
+ * API THÊM DANH SÁCH TỪ VỰNG (FINAL FIX)
+ * Đã khắc phục: Validate Ownership, Duplicate Check, URL Validation, Part of speech
  */
-// --- BẮT ĐẦU: CẤU HÌNH CORS CHUẨN ---
+
+// --- CẤU HÌNH CORS ---
 header('Access-Control-Allow-Origin: *');
-header('Access-Control-Allow-Methods: GET, POST, OPTIONS, PUT, DELETE');
-header('Access-Control-Allow-Headers: Content-Type, Access-Control-Allow-Headers, Authorization, X-Requested-With');
+header('Access-Control-Allow-Methods: GET, POST, OPTIONS');
+header('Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With');
 
 if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
     http_response_code(200);
     exit();
 }
-// --- KẾT THÚC: CẤU HÌNH CORS CHUẨN ---
 
-// 1. BẬT BÁO LỖI ĐỂ DEBUG (Sau khi chạy ngon thì comment lại dòng này)
+// Tắt hiển thị lỗi ra màn hình để bảo vệ JSON
+ini_set('display_errors', 0);
 error_reporting(E_ALL);
-ini_set('display_errors', 1);
 
 header('Content-Type: application/json; charset=utf-8');
-
 require_once '../config/config.php';
 
 try {
@@ -26,36 +26,54 @@ try {
         throw new Exception('Method Not Allowed');
     }
 
-    // BẢO MẬT: Lấy user_id từ session
-    $user_id = api_require_login();
+    // 1. BẢO MẬT: User phải login
+    $user_id = api_require_login(); 
     
-    // Nhận JSON
-    $input = json_decode(file_get_contents('php://input'), true);
+    // 2. NHẬN VÀ VALIDATE JSON
+    $raw_input = file_get_contents('php://input');
+    $input = json_decode($raw_input, true);
     
-    // Log thử dữ liệu nhận được (Xem trong F12 -> Network -> Response nếu có lỗi)
-    if (is_null($input)) {
-        throw new Exception('Dữ liệu gửi lên không đúng định dạng JSON');
+    if (json_last_error() !== JSON_ERROR_NONE || is_null($input)) {
+        throw new Exception('Dữ liệu gửi lên không đúng định dạng JSON.');
     }
 
     $course_id = isset($input['course_id']) ? intval($input['course_id']) : 0;
     $words = isset($input['words']) ? $input['words'] : [];
 
-    if ($course_id <= 0) throw new Exception('ID khóa học không hợp lệ');
-    if (empty($words)) throw new Exception('Danh sách từ vựng trống');
+    if ($course_id <= 0) throw new Exception('ID khóa học không hợp lệ.');
+    if (!is_array($words) || empty($words)) throw new Exception('Danh sách từ vựng trống hoặc sai cấu trúc.');
 
-    // Bắt đầu Transaction
+    // 3. KIỂM TRA QUYỀN SỞ HỮU (OWNERSHIP)
+    // User chỉ được thêm từ vào khóa học của chính mình
+    $checkOwnerSql = "SELECT id FROM course WHERE id = ? AND user_id = ?";
+    $stmtOwner = $conn->prepare($checkOwnerSql);
+    $stmtOwner->bind_param("ii", $course_id, $user_id);
+    $stmtOwner->execute();
+    $stmtOwner->store_result();
+    
+    if ($stmtOwner->num_rows === 0) {
+        $stmtOwner->close();
+        throw new Exception("Bạn không có quyền chỉnh sửa khóa học này.");
+    }
+    $stmtOwner->close();
+
+    // 4. CHUẨN BỊ SQL (TRANSACTION)
     $conn->begin_transaction();
 
-    // 2. CHUẨN BỊ SQL (Lưu ý thứ tự dấu ?)
-    $sql = "INSERT INTO word (course_id, word_en, word_vi, pronunciation, part_of_speech, definition, audio_file) VALUES (?, ?, ?, ?, ?, ?, ?)";
-    $stmt = $conn->prepare($sql);
+    // Query thêm từ
+    $sqlInsert = "INSERT INTO word (course_id, word_en, word_vi, pronunciation, part_of_speech, definition, audio_file) VALUES (?, ?, ?, ?, ?, ?, ?)";
+    $stmtInsert = $conn->prepare($sqlInsert);
 
-    if (!$stmt) {
-        throw new Exception("Lỗi Prepare SQL: " . $conn->error);
+    // Query kiểm tra trùng lặp (Duplicate Check)
+    $sqlCheckDup = "SELECT id FROM word WHERE course_id = ? AND word_en = ?";
+    $stmtCheckDup = $conn->prepare($sqlCheckDup);
+
+    if (!$stmtInsert || !$stmtCheckDup) {
+        throw new Exception("Lỗi hệ thống (Prepare SQL).");
     }
 
-    // Khởi tạo các biến bind (để trống ban đầu)
-    $b_course_id = $course_id; // course_id không đổi
+    // Bind biến cho Insert
+    $b_course_id = $course_id;
     $b_word_en = "";
     $b_word_vi = "";
     $b_pronunciation = "";
@@ -63,43 +81,63 @@ try {
     $b_definition = "";
     $b_audio_file = "";
 
-    // 3. BIND PARAM (GỌI 1 LẦN DUY NHẤT NGOÀI VÒNG LẶP)
-    // i: integer, s: string. Tổng cộng 1 'i' và 6 's'
-    $stmt->bind_param("issssss", 
-        $b_course_id, 
-        $b_word_en, 
-        $b_word_vi, 
-        $b_pronunciation, 
-        $b_part_of_speech, 
-        $b_definition, 
-        $b_audio_file
+    $stmtInsert->bind_param("issssss", 
+        $b_course_id, $b_word_en, $b_word_vi, $b_pronunciation, 
+        $b_part_of_speech, $b_definition, $b_audio_file
     );
 
+    // Bind biến cho Check Duplicate
+    $stmtCheckDup->bind_param("is", $b_course_id, $b_word_en);
+
     $count = 0;
-    foreach ($words as $w) {
-        // Gán giá trị vào các biến đã bind
-        $b_word_en = trim($w['tiengAnh']);
-        $b_word_vi = trim($w['nghia']);
+
+    foreach ($words as $index => $w) {
+        // --- VALIDATION DỮ LIỆU ĐẦU VÀO ---
+        $b_word_en = isset($w['tiengAnh']) ? trim($w['tiengAnh']) : '';
+        $b_word_vi = isset($w['nghia']) ? trim($w['nghia']) : '';
         
-        // Bỏ qua nếu thiếu dữ liệu bắt buộc
+        // Bắt buộc có từ và nghĩa
         if (empty($b_word_en) || empty($b_word_vi)) continue;
 
-        $b_pronunciation  = $w['phienAm'] ?? '';
-        $b_part_of_speech = $w['tuLoai'] ?? '';
-        $b_definition     = $w['moTa'] ?? '';
-        $b_audio_file     = $w['linkAm'] ?? '';
+        // Giới hạn độ dài
+        if (strlen($b_word_en) > 255 || strlen($b_word_vi) > 255) {
+             throw new Exception("Từ vựng thứ " . ($index + 1) . " quá dài (tối đa 255 ký tự).");
+        }
 
-        // Thực thi
-        if (!$stmt->execute()) {
-            // Ném lỗi chi tiết ra để frontend bắt được
-            throw new Exception("Lỗi MySQL tại từ '{$b_word_en}': " . $stmt->error);
+        // Validate Part of Speech (Từ loại) - Chỉ cho phép chữ cái, tối đa 20 ký tự
+        $raw_pos = isset($w['tuLoai']) ? trim($w['tuLoai']) : '';
+        if (strlen($raw_pos) > 20) $raw_pos = substr($raw_pos, 0, 20); // Cắt ngắn nếu quá dài
+        $b_part_of_speech = $raw_pos;
+
+        // Validate Audio URL
+        $raw_audio = isset($w['linkAm']) ? trim($w['linkAm']) : '';
+        if (!empty($raw_audio) && !filter_var($raw_audio, FILTER_VALIDATE_URL)) {
+            // Nếu link không hợp lệ, set về rỗng để tránh lỗi, hoặc throw Exception tuỳ logic
+            $raw_audio = ''; 
+        }
+        $b_audio_file = $raw_audio;
+
+        $b_pronunciation = isset($w['phienAm']) ? trim($w['phienAm']) : '';
+        $b_definition    = isset($w['moTa']) ? trim($w['moTa']) : '';
+
+        // --- CHECK TRÙNG TỪ ---
+        $stmtCheckDup->execute();
+        $stmtCheckDup->store_result();
+        if ($stmtCheckDup->num_rows > 0) {
+            // Nếu từ đã tồn tại trong khóa học này -> Báo lỗi cụ thể
+            throw new Exception("Từ '$b_word_en' đã tồn tại trong khóa học này.");
+        }
+
+        // --- THỰC THI INSERT ---
+        if (!$stmtInsert->execute()) {
+            throw new Exception("Lỗi khi lưu từ: '$b_word_en'");
         }
         $count++;
     }
 
-    // Commit transaction
     $conn->commit();
-    $stmt->close();
+    $stmtInsert->close();
+    $stmtCheckDup->close();
 
     echo json_encode([
         'success' => true,
@@ -109,7 +147,6 @@ try {
 
 } catch (Exception $e) {
     if (isset($conn)) $conn->rollback();
-    http_response_code(400); // Trả về mã lỗi 400 để JS nhảy vào catch hoặc else
     echo json_encode(['success' => false, 'error' => $e->getMessage()]);
 } finally {
     if (isset($conn)) $conn->close();
