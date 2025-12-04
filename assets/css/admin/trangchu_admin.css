@@ -87,14 +87,12 @@
 }
 
 
-/* --- 3. BỐ CỤC CHÍNH (FIX LỖI LAYOUT) --- */
+/* --- 3. BỐ CỤC CHÍNH --- */
 
 .dashboard-grid {
     display: grid;
-    /* Cột trái cố định 360px | Cột phải chiếm phần còn lại */
     grid-template-columns: 360px 1fr;
     gap: 24px;
-    /* QUAN TRỌNG: Làm cho 2 cột cao bằng nhau */
     align-items: stretch;
 }
 
@@ -139,15 +137,13 @@
 }
 
 
-/* --- 4. LIST HOẠT ĐỘNG (FIX LỖI VỠ HÌNH) --- */
+/* --- 4. LIST HOẠT ĐỘNG--- */
 
 .activity-list {
     list-style: none;
-    /* Xóa dấu chấm tròn mặc định */
     padding: 0;
     margin: 0;
     flex-grow: 1;
-    /* Đẩy nội dung cho đều */
 }
 
 .activity-item {
@@ -175,7 +171,6 @@
     justify-content: center;
     font-size: 14px;
     flex-shrink: 0;
-    /* QUAN TRỌNG: Icon không bị bóp méo */
 }
 
 .activity-text {
@@ -209,4 +204,95 @@
     /* Chiếm hết chiều cao còn lại của widget */
     min-height: 350px;
     /* Chiều cao tối thiểu, làm chuẩn cho cột bên cạnh cao theo */
+}
+
+#toast-container {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 9999;
+}
+
+.toast-message {
+    min-width: 250px;
+    margin-bottom: 10px;
+    padding: 12px 20px;
+    color: #fff;
+    border-radius: 4px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+    animation: slideIn 0.3s ease;
+}
+
+.toast-message.success {
+    background-color: #10B981;
+}
+
+
+/* Màu xanh */
+
+.toast-message.error {
+    background-color: #EF4444;
+}
+
+
+/* Màu đỏ */
+
+@keyframes slideIn {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+.fa-spin-fast {
+    animation: fa-spin 1s infinite linear;
+}
+
+@keyframes fa-spin {
+    0% {
+        transform: rotate(0deg);
+    }
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+
+/* 2. Style cho chữ "..." khi đang tải (Placeholder) */
+
+.loading-placeholder {
+    color: #999;
+    font-size: 0.9em;
+    font-style: italic;
+    font-weight: normal;
+}
+
+.toast-message.warning {
+    background-color: #F59E0B;
+}
+
+.toast-message {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.toast-message i {
+    font-size: 18px;
+}
+
+@media (max-width: 768px) {
+    .dashboard-grid {
+        grid-template-columns: 1fr;
+    }
+    .chart-box {
+        min-height: 250px;
+    }
+    .widget.full-width {
+        margin-top: 20px;
+    }
 }
