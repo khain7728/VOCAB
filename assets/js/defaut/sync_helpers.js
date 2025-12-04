@@ -12,7 +12,6 @@
  * 🔒 Automatically adds timestamp for security validation
  */
 function syncAndRefreshDashboard(action, payload) {
-    // Add timestamp nếu chưa có
     if (!payload.timestamp) {
         payload.timestamp = Date.now();
     }

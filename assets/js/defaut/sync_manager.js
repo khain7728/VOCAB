@@ -16,7 +16,7 @@ class SyncManager {
         this.listeners = new Map();
         this.isSupported = false;
         
-        // Khởi tạo Broadcast Channel nếu browser hỗ trợ
+        // Khởi tạo Broadcast Channel 
         this.init();
         
         // Debug mode (bật trong development)
