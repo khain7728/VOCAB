@@ -1,7 +1,7 @@
 <?php
 /**
- * API THÊM DANH SÁCH TỪ VỰNG (FINAL FIX)
- * Đã khắc phục: Validate Ownership, Duplicate Check, URL Validation, Part of speech
+ * API THÊM DANH SÁCH TỪ VỰNG (FINAL VERSION)
+ * Updated: Fix column names, Validate data, Transaction
  */
 
 // --- CẤU HÌNH CORS ---
@@ -14,7 +14,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
     exit();
 }
 
-// Tắt hiển thị lỗi ra màn hình để bảo vệ JSON
+// Tắt hiển thị lỗi ra màn hình client (chỉ log error)
 ini_set('display_errors', 0);
 error_reporting(E_ALL);
 
@@ -44,8 +44,8 @@ try {
     if (!is_array($words) || empty($words)) throw new Exception('Danh sách từ vựng trống hoặc sai cấu trúc.');
 
     // 3. KIỂM TRA QUYỀN SỞ HỮU (OWNERSHIP)
-    // User chỉ được thêm từ vào khóa học của chính mình
-    $checkOwnerSql = "SELECT id FROM course WHERE id = ? AND user_id = ?";
+    // Sửa: id -> course_id, user_id -> create_by
+    $checkOwnerSql = "SELECT course_id FROM course WHERE course_id = ? AND create_by = ?";
     $stmtOwner = $conn->prepare($checkOwnerSql);
     $stmtOwner->bind_param("ii", $course_id, $user_id);
     $stmtOwner->execute();
@@ -64,12 +64,13 @@ try {
     $sqlInsert = "INSERT INTO word (course_id, word_en, word_vi, pronunciation, part_of_speech, definition, audio_file) VALUES (?, ?, ?, ?, ?, ?, ?)";
     $stmtInsert = $conn->prepare($sqlInsert);
 
-    // Query kiểm tra trùng lặp (Duplicate Check)
-    $sqlCheckDup = "SELECT id FROM word WHERE course_id = ? AND word_en = ?";
+    // Query kiểm tra trùng lặp
+    // Sửa: id -> word_id
+    $sqlCheckDup = "SELECT word_id FROM word WHERE course_id = ? AND word_en = ?";
     $stmtCheckDup = $conn->prepare($sqlCheckDup);
 
     if (!$stmtInsert || !$stmtCheckDup) {
-        throw new Exception("Lỗi hệ thống (Prepare SQL).");
+        throw new Exception("Lỗi hệ thống (Prepare SQL Failed).");
     }
 
     // Bind biến cho Insert
@@ -99,20 +100,20 @@ try {
         // Bắt buộc có từ và nghĩa
         if (empty($b_word_en) || empty($b_word_vi)) continue;
 
-        // Giới hạn độ dài
-        if (strlen($b_word_en) > 255 || strlen($b_word_vi) > 255) {
-             throw new Exception("Từ vựng thứ " . ($index + 1) . " quá dài (tối đa 255 ký tự).");
+        // Giới hạn độ dài (Dùng mb_strlen cho tiếng Việt)
+        if (mb_strlen($b_word_en, 'UTF-8') > 100 || mb_strlen($b_word_vi, 'UTF-8') > 255) {
+             throw new Exception("Từ vựng thứ " . ($index + 1) . " quá dài (Xem lại giới hạn cột word_en/word_vi).");
         }
 
-        // Validate Part of Speech (Từ loại) - Chỉ cho phép chữ cái, tối đa 20 ký tự
+        // Validate Part of Speech
         $raw_pos = isset($w['tuLoai']) ? trim($w['tuLoai']) : '';
-        if (strlen($raw_pos) > 20) $raw_pos = substr($raw_pos, 0, 20); // Cắt ngắn nếu quá dài
+        if (mb_strlen($raw_pos, 'UTF-8') > 50) $raw_pos = mb_substr($raw_pos, 0, 50, 'UTF-8');
         $b_part_of_speech = $raw_pos;
 
-        // Validate Audio URL
+        // Validate Audio URL (Chấp nhận cả URL http và đường dẫn nội bộ uploads/...)
         $raw_audio = isset($w['linkAm']) ? trim($w['linkAm']) : '';
-        if (!empty($raw_audio) && !filter_var($raw_audio, FILTER_VALIDATE_URL)) {
-            // Nếu link không hợp lệ, set về rỗng để tránh lỗi, hoặc throw Exception tuỳ logic
+        // Logic: Nếu là link web thì validate, nếu là path nội bộ thì cho qua
+        if (!empty($raw_audio) && strpos($raw_audio, 'http') === 0 && !filter_var($raw_audio, FILTER_VALIDATE_URL)) {
             $raw_audio = ''; 
         }
         $b_audio_file = $raw_audio;
@@ -124,7 +125,6 @@ try {
         $stmtCheckDup->execute();
         $stmtCheckDup->store_result();
         if ($stmtCheckDup->num_rows > 0) {
-            // Nếu từ đã tồn tại trong khóa học này -> Báo lỗi cụ thể
             throw new Exception("Từ '$b_word_en' đã tồn tại trong khóa học này.");
         }
 

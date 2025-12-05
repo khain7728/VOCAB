@@ -1,6 +1,7 @@
 document.addEventListener('DOMContentLoaded', function() {
 
     // --- CẤU HÌNH ---
+    // Thay đổi đường dẫn này nếu cần thiết
     const API_BASE_URL = 'http://localhost/VOCAB/api';
 
     const urlParams = new URLSearchParams(window.location.search);
@@ -15,18 +16,16 @@ document.addEventListener('DOMContentLoaded', function() {
     // --- STATE ---
     let danhSachTu = [];
 
-    // --- DOM ---
+    // --- DOM ELEMENTS ---
     const formThemTu = document.getElementById('form-them-tu');
-    const btnThemTu = formThemTu.querySelector('button[type="submit"]'); // Nút thêm nhỏ
+    const btnThemTu = formThemTu.querySelector('button[type="submit"]'); 
     const danhSachContainer = document.getElementById('danh-sach-tu-vung-container');
     const soLuongTuSpan = document.getElementById('so-luong-tu');
 
-    // Action Buttons
     const btnTroVe = document.getElementById('btn-tro-ve');
     const btnHuyBo = document.getElementById('btn-huy-bo');
     const btnLuuVaThoat = document.getElementById('btn-luu-va-thoat');
 
-    // Inputs
     const inputTuTiengAnh = document.getElementById('input-tu-tieng-anh');
     const inputPhienAm = document.getElementById('input-phien-am');
     const inputNghiaTiengViet = document.getElementById('input-nghia-tieng-viet');
@@ -35,8 +34,12 @@ document.addEventListener('DOMContentLoaded', function() {
     const inputMoTa = document.getElementById('input-mo-ta');
 
     const audioPlayer = document.getElementById('audio-player-an');
+    
+    // Upload Elements
+    const linkTaiFileAm = document.getElementById('link-tai-file-am');
+    const inputFileAn = document.getElementById('input-file-an');
 
-    // --- RENDER ---
+    // --- RENDER FUNCTION ---
     function renderDanhSach() {
         danhSachContainer.innerHTML = '';
 
@@ -70,15 +73,66 @@ document.addEventListener('DOMContentLoaded', function() {
         soLuongTuSpan.textContent = danhSachTu.length;
     }
 
+    // --- UPLOAD AUDIO LOGIC ---
+    if (linkTaiFileAm && inputFileAn) {
+        linkTaiFileAm.addEventListener('click', function(e) {
+            e.preventDefault();
+            inputFileAn.click();
+        });
+
+        inputFileAn.addEventListener('change', function() {
+            if (this.files && this.files[0]) {
+                uploadAudioFile(this.files[0]);
+            }
+        });
+    }
+
+    async function uploadAudioFile(file) {
+        if (file.type !== 'audio/mpeg' && file.type !== 'audio/mp3' && !file.name.endsWith('.mp3')) {
+            alert('Vui lòng chỉ chọn file .mp3');
+            return;
+        }
+
+        const oldText = linkTaiFileAm.textContent;
+        linkTaiFileAm.textContent = "Đang tải lên...";
+        linkTaiFileAm.style.pointerEvents = "none";
+        
+        const formData = new FormData();
+        formData.append('audio_file', file);
+
+        try {
+            const response = await fetch(`${API_BASE_URL}/upload_audio.php`, {
+                method: 'POST',
+                body: formData
+            });
+
+            const result = await response.json();
+
+            if (result.success) {
+                inputLinkPhatAm.value = result.url; 
+                alert("Đã tải file lên thành công!");
+            } else {
+                alert("Lỗi upload: " + (result.error || "Không xác định"));
+            }
+        } catch (error) {
+            console.error(error);
+            alert("Lỗi kết nối server khi upload file.");
+        } finally {
+            linkTaiFileAm.textContent = oldText;
+            linkTaiFileAm.style.pointerEvents = "auto";
+            inputFileAn.value = '';
+        }
+    }
+
     // --- HANDLERS ---
     function handleThemTu(event) {
         event.preventDefault();
 
-        // 1. Chống Double-Submit Form
+        // Fix #34: Disable button
         if (btnThemTu.disabled) return;
         btnThemTu.disabled = true;
 
-        // 2. Trim Whitespace
+        // Fix #18: Trim whitespace
         const tuTiengAnh = inputTuTiengAnh.value.trim();
         const phienAm = inputPhienAm.value.trim();
         const nghia = inputNghiaTiengViet.value.trim();
@@ -86,16 +140,16 @@ document.addEventListener('DOMContentLoaded', function() {
         const linkAm = inputLinkPhatAm.value.trim();
         const moTa = inputMoTa.value.trim();
 
-        // 3. Validation Cơ bản
+        // Fix #17: Validation
         if (!tuTiengAnh || !nghia) {
             alert('Vui lòng nhập đầy đủ "Từ tiếng Anh" và "Nghĩa tiếng Việt".');
             btnThemTu.disabled = false;
             return;
         }
 
-        // 4. Validate URL Âm thanh (Regex)
-        if (linkAm && !isValidUrl(linkAm)) {
-            alert('Link phát âm không hợp lệ (phải bắt đầu bằng http:// hoặc https://).');
+        // Validate URL chỉ khi nó bắt đầu bằng http (nếu là path nội bộ thì bỏ qua)
+        if (linkAm && linkAm.startsWith('http') && !isValidUrl(linkAm)) {
+            alert('Link phát âm không hợp lệ.');
             inputLinkPhatAm.focus();
             btnThemTu.disabled = false;
             return;
@@ -114,11 +168,10 @@ document.addEventListener('DOMContentLoaded', function() {
         renderDanhSach();
         formThemTu.reset();
         
-        // 5. Scroll về đầu (Fix #37)
+        // Fix #37: Scroll to top
         window.scrollTo({ top: 0, behavior: 'smooth' });
         inputTuTiengAnh.focus();
 
-        // Mở lại nút
         setTimeout(() => { btnThemTu.disabled = false; }, 300);
     }
 
@@ -136,24 +189,26 @@ document.addEventListener('DOMContentLoaded', function() {
             if (confirm(`Bạn có chắc muốn xóa từ "${tu.tiengAnh}" không?`)) {
                 danhSachTu.splice(index, 1);
                 renderDanhSach();
-                // Fix #37: Xóa xong cũng scroll nhẹ về đầu danh sách hoặc đầu trang
-                window.scrollTo({ top: 0, behavior: 'smooth' });
             }
         }
     }
 
     function handlePhatAm(tu) {
-        // Fix #40: Dừng audio cũ trước
+        // Fix #40: Stop old audio
         if (audioPlayer) {
             audioPlayer.pause();
             audioPlayer.currentTime = 0;
         }
         window.speechSynthesis.cancel(); 
 
-        if (tu.linkAm && isValidUrl(tu.linkAm)) {
-            audioPlayer.src = tu.linkAm;
+        // Ưu tiên link file upload hoặc link ngoài
+        if (tu.linkAm) {
+            // Kiểm tra xem là link http hay link nội bộ
+            // Nếu link nội bộ, cần thêm prefix domain nếu file JS đang chạy ở path khác root
+            // Nhưng nếu thẻ <base> hoặc path đúng rồi thì gán trực tiếp
+            audioPlayer.src = tu.linkAm; 
             audioPlayer.play().catch(e => {
-                console.warn("Lỗi file audio, fallback sang API speech");
+                console.warn("Lỗi file audio, fallback sang API speech", e);
                 phatAmBangAPI(tu.tiengAnh);
             });
         } else if (tu.tiengAnh) {
@@ -162,21 +217,15 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function phatAmBangAPI(text) {
-        // Kiểm tra trình duyệt hỗ trợ
         if ('speechSynthesis' in window) {
-            window.speechSynthesis.cancel();
             const utterance = new SpeechSynthesisUtterance(text);
             utterance.lang = 'en-US';
-            utterance.onerror = function(event) {
-                console.error('SpeechSynthesis error', event);
-            };
             window.speechSynthesis.speak(utterance);
         } else {
             alert("Trình duyệt không hỗ trợ phát âm.");
         }
     }
 
-    // Validate URL helper
     function isValidUrl(string) {
         try {
             const url = new URL(string);
@@ -195,7 +244,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
         if (!confirm(`Bạn sắp lưu ${danhSachTu.length} từ vựng vào khóa học. Tiếp tục?`)) return;
 
-        // Fix #34: Disable nút Lưu ngay lập tức
         btnLuuVaThoat.textContent = "Đang lưu...";
         btnLuuVaThoat.disabled = true;
 
@@ -209,28 +257,28 @@ document.addEventListener('DOMContentLoaded', function() {
                 })
             });
 
-            // Parse JSON an toàn
+            // Parse text trước để debug nếu cần
+            const textResult = await response.text();
             let result;
             try {
-                result = await response.json();
+                result = JSON.parse(textResult);
             } catch (e) {
-                throw new Error("Phản hồi từ server không hợp lệ (không phải JSON).");
+                console.error("Server response not JSON:", textResult);
+                throw new Error("Phản hồi server lỗi (không phải JSON).");
             }
 
             if (result.success) {
                 alert("Lưu thành công! Đang quay về danh sách khóa học.");
                 window.location.href = `khoa_hoc_cua_toi.html`;
-                // Không enable lại nút ở đây
             } else {
-                // Fix #28: Thông báo lỗi thân thiện
-                alert(result.error || "Có lỗi xảy ra. Vui lòng kiểm tra lại dữ liệu.");
+                alert(result.error || "Có lỗi xảy ra.");
                 btnLuuVaThoat.textContent = "Lưu và thoát";
                 btnLuuVaThoat.disabled = false;
             }
 
         } catch (error) {
             console.error(error);
-            alert("Lỗi kết nối server: " + error.message);
+            alert("Lỗi: " + error.message);
             btnLuuVaThoat.textContent = "Lưu và thoát";
             btnLuuVaThoat.disabled = false;
         }
@@ -249,7 +297,6 @@ document.addEventListener('DOMContentLoaded', function() {
     // --- LISTENERS ---
     if (formThemTu) formThemTu.addEventListener('submit', handleThemTu);
     if (danhSachContainer) danhSachContainer.addEventListener('click', handleDanhSachClick);
-
     if (btnTroVe) btnTroVe.addEventListener('click', () => history.back());
     if (btnHuyBo) btnHuyBo.addEventListener('click', handleHuyBo);
     if (btnLuuVaThoat) btnLuuVaThoat.addEventListener('click', handleLuuVaThoat);
