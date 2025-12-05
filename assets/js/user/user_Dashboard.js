@@ -82,7 +82,7 @@ async function loadDashboardStats() {
             if (welcomeEl) welcomeEl.textContent = `Chào mừng bạn trở lại, ${data.user_name}`;
             if (coursesEl) coursesEl.textContent = data.total_courses;
             if (wordsEl) wordsEl.textContent = data.total_words_learned;
-            if (scoreEl) scoreEl.textContent = `${data.average_score}/10`;
+            if (scoreEl) scoreEl.textContent = `${data.average_score}/100`;
             
             console.log('✅ Dashboard stats loaded successfully');
         } else {
@@ -339,6 +339,8 @@ function escapeHtml(text) {
 /**
  * Load thống kê quiz theo tuần và vẽ chart
  */
+let weeklyChart = null; // Biến global để lưu Chart instance
+
 async function loadWeeklyQuizStats() {
     try {
         const response = await fetch(`${API_BASE}/get-weekly-quiz-stats.php?user_id=${currentUserId}`);
@@ -362,81 +364,148 @@ async function loadWeeklyQuizStats() {
 }
 
 /**
- * Vẽ biểu đồ tuần
+ * Vẽ biểu đồ tuần bằng Chart.js
  */
 function drawWeeklyChart(weekData) {
-    const svgNS = "http://www.w3.org/2000/svg";
-    const chartSVG = document.querySelector('.chart');
+    const ctx = document.getElementById('weeklyChart');
     
-    if (!chartSVG || weekData.length === 0) return;
+    if (!ctx) {
+        console.error('❌ Canvas element not found');
+        return;
+    }
     
-    // Clear existing chart data (keep grid)
-    const existingPolyline = chartSVG.querySelector('polyline');
-    const existingCircles = chartSVG.querySelectorAll('circle');
-    const existingLabels = chartSVG.querySelectorAll('.data-label, .x-label');
+    if (weekData.length === 0) {
+        console.warn('⚠️ No data to display');
+        return;
+    }
     
-    if (existingPolyline) existingPolyline.remove();
-    existingCircles.forEach(c => c.remove());
-    existingLabels.forEach(l => l.remove());
+    // Kiểm tra Chart.js đã load chưa
+    if (typeof Chart === 'undefined') {
+        console.error('❌ Chart.js library not loaded');
+        return;
+    }
     
-    // Calculate positions
-    const startX = 70;
-    const spacing = 95;
-    const maxY = 250;
-    const minY = 50;
-    const maxScore = 10; // Điểm tối đa là 10
+    // Destroy chart cũ nếu tồn tại
+    if (weeklyChart) {
+        weeklyChart.destroy();
+    }
     
-    let points = [];
+    // Prepare data
+    const labels = weekData.map(day => day.day_name);
+    const scores = weekData.map(day => day.avg_score || 0);
     
-    weekData.forEach((day, index) => {
-        const x = startX + (index * spacing);
-        const score = day.avg_score || 0;
-        const y = maxY - ((score / maxScore) * (maxY - minY));
-        
-        points.push(`${x},${y}`);
-        
-        // Draw circle
-        const circle = document.createElementNS(svgNS, 'circle');
-        circle.setAttribute('cx', x);
-        circle.setAttribute('cy', y);
-        circle.setAttribute('r', '5');
-        circle.setAttribute('fill', '#4A90E2');
-        chartSVG.appendChild(circle);
-        
-        // Draw score label above point
-        if (score > 0) {
-            const label = document.createElementNS(svgNS, 'text');
-            label.setAttribute('x', x);
-            label.setAttribute('y', y - 10);
-            label.setAttribute('text-anchor', 'middle');
-            label.setAttribute('font-size', '12');
-            label.setAttribute('fill', '#4A90E2');
-            label.setAttribute('class', 'data-label');
-            label.textContent = score.toFixed(1);
-            chartSVG.appendChild(label);
+    console.log('📊 Drawing chart with data:', { labels, scores });
+    
+    // Create new chart
+    weeklyChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Điểm trung bình',
+                data: scores,
+                borderColor: '#4A90E2',
+                backgroundColor: 'rgba(74, 144, 226, 0.1)',
+                borderWidth: 3,
+                pointBackgroundColor: '#4A90E2',
+                pointBorderColor: '#fff',
+                pointBorderWidth: 2,
+                pointRadius: 6,
+                pointHoverRadius: 8,
+                tension: 0.4, // Làm đường cong mượt
+                fill: true
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            aspectRatio: 3,
+            layout: {
+                padding: {
+                    left: 10,
+                    right: 30,
+                    top: 10,
+                    bottom: 10
+                }
+            },
+            plugins: {
+                legend: {
+                    display: true,
+                    position: 'top',
+                    labels: {
+                        font: {
+                            size: 13,
+                            family: 'Roboto'
+                        },
+                        padding: 15,
+                        color: '#666'
+                    }
+                },
+                tooltip: {
+                    enabled: true,
+                    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                    titleFont: {
+                        size: 14,
+                        family: 'Roboto'
+                    },
+                    bodyFont: {
+                        size: 13,
+                        family: 'Roboto'
+                    },
+                    padding: 12,
+                    cornerRadius: 8,
+                    displayColors: false,
+                    callbacks: {
+                        label: function(context) {
+                            return 'Điểm: ' + context.parsed.y.toFixed(1) + '/100';
+                        }
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    max: 100,
+                    ticks: {
+                        stepSize: 25,
+                        font: {
+                            size: 12,
+                            family: 'Roboto'
+                        },
+                        color: '#666',
+                        callback: function(value) {
+                            return value.toFixed(1);
+                        }
+                    },
+                    grid: {
+                        color: 'rgba(0, 0, 0, 0.05)',
+                        drawBorder: false
+                    }
+                },
+                x: {
+                    ticks: {
+                        font: {
+                            size: 12,
+                            family: 'Roboto'
+                        },
+                        color: '#666',
+                        padding: 10
+                    },
+                    grid: {
+                        display: true,
+                        color: 'rgba(0, 0, 0, 0.03)',
+                        drawBorder: false
+                    }
+                }
+            },
+            interaction: {
+                intersect: false,
+                mode: 'index'
+            }
         }
-        
-        // Draw x-axis label (day name)
-        const xLabel = document.createElementNS(svgNS, 'text');
-        xLabel.setAttribute('x', x);
-        xLabel.setAttribute('y', '270');
-        xLabel.setAttribute('text-anchor', 'middle');
-        xLabel.setAttribute('font-size', '12');
-        xLabel.setAttribute('fill', '#666');
-        xLabel.setAttribute('class', 'x-label');
-        xLabel.textContent = day.day_name;
-        chartSVG.appendChild(xLabel);
     });
     
-    // Draw polyline
-    const polyline = document.createElementNS(svgNS, 'polyline');
-    polyline.setAttribute('points', points.join(' '));
-    polyline.setAttribute('fill', 'none');
-    polyline.setAttribute('stroke', '#4A90E2');
-    polyline.setAttribute('stroke-width', '3');
-    polyline.setAttribute('stroke-linecap', 'round');
-    polyline.setAttribute('stroke-linejoin', 'round');
-    chartSVG.appendChild(polyline);
+    console.log('✅ Chart created successfully');
 }
 
 /**

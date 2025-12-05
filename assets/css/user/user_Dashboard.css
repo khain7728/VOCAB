@@ -97,8 +97,16 @@ body {
 .chart-container {
     background: #fff;
     border-radius: 14px;
-    padding: 20px;
+    padding: 30px 40px;
     box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08);
+    position: relative;
+}
+
+#weeklyChart {
+    width: 100% !important;
+    height: auto !important;
+    min-height: 320px;
+    max-height: 400px;
 }
 
 /* ===== MY COURSES ===== */
