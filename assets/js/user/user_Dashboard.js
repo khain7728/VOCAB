@@ -220,6 +220,13 @@ async function loadDailyGoal() {
                 noGoalCard.style.display = 'none';
                 hasGoalCard.style.display = 'block';
                 
+                // Debug log
+                console.log('Goal data:', {
+                    target: data.daily_target,
+                    learned: data.words_learned_today,
+                    percent: data.progress_percent
+                });
+                
                 // Cập nhật tiêu đề
                 const goalTitle = `Học ${data.daily_target} từ hôm nay${data.is_recurring ? ' (Lặp lại hàng ngày)' : ''}`;
                 const goalSubtitle = `Đã học ${data.words_learned_today}/${data.daily_target} từ hôm nay`;
@@ -303,8 +310,17 @@ async function saveGoal() {
         if (result.success) {
             alert('Đã lưu mục tiêu thành công!');
             hideGoalModal();
-            // Reload mục tiêu
-            loadDailyGoal();
+            
+            // Broadcast để sync cross-tab
+            if (window.SyncManager) {
+                window.SyncManager.broadcast(window.SYNC_ACTIONS.DAILY_GOAL_UPDATED, {
+                    userId: currentUserId,
+                    dailyTarget: dailyTarget
+                });
+            }
+            
+            // Reload mục tiêu để lấy data mới
+            await loadDailyGoal();
         } else {
             alert('Lỗi: ' + result.error);
         }
@@ -315,7 +331,7 @@ async function saveGoal() {
 }
 
 /**
- * Chuyển đến trang chi tiết khóa học
+ * Chuyển đến trang khóa học của tôi
  */
 function goToCourse(courseId) {
     localStorage.setItem('selected_course_id', courseId);

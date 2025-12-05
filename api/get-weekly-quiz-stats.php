@@ -33,15 +33,14 @@ try {
 
     // Lấy điểm trung bình theo từng ngày trong tuần (7 ngày gần nhất)
     $sql = "SELECT 
-                DAYOFWEEK(completed_at) as day_of_week,
                 DATE(completed_at) as quiz_date,
                 AVG(score) as avg_score,
                 COUNT(*) as quiz_count
             FROM review_session
             WHERE user_id = ?
-            AND completed_at >= DATE_SUB(CURDATE(), INTERVAL 6 DAY)
-            AND completed_at <= CURDATE()
-            GROUP BY DATE(completed_at), DAYOFWEEK(completed_at)
+            AND DATE(completed_at) >= DATE_SUB(CURDATE(), INTERVAL 6 DAY)
+            AND DATE(completed_at) <= CURDATE()
+            GROUP BY DATE(completed_at)
             ORDER BY quiz_date ASC";
     
     $stmt = $conn->prepare($sql);

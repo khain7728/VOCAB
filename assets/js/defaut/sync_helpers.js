@@ -55,6 +55,7 @@ function setupDashboardSync() {
         window.SYNC_ACTIONS.REVIEW_COMPLETED,
         window.SYNC_ACTIONS.COURSE_JOINED,
         window.SYNC_ACTIONS.COURSE_CREATED,
+        window.SYNC_ACTIONS.DAILY_GOAL_UPDATED,
         window.SYNC_ACTIONS.REFRESH_DASHBOARD
     ];
     

@@ -78,15 +78,15 @@ try {
     }
     
     // 2. Tính số từ đã học hôm nay 
-    // Ưu tiên lấy từ review_session (số từ đã làm quiz/ôn tập hôm nay)
+    // Strategy: Đếm từ learned_word có updated_at là hôm nay VÀ status thay đổi từ not_learned
     try {
-        // Đếm từ review_session_detail hôm nay - SỬ DỤNG completed_at THAY VÌ created_at
-        // TEMPORARY: Để test với dữ liệu ngày 23/11, thay CURDATE() = '2025-11-23'
-        $sqlWordsToday = "SELECT COUNT(DISTINCT rsd.word_id) as words_learned_today
-                          FROM review_session rs
-                          INNER JOIN review_session_detail rsd ON rs.session_id = rsd.session_id
-                          WHERE rs.user_id = ? 
-                          AND DATE(rs.completed_at) = CURDATE()";
+        // Đếm từ learned_word được đánh dấu đã học hôm nay (last_reviewed_at = hôm nay)
+        // Đây là từ user vừa đánh dấu đã học trong ngày
+        $sqlWordsToday = "SELECT COUNT(DISTINCT word_id) as words_learned_today
+                          FROM learned_word
+                          WHERE user_id = ? 
+                          AND DATE(last_reviewed_at) = CURDATE()
+                          AND status IN ('learning', 'reviewing', 'mastered')";
         
         $stmtWordsToday = $conn->prepare($sqlWordsToday);
         if ($stmtWordsToday) {
@@ -97,29 +97,31 @@ try {
             $wordsLearnedToday = (int)($row['words_learned_today'] ?? 0);
             $stmtWordsToday->close();
             
-            error_log("[get-daily-goal] Words learned today from review_session: " . $wordsLearnedToday);
+            error_log("[get-daily-goal] Words learned today (last_reviewed_at): " . $wordsLearnedToday);
         }
         
-        // Nếu không có dữ liệu từ review_session, thử lấy từ learned_word
-        if ($wordsLearnedToday == 0) {
-            $sqlWordsAlt = "SELECT COUNT(DISTINCT word_id) as words_learned_today
-                            FROM learned_word
-                            WHERE user_id = ? 
-                            AND DATE(last_reviewed_at) = CURDATE()
-                            AND status != 'not_learned'";
+        // HOẶC đếm từ review_session hôm nay (nếu user làm quiz)
+        $sqlQuizToday = "SELECT COUNT(DISTINCT rsd.word_id) as quiz_words
+                         FROM review_session rs
+                         INNER JOIN review_session_detail rsd ON rs.session_id = rsd.session_id
+                         WHERE rs.user_id = ? 
+                         AND DATE(rs.completed_at) = CURDATE()";
+        
+        $stmtQuizToday = $conn->prepare($sqlQuizToday);
+        if ($stmtQuizToday) {
+            $stmtQuizToday->bind_param("i", $user_id);
+            $stmtQuizToday->execute();
+            $resultQuizToday = $stmtQuizToday->get_result();
+            $row = $resultQuizToday->fetch_assoc();
+            $quizWords = (int)($row['quiz_words'] ?? 0);
+            $stmtQuizToday->close();
             
-            $stmtWordsAlt = $conn->prepare($sqlWordsAlt);
-            if ($stmtWordsAlt) {
-                $stmtWordsAlt->bind_param("i", $user_id);
-                $stmtWordsAlt->execute();
-                $resultWordsAlt = $stmtWordsAlt->get_result();
-                $row = $resultWordsAlt->fetch_assoc();
-                $wordsLearnedToday = (int)($row['words_learned_today'] ?? 0);
-                $stmtWordsAlt->close();
-                
-                error_log("[get-daily-goal] Words learned today from learned_word: " . $wordsLearnedToday);
-            }
+            // Lấy số lớn hơn giữa learned_word và quiz
+            $wordsLearnedToday = max($wordsLearnedToday, $quizWords);
+            
+            error_log("[get-daily-goal] Quiz words today: " . $quizWords . ", Final: " . $wordsLearnedToday);
         }
+        
     } catch (Exception $wordsError) {
         error_log("[get-daily-goal] Error counting words: " . $wordsError->getMessage());
         // Giữ wordsLearnedToday = 0
