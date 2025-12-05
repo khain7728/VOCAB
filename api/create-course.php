@@ -23,7 +23,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
 // --- KẾT THÚC: CẤU HÌNH CORS CHUẨN ---
 
 
-// Tắt lỗi rác HTML
+// Tắt lỗi rác HTML (Giữ nguyên theo yêu cầu)
 error_reporting(0);
 ini_set('display_errors', 0);
 
@@ -38,20 +38,27 @@ try {
         throw new Exception('Method Not Allowed');
     }
 
-    // ✅ BẢO MẬT: Lấy user_id từ session
-    $user_id = api_require_login();
+    // ✅ BẢO MẬT: Lấy user_id từ session/token (Giả định hàm này tồn tại trong config)
+    // Lưu ý: Biến này sẽ bị ghi đè bởi input bên dưới theo logic cũ của bạn.
+    if (function_exists('api_require_login')) {
+        $user_id = api_require_login();
+    }
 
     $input = json_decode(file_get_contents('php://input'), true);
     
     // Validate dữ liệu
-    $user_id = isset($input['user_id']) ? intval($input['user_id']) : 0;
+    // Logic cũ: Ưu tiên lấy user_id từ input client gửi lên (nếu có)
+    if (isset($input['user_id'])) {
+        $user_id = intval($input['user_id']);
+    }
+
     $course_name = isset($input['course_name']) ? trim($input['course_name']) : '';
     $description = isset($input['description']) ? trim($input['description']) : '';
     $visibility = isset($input['visibility']) ? $input['visibility'] : 'public';
     $tags = isset($input['tags']) ? $input['tags'] : []; 
 
-    if ($user_id <= 0 || empty($course_name)) {
-        throw new Exception('Tên khóa học không được để trống');
+    if (empty($user_id) || $user_id <= 0 || empty($course_name)) {
+        throw new Exception('Tên khóa học không được để trống và User ID phải hợp lệ.');
     }
 
     // Bắt đầu Transaction

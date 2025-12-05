@@ -5,13 +5,18 @@ document.addEventListener('DOMContentLoaded', function() {
     // ============================================================
     const API_BASE_URL = 'http://localhost/VOCAB/api'; 
     const urlParams = new URLSearchParams(window.location.search);
-    const USER_ID = localStorage.getItem('user_id'); // Lấy từ session đã được lưu bởi auth_check.js
+    const USER_ID = localStorage.getItem('user_id'); 
 
     // DOM ELEMENTS
     const tabKhoaHocCongDong = document.getElementById('tab-khoa-hoc-cong-dong');
     const danhSachContainer = document.getElementById('danh-sach-khoa-hoc');
     const khungPhanTrang = document.getElementById('khung-phan-trang');
     const thanhTimKiem = document.getElementById('thanh-tim-kiem');
+    
+    // [FIX LỖI #30]: Khai báo biến hiển thị kết quả. 
+    let textKetQuaTimKiem = document.getElementById('text-ket-qua-tim-kiem');
+
+    // Filter Elements
     const boLocNguonGocBtn = document.getElementById('bo-loc-nguon-goc');
     const tieuDeNguonGoc = document.getElementById('tieu-de-nguon-goc');
     const menuLocNguonGoc = document.getElementById('menu-loc-nguon-goc');
@@ -24,8 +29,10 @@ document.addEventListener('DOMContentLoaded', function() {
     const khungCheMo = document.getElementById('khung-che-mo');
     const modalTaoKhoaHoc = document.getElementById('modal-tao-khoa-hoc');
     const btnHuyModalTaoKhoaHoc = document.getElementById('btn-huy-modal-taokhoahoc');
-    const btnSubmitTaoKhoaHoc = document.getElementById('btn-them-tu-vung'); // Nút submit form
+    const btnSubmitTaoKhoaHoc = document.getElementById('btn-them-tu-vung'); 
     const tieuDeModal = document.querySelector('#modal-tao-khoa-hoc .tieu-de-modal');
+    // [FIX LỖI #33]: Bắt thêm các nút đóng có class .close (nút X)
+    const btnCloseIcons = document.querySelectorAll('.close');
     
     // TAGS
     const btnChonTag = document.getElementById('btn-chon-tag');
@@ -39,9 +46,8 @@ document.addEventListener('DOMContentLoaded', function() {
     // STATE
     let coursesData = [];    
     let filteredData = [];   
-    let boLocNguonGoc = 'tat-ca'; // Đã tạo / Đã tham gia
-    let boLocTrangThai = 'tat-ca'; // Chưa học / Đang học / Hoàn thành
-    let currentTab = 'my-courses'; // Thêm biến theo dõi tab
+    let boLocNguonGoc = 'tat-ca'; 
+    let boLocTrangThai = 'tat-ca'; 
     let tuKhoaTimKiem = '';
     let trangHienTai = 1;
     const soMucTrenTrang = 5;
@@ -49,26 +55,111 @@ document.addEventListener('DOMContentLoaded', function() {
     let availableTags = []; 
     let dsTagDaChon = [];   
 
+    // [FIX LỖI #41]: Hàm Debounce giúp tối ưu tìm kiếm (chống lag)
+    function debounce(func, wait) {
+        let timeout;
+        return function(...args) {
+            const context = this;
+            clearTimeout(timeout);
+            timeout = setTimeout(() => func.apply(context, args), wait);
+        };
+    }
+
     // ============================================================
     // 2. API CALLS
     // ============================================================
 
     async function fetchMyCourses() {
         try {
-            danhSachContainer.innerHTML = '<p style="text-align:center">Đang tải dữ liệu...</p>';
+            if (danhSachContainer) danhSachContainer.innerHTML = '<p style="text-align:center">Đang tải dữ liệu...</p>';
             const response = await fetch(`${API_BASE_URL}/get-my-courses.php?user_id=${USER_ID}`);
             const result = await response.json();
 
             if (result.success) {
-                coursesData = result.data;
+                // --- [LOGIC MỚI] XỬ LÝ TỰ ĐỘNG DỰA TRÊN SỐ TỪ ---
+                const rawData = result.data;
+                const validCourses = [];
+
+                rawData.forEach(course => {
+                    const soTu = parseInt(course.soTu || 0);
+
+                    // Chỉ xử lý nếu user là chủ sở hữu
+                    if (course.isOwner) {
+                        if (soTu === 0) {
+                            // CASE 1: 0 từ -> Xóa vĩnh viễn & Ẩn khỏi list
+                            console.warn(`Khóa học ${course.id} (0 từ): Đang tự động xóa...`);
+                            autoDeleteCourseSilent(course.id);
+                            // Không push vào validCourses -> Ẩn ngay lập tức
+                        } 
+                        else if (soTu < 3) {
+                            // CASE 2: 1 hoặc 2 từ -> Chuyển sang Riêng tư (nếu đang Công khai)
+                            // Lưu ý: course.trangThaiChiaSe thường là text hiển thị ("Công khai" / "Riêng tư")
+                            if (course.trangThaiChiaSe === 'Công khai') {
+                                console.warn(`Khóa học ${course.id} (<3 từ): Chuyển về Riêng tư...`);
+                                autoSetPrivateSilent(course);
+                                // Cập nhật lại object để hiển thị đúng trên UI ngay
+                                course.trangThaiChiaSe = 'Riêng tư'; 
+                            }
+                            // Vẫn hiển thị ra list
+                            validCourses.push(course);
+                        } 
+                        else {
+                            // CASE 3: >= 3 từ -> Giữ nguyên trạng thái
+                            validCourses.push(course);
+                        }
+                    } else {
+                        // Khóa học tham gia -> Giữ nguyên
+                        validCourses.push(course);
+                    }
+                });
+
+                coursesData = validCourses;
+                // ----------------------------------------------------
+
                 filteredData = coursesData;
                 renderDanhSach();
             } else {
-                danhSachContainer.innerHTML = `<p class="thong-bao-rong">Lỗi: ${result.error}</p>`;
+                if (danhSachContainer) danhSachContainer.innerHTML = `<p class="thong-bao-rong">Lỗi: ${result.error}</p>`;
             }
         } catch (error) {
             console.error(error);
-            danhSachContainer.innerHTML = `<p class="thong-bao-rong">Lỗi kết nối server.</p>`;
+            if (danhSachContainer) danhSachContainer.innerHTML = `<p class="thong-bao-rong">Lỗi kết nối server.</p>`;
+        }
+    }
+
+    // Hàm xóa ngầm (khi số từ = 0)
+    async function autoDeleteCourseSilent(courseId) {
+        try {
+            await fetch(`${API_BASE_URL}/delete-course.php`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ user_id: USER_ID, course_id: courseId, action: 'delete' })
+            });
+        } catch (e) {
+            console.error("Lỗi xóa ngầm:", e);
+        }
+    }
+
+    // Hàm chuyển về riêng tư ngầm (khi số từ < 3)
+    async function autoSetPrivateSilent(course) {
+        try {
+            // Cần gửi đủ thông tin để update-course.php không bị lỗi thiếu trường
+            const payload = {
+                user_id: USER_ID,
+                course_id: course.id,
+                course_name: course.tieuDe, // Mapping lại tên trường cho khớp API
+                description: course.mota || '',
+                visibility: 'private',      // Ép về private
+                tags: course.tags || []
+            };
+
+            await fetch(`${API_BASE_URL}/update-course.php`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+        } catch (e) {
+            console.error("Lỗi cập nhật riêng tư ngầm:", e);
         }
     }
 
@@ -121,27 +212,19 @@ document.addEventListener('DOMContentLoaded', function() {
         if (!danhSachContainer) return;
 
         filteredData = coursesData.filter(kh => {
-            // [CẬP NHẬT LOGIC LỌC]: Đồng bộ logic hiển thị, nếu tiến độ 100% thì coi là Hoàn thành khi lọc
             let hienThiTrangThai = kh.trangThai;
             if (kh.tienDo === 100) hienThiTrangThai = 'Hoàn thành';
 
             // Filter 1: Nguồn gốc
             let matchNguonGoc = true;
-            if (boLocNguonGoc === 'da-tao') {
-                matchNguonGoc = kh.isOwner;
-            } else if (boLocNguonGoc === 'da-tham-gia') {
-                matchNguonGoc = !kh.isOwner;
-            }
+            if (boLocNguonGoc === 'da-tao') matchNguonGoc = kh.isOwner;
+            else if (boLocNguonGoc === 'da-tham-gia') matchNguonGoc = !kh.isOwner;
             
-            // Filter 2: Trạng thái học tập
+            // Filter 2: Trạng thái
             let matchTrangThai = true;
-            if (boLocTrangThai === 'chua-hoc') {
-                matchTrangThai = hienThiTrangThai === 'Chưa học';
-            } else if (boLocTrangThai === 'dang-hoc') {
-                matchTrangThai = hienThiTrangThai === 'Đang học';
-            } else if (boLocTrangThai === 'hoan-thanh') {
-                matchTrangThai = hienThiTrangThai === 'Hoàn thành';
-            }
+            if (boLocTrangThai === 'chua-hoc') matchTrangThai = hienThiTrangThai === 'Chưa học';
+            else if (boLocTrangThai === 'dang-hoc') matchTrangThai = hienThiTrangThai === 'Đang học';
+            else if (boLocTrangThai === 'hoan-thanh') matchTrangThai = hienThiTrangThai === 'Hoàn thành';
             
             // Filter 3: Tìm kiếm
             let matchSearch = true;
@@ -149,9 +232,28 @@ document.addEventListener('DOMContentLoaded', function() {
                 const k = tuKhoaTimKiem.toLowerCase();
                 matchSearch = kh.tieuDe.toLowerCase().includes(k) || (kh.mota && kh.mota.toLowerCase().includes(k));
             }
-            
             return matchNguonGoc && matchTrangThai && matchSearch;
         });
+
+        // [FIX Lỗi #30]: Hiển thị dòng chữ kết quả tìm kiếm
+        if (!textKetQuaTimKiem) {
+            textKetQuaTimKiem = document.createElement('div');
+            textKetQuaTimKiem.id = 'text-ket-qua-tim-kiem';
+            textKetQuaTimKiem.style.marginBottom = '10px';
+            textKetQuaTimKiem.style.fontStyle = 'italic';
+            textKetQuaTimKiem.style.color = '#666';
+            danhSachContainer.parentNode.insertBefore(textKetQuaTimKiem, danhSachContainer);
+        }
+
+        if (tuKhoaTimKiem && tuKhoaTimKiem.trim() !== '') {
+            textKetQuaTimKiem.innerHTML = `Có ${filteredData.length} khóa học liên quan.`;
+            textKetQuaTimKiem.style.display = 'block';
+            textKetQuaTimKiem.style.color = '#6b7280'; 
+            textKetQuaTimKiem.style.marginBottom = '1rem';
+        } else {
+            textKetQuaTimKiem.innerText = '';
+            textKetQuaTimKiem.style.display = 'none';
+        }
 
         const tongSoMuc = filteredData.length;
         const tongSoTrang = Math.ceil(tongSoMuc / soMucTrenTrang);
@@ -172,18 +274,13 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function taoTheKhoaHoc(kh) {
-        // [CẬP NHẬT MỚI] Logic override: Nếu tiến độ 100% thì gán cứng trạng thái là Hoàn thành
-        if (kh.tienDo === 100) {
-            kh.trangThai = 'Hoàn thành';
-        }
-        // ---------------------------------------------------------------------------------
+        if (kh.tienDo === 100) kh.trangThai = 'Hoàn thành';
 
         const div = document.createElement('div');
         div.className = 'the-khoa-hoc';
         div.setAttribute('data-id', kh.id);
 
         let classTrangThai = kh.trangThai === 'Hoàn thành' ? 'trang-thai-hoan-thanh' : (kh.trangThai === 'Đang học' ? 'trang-thai-dang-hoc' : 'trang-thai-chua-hoc');
-        // Logic nút: Nếu học 100% -> Kiểm tra, ngược lại -> Học
         let btnAction = kh.tienDo === 100 ? { text: 'Kiểm tra', action: 'kiem-tra', class: 'nut-xanh' } : { text: 'Học', action: 'hoc', class: 'nut-trang-vien-xanh' };
         const btnSua = kh.isOwner ? `<button class="nut-hanh-dong" data-action="sua"><i class="fa-solid fa-pencil"></i></button>` : '';
         const tagsHtml = (kh.tags && kh.tags.length) ? kh.tags.map(t => `<span class="the-tag">${t}</span>`).join('') : '<span class="the-tag" style="opacity:0.5">Không có tag</span>';
@@ -217,6 +314,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function renderPhanTrang(tongSoTrang) {
+        if (!khungPhanTrang) return;
         khungPhanTrang.innerHTML = '';
         if (tongSoTrang <= 1) return;
         const taoNut = (txt, p) => {
@@ -240,9 +338,9 @@ document.addEventListener('DOMContentLoaded', function() {
         if (tieuDeModal) tieuDeModal.textContent = "Thông tin khóa học";
         if (btnSubmitTaoKhoaHoc) btnSubmitTaoKhoaHoc.textContent = "Thêm từ vựng";
         moModalChung();
-        document.getElementById('form-tao-khoa-hoc').reset();
+        if(document.getElementById('form-tao-khoa-hoc')) document.getElementById('form-tao-khoa-hoc').reset();
         dsTagDaChon = [];
-        tagInput.value = "";
+        if(tagInput) tagInput.value = "";
         fetchTags();
     }
 
@@ -251,21 +349,22 @@ document.addEventListener('DOMContentLoaded', function() {
         if (tieuDeModal) tieuDeModal.textContent = "Cập nhật khóa học";
         if (btnSubmitTaoKhoaHoc) btnSubmitTaoKhoaHoc.textContent = "Lưu thay đổi";
         moModalChung();
-        document.getElementById('ten-khoa-hoc-input').value = course.tieuDe;
-        document.getElementById('mo-ta-input').value = course.mota || "";
-        document.getElementById('trang-thai-select').value = (course.trangThaiChiaSe === 'Công khai') ? 'cong-khai' : 'rieng-tu';
+        if(document.getElementById('ten-khoa-hoc-input')) document.getElementById('ten-khoa-hoc-input').value = course.tieuDe;
+        if(document.getElementById('mo-ta-input')) document.getElementById('mo-ta-input').value = course.mota || "";
+        if(document.getElementById('trang-thai-select')) document.getElementById('trang-thai-select').value = (course.trangThaiChiaSe === 'Công khai') ? 'cong-khai' : 'rieng-tu';
         dsTagDaChon = course.tags ? [...course.tags] : [];
-        tagInput.value = dsTagDaChon.join(', ');
+        if(tagInput) tagInput.value = dsTagDaChon.join(', ');
         fetchTags();
     }
 
     function moModalChung() {
-        khungCheMo.classList.remove('an');
-        modalTaoKhoaHoc.classList.remove('an');
-        modalThemTag.classList.add('an');
+        if(khungCheMo) khungCheMo.classList.remove('an');
+        if(modalTaoKhoaHoc) modalTaoKhoaHoc.classList.remove('an');
+        if(modalThemTag) modalThemTag.classList.add('an');
     }
 
     function renderTagsTrongModal() {
+        if (!khungTagGoiY || !khungTagDaChon) return;
         khungTagGoiY.innerHTML = '';
         khungTagDaChon.innerHTML = '';
         availableTags.forEach(tag => {
@@ -287,15 +386,16 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function dongTatCaModal() {
-        khungCheMo.classList.add('an');
-        modalTaoKhoaHoc.classList.add('an');
-        modalThemTag.classList.add('an');
+        if(khungCheMo) khungCheMo.classList.add('an');
+        if(modalTaoKhoaHoc) modalTaoKhoaHoc.classList.add('an');
+        if(modalThemTag) modalThemTag.classList.add('an');
     }
 
     // --- EVENTS ---
     if(tabKhoaHocCongDong) tabKhoaHocCongDong.onclick = () => window.location.href = `khoa_hoc_cong_dong.html?user_id=${USER_ID}`;
     if(btnTaoKhoaHoc) btnTaoKhoaHoc.onclick = moModalTaoKhoaHoc;
     if(btnHuyModalTaoKhoaHoc) btnHuyModalTaoKhoaHoc.onclick = dongTatCaModal;
+    if(btnCloseIcons) btnCloseIcons.forEach(btn => btn.onclick = dongTatCaModal);
     if(khungCheMo) khungCheMo.onclick = (e) => { if(e.target === khungCheMo) dongTatCaModal(); };
 
     // --- NÚT LƯU / TẠO ---
@@ -322,8 +422,6 @@ document.addEventListener('DOMContentLoaded', function() {
             btnSubmitTaoKhoaHoc.disabled = false;
             btnSubmitTaoKhoaHoc.textContent = isUpdate ? "Lưu thay đổi" : "Thêm từ vựng";
 
-            console.log("Response Server:", res); // Debug
-
             if (res.success) {
                 alert(res.message || (isUpdate ? "Cập nhật thành công!" : "Tạo thành công!"));
                 dongTatCaModal();
@@ -332,7 +430,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     fetchMyCourses();
                 } else {
                     const newId = res.course_id; 
-
                     if (newId && newId > 0) {
                         window.location.href = `them_tu_vung.html?id=${newId}&user_id=${USER_ID}`;
                     } else {
@@ -353,24 +450,23 @@ document.addEventListener('DOMContentLoaded', function() {
         const currentTags = tagInput.value.split(',').map(t => t.trim()).filter(t => t);
         dsTagDaChon = [...new Set([...dsTagDaChon, ...currentTags])];
         moModalChung(); 
-        modalTaoKhoaHoc.classList.add('an'); 
-        modalThemTag.classList.remove('an');
+        if(modalTaoKhoaHoc) modalTaoKhoaHoc.classList.add('an'); 
+        if(modalThemTag) modalThemTag.classList.remove('an');
         renderTagsTrongModal();
     };
     if(btnDongModalTag) btnDongModalTag.onclick = dongTatCaModal;
     if(btnXacNhanTag) btnXacNhanTag.onclick = () => {
-        tagInput.value = dsTagDaChon.join(', ');
-        modalThemTag.classList.add('an');
-        modalTaoKhoaHoc.classList.remove('an');
+        if(tagInput) tagInput.value = dsTagDaChon.join(', ');
+        if(modalThemTag) modalThemTag.classList.add('an');
+        if(modalTaoKhoaHoc) modalTaoKhoaHoc.classList.remove('an');
     };
 
-    // Filter & Search
-    // Dropdown Nguồn gốc
+    // Filter & Search Events
     if(boLocNguonGocBtn) {
         boLocNguonGocBtn.onclick = (e) => { 
             e.stopPropagation(); 
-            menuLocNguonGoc.classList.toggle('an');
-            menuLocTrangThai.classList.add('an'); // Đóng dropdown kia
+            if(menuLocNguonGoc) menuLocNguonGoc.classList.toggle('an');
+            if(menuLocTrangThai) menuLocTrangThai.classList.add('an'); 
         };
     }
     
@@ -383,7 +479,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     'da-tao': 'Đã tạo',
                     'da-tham-gia': 'Đã tham gia'
                 };
-                tieuDeNguonGoc.textContent = nguonGocNames[boLocNguonGoc];
+                if(tieuDeNguonGoc) tieuDeNguonGoc.textContent = nguonGocNames[boLocNguonGoc];
                 menuLocNguonGoc.classList.add('an');
                 
                 menuLocNguonGoc.querySelectorAll('.lua-chon-loc').forEach(i => i.classList.remove('active'));
@@ -395,12 +491,11 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
-    // Dropdown Trạng thái
     if(boLocTrangThaiBtn) {
         boLocTrangThaiBtn.onclick = (e) => { 
             e.stopPropagation(); 
-            menuLocTrangThai.classList.toggle('an');
-            menuLocNguonGoc.classList.add('an'); // Đóng dropdown kia
+            if(menuLocTrangThai) menuLocTrangThai.classList.toggle('an');
+            if(menuLocNguonGoc) menuLocNguonGoc.classList.add('an'); 
         };
     }
     
@@ -414,7 +509,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     'dang-hoc': 'Đang học',
                     'hoan-thanh': 'Hoàn thành'
                 };
-                tieuDeTrangThai.textContent = trangThaiNames[boLocTrangThai];
+                if(tieuDeTrangThai) tieuDeTrangThai.textContent = trangThaiNames[boLocTrangThai];
                 menuLocTrangThai.classList.add('an');
                 
                 menuLocTrangThai.querySelectorAll('.lua-chon-loc').forEach(i => i.classList.remove('active'));
@@ -426,19 +521,23 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
-    if(thanhTimKiem) thanhTimKiem.oninput = (e) => { tuKhoaTimKiem = e.target.value.toLowerCase(); trangHienTai = 1; renderDanhSach(); };
+    if(thanhTimKiem) {
+        thanhTimKiem.oninput = debounce((e) => { 
+            tuKhoaTimKiem = e.target.value.toLowerCase(); 
+            trangHienTai = 1; 
+            renderDanhSach(); 
+        }, 300); 
+    }
     
-    // Đóng dropdowns khi click bên ngoài
     document.onclick = (e) => { 
-        if(boLocNguonGocBtn && !boLocNguonGocBtn.contains(e.target) && !menuLocNguonGoc.contains(e.target)) {
+        if(boLocNguonGocBtn && menuLocNguonGoc && !boLocNguonGocBtn.contains(e.target) && !menuLocNguonGoc.contains(e.target)) {
             menuLocNguonGoc.classList.add('an');
         }
-        if(boLocTrangThaiBtn && !boLocTrangThaiBtn.contains(e.target) && !menuLocTrangThai.contains(e.target)) {
+        if(boLocTrangThaiBtn && menuLocTrangThai && !boLocTrangThaiBtn.contains(e.target) && !menuLocTrangThai.contains(e.target)) {
             menuLocTrangThai.classList.add('an');
         }
     };
 
-    // Hàm kiểm tra điều kiện kiểm tra (cần ít nhất 2 từ đã học)
     async function checkAndNavigateToTest(courseId) {
         try {
             const response = await fetch(`${API_BASE_URL}/get-words.php?course_id=${courseId}&user_id=${USER_ID}`);
@@ -446,13 +545,10 @@ document.addEventListener('DOMContentLoaded', function() {
             
             if (result.success) {
                 const learnedCount = result.data.statistics.learned;
-                
                 if (learnedCount < 2) {
                     alert('Bạn cần học ít nhất 2 từ vựng trước khi có thể kiểm tra!\n\nHãy học thêm từ vựng để mở khóa tính năng này.');
                     return;
                 }
-                
-                // Điều hướng đến trang kiểm tra
                 window.location.href = `user_kiem_tra.html?course_id=${courseId}&user_id=${USER_ID}`;
             } else {
                 alert('Không thể tải thông tin khóa học. Vui lòng thử lại!');
@@ -463,7 +559,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    // Click Handler cho List
     if(danhSachContainer) danhSachContainer.onclick = (e) => {
         const nut = e.target.closest('.nut-bam, .nut-hanh-dong');
         if(!nut) return;
