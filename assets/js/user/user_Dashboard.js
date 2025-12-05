@@ -9,6 +9,54 @@ const API_BASE = '../../api';
 // Lấy user_id từ session
 let currentUserId = null;
 
+// Cache configuration 
+const CACHE_DURATION = 5 * 60 * 1000; 
+
+/**
+ * Cache helper functions
+ */
+function getCachedData(key) {
+    const cached = localStorage.getItem(key);
+    if (!cached) return null;
+    
+    try {
+        const data = JSON.parse(cached);
+        const now = Date.now();
+        
+        // Check if cache is still valid
+        if (data.timestamp && (now - data.timestamp < CACHE_DURATION)) {
+            console.log(`Using cached data for: ${key}`);
+            return data.value;
+        }
+        
+        // Cache expired, remove it
+        localStorage.removeItem(key);
+        return null;
+    } catch (e) {
+        localStorage.removeItem(key);
+        return null;
+    }
+}
+
+function setCachedData(key, value) {
+    const data = {
+        timestamp: Date.now(),
+        value: value
+    };
+    localStorage.setItem(key, JSON.stringify(data));
+}
+
+function clearDashboardCache() {
+    const keys = [
+        'dashboard_stats',
+        'dashboard_courses',
+        'dashboard_goal',
+        'dashboard_weekly_stats'
+    ];
+    keys.forEach(key => localStorage.removeItem(key));
+    console.log('🗑️ Dashboard cache cleared');
+}
+
 /**
  * Khởi tạo user_id từ session
  */
@@ -19,14 +67,14 @@ async function initializeUser() {
         
         if (result.success) {
             currentUserId = result.user_id;
-            console.log('✅ Loaded user_id from session:', currentUserId);
+            console.log('Loaded user_id from session:', currentUserId);
             
             // Lưu vào localStorage để dùng cho các request tiếp theo
             localStorage.setItem('user_id', currentUserId);
             localStorage.setItem('user_name', result.name);
             localStorage.setItem('user_role', result.role);
         } else {
-            console.error('❌ Not logged in');
+            console.error('Not logged in');
             alert('Vui lòng đăng nhập');
             window.location.href = '../dangnhap.html';
         }
@@ -45,119 +93,77 @@ async function initializeUser() {
  * Load thống kê dashboard
  */
 async function loadDashboardStats() {
+    // Check cache first
+    const cached = getCachedData('dashboard_stats');
+    if (cached) {
+        displayDashboardStats(cached);
+        return;
+    }
+    
     try {
         console.log('Fetching dashboard stats for user:', currentUserId);
         const response = await fetch(`${API_BASE}/get-dashboard-stats.php?user_id=${currentUserId}`);
         
-        // Kiểm tra response status
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
         }
         
-        // Lấy raw text trước để debug
         const text = await response.text();
-        console.log('Raw response:', text);
-        
-        // Parse JSON
         let result;
         try {
             result = JSON.parse(text);
         } catch (parseError) {
             console.error('❌ JSON Parse Error. Raw response:', text);
-            alert('Server trả về dữ liệu không hợp lệ. Kiểm tra console để xem chi tiết.');
             return;
         }
-        
-        console.log('Dashboard stats result:', result);
 
         if (result.success) {
-            const data = result.data;
-            
-            // Kiểm tra các element tồn tại trước khi cập nhật
-            const welcomeEl = document.getElementById('welcome-message');
-            const coursesEl = document.getElementById('total-courses');
-            const wordsEl = document.getElementById('total-words');
-            const scoreEl = document.getElementById('avg-score');
-            
-            if (welcomeEl) welcomeEl.textContent = `Chào mừng bạn trở lại, ${data.user_name}`;
-            if (coursesEl) coursesEl.textContent = data.total_courses;
-            if (wordsEl) wordsEl.textContent = data.total_words_learned;
-            if (scoreEl) scoreEl.textContent = `${data.average_score}/100`;
-            
-            console.log('✅ Dashboard stats loaded successfully');
+            // Cache the data
+            setCachedData('dashboard_stats', result.data);
+            displayDashboardStats(result.data);
+            console.log('Dashboard stats loaded successfully');
         } else {
-            console.error('❌ Lỗi API:', result.error);
-            alert('Lỗi khi tải thống kê: ' + (result.error || 'Unknown error'));
+            console.error('Lỗi API:', result.error);
         }
     } catch (error) {
-        console.error('❌ Lỗi kết nối API get-dashboard-stats:', error);
-        console.error('Error details:', error.message);
-        alert('Không thể kết nối đến server. Vui lòng kiểm tra console.');
+        console.error('Lỗi kết nối API get-dashboard-stats:', error);
     }
+}
+
+/**
+ * Display dashboard stats (separated from loading)
+ */
+function displayDashboardStats(data) {
+    const welcomeEl = document.getElementById('welcome-message');
+    const coursesEl = document.getElementById('total-courses');
+    const wordsEl = document.getElementById('total-words');
+    const scoreEl = document.getElementById('avg-score');
+    
+    if (welcomeEl) welcomeEl.textContent = `Chào mừng bạn trở lại, ${data.user_name}`;
+    if (coursesEl) coursesEl.textContent = data.total_courses;
+    if (wordsEl) wordsEl.textContent = data.total_words_learned;
+    if (scoreEl) scoreEl.textContent = `${data.average_score}/100`;
 }
 
 /**
  * Load khóa học của người dùng
  */
 async function loadMyCourses() {
+    // Check cache first
+    const cached = getCachedData('dashboard_courses');
+    if (cached) {
+        displayMyCourses(cached);
+        return;
+    }
+    
     try {
         const response = await fetch(`${API_BASE}/get-my-courses.php?user_id=${currentUserId}`);
         const result = await response.json();
 
         if (result.success) {
-            const courses = result.data || [];
-            const coursesGrid = document.getElementById('courses-grid');
-            
-            if (courses.length === 0) {
-                coursesGrid.innerHTML = `
-                    <div style="text-align: center; padding: 40px; color: #999; grid-column: 1 / -1;">
-                        <i class="fa-solid fa-book-open" style="font-size: 48px; margin-bottom: 15px; opacity: 0.3;"></i>
-                        <p>Bạn chưa có khóa học nào. Hãy tạo hoặc tham gia khóa học!</p>
-                    </div>
-                `;
-                return;
-            }
-            
-            // Hiển thị tối đa 3 khóa học
-            const displayCourses = courses.slice(0, 3);
-            let html = '';
-            
-            displayCourses.forEach(course => {
-                html += `
-                    <div class="course-card">
-                        <h3 class="course-title">${escapeHtml(course.tieuDe)}</h3>
-                        <p class="course-description">${escapeHtml(course.mota || 'Chưa có mô tả')}</p>
-                        <div style="font-size: 12px; color: #666; margin: 8px 0;">
-                            <i class="fa-solid fa-book"></i> ${course.soTu} từ &nbsp;|&nbsp; 
-                            <i class="fa-solid fa-users"></i> ${course.hocVien} học viên
-                        </div>
-                        <div class="progress-section">
-                            <div class="progress-label">
-                                <span>Hoàn thành</span>
-                                <span>${course.tienDo}%</span>
-                            </div>
-                            <div class="progress-bar">
-                                <div class="progress-fill" style="width: ${course.tienDo}%"></div>
-                            </div>
-                        </div>
-                        <button class="btn-continue" onclick="goToCourse(${course.id})">
-                            ${course.tienDo === 0 ? 'Bắt đầu học' : 'Tiếp tục học'}
-                        </button>
-                    </div>
-                `;
-            });
-            
-            // Thêm nút xem tất cả nếu có nhiều hơn 3 khóa học
-            if (courses.length > 3) {
-                html += `
-                    <div class="more-card" onclick="window.location.href='khoa_hoc_cua_toi.html'" style="cursor: pointer;">
-                        <i class="fa-solid fa-arrow-right"></i>
-                        <p>Xem tất cả ${courses.length} khóa học</p>
-                    </div>
-                `;
-            }
-            
-            coursesGrid.innerHTML = html;
+            // Cache the data
+            setCachedData('dashboard_courses', result.data || []);
+            displayMyCourses(result.data || []);
         } else {
             console.error('Lỗi khi tải khóa học:', result.error);
         }
@@ -167,9 +173,74 @@ async function loadMyCourses() {
 }
 
 /**
+ * Display courses (separated from loading)
+ */
+function displayMyCourses(courses) {
+    const coursesGrid = document.getElementById('courses-grid');
+    
+    if (courses.length === 0) {
+        coursesGrid.innerHTML = `
+            <div style="text-align: center; padding: 40px; color: #999; grid-column: 1 / -1;">
+                <i class="fa-solid fa-book-open" style="font-size: 48px; margin-bottom: 15px; opacity: 0.3;"></i>
+                <p>Bạn chưa có khóa học nào. Hãy tạo hoặc tham gia khóa học!</p>
+            </div>
+        `;
+        return;
+    }
+    
+    // Hiển thị tối đa 3 khóa học
+    const displayCourses = courses.slice(0, 3);
+    let html = '';
+    
+    displayCourses.forEach(course => {
+        html += `
+            <div class="course-card">
+                <h3 class="course-title">${escapeHtml(course.tieuDe)}</h3>
+                <p class="course-description">${escapeHtml(course.mota || 'Chưa có mô tả')}</p>
+                <div style="font-size: 12px; color: #666; margin: 8px 0;">
+                    <i class="fa-solid fa-book"></i> ${course.soTu} từ &nbsp;|&nbsp; 
+                    <i class="fa-solid fa-users"></i> ${course.hocVien} học viên
+                </div>
+                <div class="progress-section">
+                    <div class="progress-label">
+                        <span>Hoàn thành</span>
+                        <span>${course.tienDo}%</span>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: ${course.tienDo}%"></div>
+                    </div>
+                </div>
+                <button class="btn-continue" onclick="goToCourse(${course.id})">
+                    ${course.tienDo === 0 ? 'Bắt đầu học' : 'Tiếp tục học'}
+                </button>
+            </div>
+        `;
+    });
+    
+    // Thêm nút xem tất cả nếu có nhiều hơn 3 khóa học
+    if (courses.length > 3) {
+        html += `
+            <div class="more-card" onclick="window.location.href='khoa_hoc_cua_toi.html'" style="cursor: pointer;">
+                <i class="fa-solid fa-arrow-right"></i>
+                <p>Xem tất cả ${courses.length} khóa học</p>
+            </div>
+        `;
+    }
+    
+    coursesGrid.innerHTML = html;
+}
+
+/**
  * Load mục tiêu hàng ngày
  */
 async function loadDailyGoal() {
+    // Check cache first
+    const cached = getCachedData('dashboard_goal');
+    if (cached) {
+        displayDailyGoal(cached);
+        return;
+    }
+    
     try {
         console.log('Fetching daily goal for user:', currentUserId);
         const response = await fetch(`${API_BASE}/get-daily-goal.php?user_id=${currentUserId}`);
@@ -188,7 +259,7 @@ async function loadDailyGoal() {
         try {
             result = JSON.parse(text);
         } catch (parseError) {
-            console.error('❌ JSON Parse Error. Raw response:', text);
+            console.error('JSON Parse Error. Raw response:', text);
             alert('Server trả về dữ liệu không hợp lệ cho daily goal. Kiểm tra console.');
             return;
         }
@@ -196,66 +267,104 @@ async function loadDailyGoal() {
         console.log('Daily goal result:', result);
 
         if (result.success) {
-            const data = result.data;
+            // Cache the data
+            setCachedData('dashboard_goal', result.data);
+            displayDailyGoal(result.data);
             
-            const noGoalCard = document.getElementById('no-goal-card');
-            const hasGoalCard = document.getElementById('has-goal-card');
-            const streakBadge = document.getElementById('streak-badge');
-            const streakDaysEl = document.getElementById('streak-days');
-            
-            // Kiểm tra elements tồn tại
-            if (!noGoalCard || !hasGoalCard) {
-                console.error('❌ Goal card elements not found in DOM');
-                return;
-            }
-            
-            // Hiển thị streak nếu có
-            if (data.streak_days && data.streak_days > 0) {
-                if (streakBadge) streakBadge.style.display = 'flex';
-                if (streakDaysEl) streakDaysEl.textContent = data.streak_days;
-            }
-            
-            if (data.has_goal) {
-                // Hiển thị mục tiêu hiện tại
-                noGoalCard.style.display = 'none';
-                hasGoalCard.style.display = 'block';
-                
-                // Debug log
-                console.log('Goal data:', {
-                    target: data.daily_target,
-                    learned: data.words_learned_today,
-                    percent: data.progress_percent
-                });
-                
-                // Cập nhật tiêu đề
-                const goalTitle = `Học ${data.daily_target} từ hôm nay${data.is_recurring ? ' (Lặp lại hàng ngày)' : ''}`;
-                const goalSubtitle = `Đã học ${data.words_learned_today}/${data.daily_target} từ hôm nay`;
-                
-                const goalTitleEl = document.getElementById('goal-title');
-                const goalSubtitleEl = document.getElementById('goal-subtitle');
-                const goalPercentEl = document.getElementById('goal-progress-percent');
-                const goalBarEl = document.getElementById('goal-progress-bar');
-                
-                if (goalTitleEl) goalTitleEl.textContent = goalTitle;
-                if (goalSubtitleEl) goalSubtitleEl.textContent = goalSubtitle;
-                if (goalPercentEl) goalPercentEl.textContent = `${data.progress_percent}%`;
-                if (goalBarEl) goalBarEl.style.width = `${data.progress_percent}%`;
-                
-                console.log('✅ Daily goal loaded:', data);
-            } else {
-                // Chưa có mục tiêu
-                noGoalCard.style.display = 'block';
-                hasGoalCard.style.display = 'none';
-                console.log('ℹ️ User has no goal set');
-            }
         } else {
-            console.error('❌ Lỗi API:', result.error);
-            alert('Lỗi khi tải mục tiêu: ' + (result.error || 'Unknown error'));
+            console.error('Lỗi API:', result.error);
         }
     } catch (error) {
-        console.error('❌ Lỗi kết nối API get-daily-goal:', error);
-        console.error('Error details:', error.message);
-        alert('Không thể tải mục tiêu. Vui lòng kiểm tra console.');
+        console.error('Lỗi kết nối API get-daily-goal:', error);
+    }
+}
+
+/**
+ * Display daily goal (separated from loading)
+ */
+function displayDailyGoal(data) {
+    const noGoalCard = document.getElementById('no-goal-card');
+    const hasGoalCard = document.getElementById('has-goal-card');
+    const streakBadge = document.getElementById('streak-badge');
+    const streakDaysEl = document.getElementById('streak-days');
+    
+    // Kiểm tra elements tồn tại
+    if (!noGoalCard || !hasGoalCard) {
+        console.error('Goal card elements not found in DOM');
+        return;
+    }
+    
+    // Hiển thị streak nếu có
+    if (data.streak_days && data.streak_days > 0) {
+        if (streakBadge) streakBadge.style.display = 'flex';
+        if (streakDaysEl) streakDaysEl.textContent = data.streak_days;
+    }
+    
+    if (data.has_goal) {
+        // Hiển thị mục tiêu hiện tại
+        noGoalCard.style.display = 'none';
+        hasGoalCard.style.display = 'block';
+        
+        // Cập nhật tiêu đề
+        const goalTitle = `Học ${data.daily_target} từ hôm nay${data.is_recurring ? ' (Lặp lại hàng ngày)' : ''}`;
+        const goalSubtitle = `Đã học ${data.words_learned_today}/${data.daily_target} từ hôm nay`;
+        
+        const goalTitleEl = document.getElementById('goal-title');
+        const goalSubtitleEl = document.getElementById('goal-subtitle');
+        const goalPercentEl = document.getElementById('goal-progress-percent');
+        const goalBarEl = document.getElementById('goal-progress-bar');
+        
+        if (goalTitleEl) goalTitleEl.textContent = goalTitle;
+        if (goalSubtitleEl) goalSubtitleEl.textContent = goalSubtitle;
+        if (goalPercentEl) goalPercentEl.textContent = `${data.progress_percent}%`;
+        if (goalBarEl) goalBarEl.style.width = `${data.progress_percent}%`;
+    } else {
+        // Chưa có mục tiêu
+        noGoalCard.style.display = 'block';
+        hasGoalCard.style.display = 'none';
+    }
+}
+
+/**
+ * Display daily goal (separated from loading)
+ */
+function displayDailyGoal(data) {
+    const noGoalCard = document.getElementById('no-goal-card');
+    const hasGoalCard = document.getElementById('has-goal-card');
+    const streakBadge = document.getElementById('streak-badge');
+    const streakDaysEl = document.getElementById('streak-days');
+    
+    if (!noGoalCard || !hasGoalCard) {
+        console.error('Goal card elements not found in DOM');
+        return;
+    }
+    
+    // Hiển thị streak nếu có
+    if (data.streak_days && data.streak_days > 0) {
+        if (streakBadge) streakBadge.style.display = 'flex';
+        if (streakDaysEl) streakDaysEl.textContent = data.streak_days;
+    }
+    
+    if (data.has_goal) {
+        // Hiển thị mục tiêu hiện tại
+        noGoalCard.style.display = 'none';
+        hasGoalCard.style.display = 'block';
+        
+        const goalTitle = `Học ${data.daily_target} từ hôm nay${data.is_recurring ? ' (Lặp lại hàng ngày)' : ''}`;
+        const goalSubtitle = `Đã học ${data.words_learned_today}/${data.daily_target} từ hôm nay`;
+        
+        const goalTitleEl = document.getElementById('goal-title');
+        const goalSubtitleEl = document.getElementById('goal-subtitle');
+        const goalPercentEl = document.getElementById('goal-progress-percent');
+        const goalBarEl = document.getElementById('goal-progress-bar');
+        
+        if (goalTitleEl) goalTitleEl.textContent = goalTitle;
+        if (goalSubtitleEl) goalSubtitleEl.textContent = goalSubtitle;
+        if (goalPercentEl) goalPercentEl.textContent = `${data.progress_percent}%`;
+        if (goalBarEl) goalBarEl.style.width = `${data.progress_percent}%`;
+    } else {
+        noGoalCard.style.display = 'block';
+        hasGoalCard.style.display = 'none';
     }
 }
 
@@ -311,6 +420,9 @@ async function saveGoal() {
             alert('Đã lưu mục tiêu thành công!');
             hideGoalModal();
             
+            // Clear cache để lấy data mới
+            localStorage.removeItem('dashboard_goal');
+            
             // Broadcast để sync cross-tab
             if (window.SyncManager) {
                 window.SyncManager.broadcast(window.SYNC_ACTIONS.DAILY_GOAL_UPDATED, {
@@ -358,6 +470,13 @@ function escapeHtml(text) {
 let weeklyChart = null; // Biến global để lưu Chart instance
 
 async function loadWeeklyQuizStats() {
+    // Check cache first
+    const cached = getCachedData('dashboard_weekly_stats');
+    if (cached) {
+        drawWeeklyChart(cached);
+        return;
+    }
+    
     try {
         const response = await fetch(`${API_BASE}/get-weekly-quiz-stats.php?user_id=${currentUserId}`);
         const text = await response.text();
@@ -366,16 +485,18 @@ async function loadWeeklyQuizStats() {
         try {
             result = JSON.parse(text);
         } catch (parseError) {
-            console.error('❌ JSON Parse Error for weekly stats:', text);
+            console.error('JSON Parse Error for weekly stats:', text);
             return;
         }
         
         if (result.success && result.data) {
+            // Cache the data
+            setCachedData('dashboard_weekly_stats', result.data);
             drawWeeklyChart(result.data);
-            console.log('✅ Weekly quiz stats loaded:', result.data);
+            console.log('Weekly quiz stats loaded:', result.data);
         }
     } catch (error) {
-        console.error('❌ Error loading weekly quiz stats:', error);
+        console.error('Error loading weekly quiz stats:', error);
     }
 }
 
@@ -386,7 +507,7 @@ function drawWeeklyChart(weekData) {
     const ctx = document.getElementById('weeklyChart');
     
     if (!ctx) {
-        console.error('❌ Canvas element not found');
+        console.error('Canvas element not found');
         return;
     }
     
@@ -397,7 +518,7 @@ function drawWeeklyChart(weekData) {
     
     // Kiểm tra Chart.js đã load chưa
     if (typeof Chart === 'undefined') {
-        console.error('❌ Chart.js library not loaded');
+        console.error('Chart.js library not loaded');
         return;
     }
     
@@ -410,7 +531,7 @@ function drawWeeklyChart(weekData) {
     const labels = weekData.map(day => day.day_name);
     const scores = weekData.map(day => day.avg_score || 0);
     
-    console.log('📊 Drawing chart with data:', { labels, scores });
+    console.log('📊Drawing chart with data:', { labels, scores });
     
     // Create new chart
     weeklyChart = new Chart(ctx, {
@@ -427,8 +548,9 @@ function drawWeeklyChart(weekData) {
                 pointBorderColor: '#fff',
                 pointBorderWidth: 2,
                 pointRadius: 6,
-                pointHoverRadius: 8,
-                tension: 0.4, // Làm đường cong mượt
+                pointHoverRadius: 6, // Giữ nguyên kích thước khi hover
+                pointHoverBorderWidth: 3, // Chỉ tăng độ dày viền
+                tension: 0,
                 fill: true
             }]
         },
@@ -516,12 +638,19 @@ function drawWeeklyChart(weekData) {
             },
             interaction: {
                 intersect: false,
-                mode: 'index'
+                mode: 'nearest',
+                axis: 'x'
+            },
+            animation: {
+                duration: 0 // Tắt animation khi hover để tránh rung
+            },
+            hover: {
+                animationDuration: 0 // Tắt animation khi hover
             }
         }
     });
     
-    console.log('✅ Chart created successfully');
+    console.log('Chart created successfully');
 }
 
 /**
