@@ -1,6 +1,6 @@
 <?php
 /**
- * API LẤY THÔNG TIN HỒ SƠ USER (Full Update)
+ * API LẤY THÔNG TIN HỒ SƠ USER
  */
 ob_start();
 error_reporting(0);
@@ -29,7 +29,7 @@ try {
 
     if (!$userInfo) throw new Exception('User không tồn tại');
 
-    // B. LẤY THỐNG KÊ (Statistic + Count Realtime)
+    // B. LẤY THỐNG KÊ (Giữ nguyên logic của bạn)
     $sqlStats = "SELECT total_courses, total_words_learned, total_quizzes_done, accuracy_rate, streak_days 
                  FROM statistic WHERE user_id = ?";
     $stmtStats = $conn->prepare($sqlStats);
@@ -43,17 +43,15 @@ try {
             'total_quizzes_done' => 0, 'accuracy_rate' => 0, 'streak_days' => 0
         ];
     }
-
-    // Recount Courses
+    
+    // Recount logic (Giữ nguyên)...
     $sqlCountCourse = "SELECT COUNT(*) as cnt FROM user_course WHERE user_id = ?";
     $stmtCount = $conn->prepare($sqlCountCourse);
     $stmtCount->bind_param("i", $user_id);
     $stmtCount->execute();
     $statsInfo['total_courses'] = $stmtCount->get_result()->fetch_assoc()['cnt'];
 
-    // Recount Words (Logic mới: status != not_learned)
-    $sqlCountWords = "SELECT COUNT(*) as cnt FROM learned_word 
-                      WHERE user_id = ? AND status != 'not_learned'";
+    $sqlCountWords = "SELECT COUNT(*) as cnt FROM learned_word WHERE user_id = ? AND status != 'not_learned'";
     $stmtWord = $conn->prepare($sqlCountWords);
     $stmtWord->bind_param("i", $user_id);
     $stmtWord->execute();
@@ -68,7 +66,8 @@ try {
                 'fullname' => $userInfo['name'],
                 'email' => $userInfo['email'],
                 'bio' => $userInfo['bio'] ?? 'Chưa cập nhật tiểu sử',
-                'avatar' => $userInfo['avatar'] ?? '',
+                // Trả về nguyên gốc giá trị trong DB (hoặc null) để JS xử lý
+                'avatar' => $userInfo['avatar'], 
                 'joined_date' => date('d/m/Y', strtotime($userInfo['created_at'])),
                 'role' => $userInfo['role'],
                 'language' => 'Tiếng Anh',

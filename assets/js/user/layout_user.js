@@ -73,13 +73,14 @@
     document.body.appendChild(mainContainer);
   }
 
-  // --- Logic Header User Data ---
+  // --- Logic Header User Data (ĐÃ SỬA LOGIC AVATAR) ---
   async function loadHeaderUserData() {
     const userInfoBox = document.getElementById('user-info');
     if (!userInfoBox) return;
 
     const avatarImg = userInfoBox.querySelector('img');
     const nameText = userInfoBox.querySelector('.user-name');
+    const DEFAULT_AVATAR = "https://upload.wikimedia.org/wikipedia/commons/9/99/Sample_User_Icon.png";
 
     let storedName = localStorage.getItem('user_name');
     let storedAvatar = localStorage.getItem('user_avatar');
@@ -94,14 +95,36 @@
                 storedName = result.data.user.fullname;
                 storedAvatar = result.data.user.avatar;
                 localStorage.setItem('user_name', storedName);
+                // Lưu avatar mới (có thể là null, url, hoặc filename)
                 if (storedAvatar) localStorage.setItem('user_avatar', storedAvatar);
             }
         } catch (e) { console.error("Lỗi lấy thông tin user header:", e); }
     }
 
+    // Hiển thị tên
     if (nameText) nameText.textContent = (storedName && storedName !== 'null') ? storedName : "User";
-    if (avatarImg && storedAvatar && storedAvatar !== 'null') {
-        avatarImg.src = `../../assets/images/avatar/${storedAvatar}`;
+
+    // Hiển thị Avatar (Logic mới)
+    if (avatarImg) {
+        let finalSrc = DEFAULT_AVATAR;
+
+        // Kiểm tra nếu có dữ liệu avatar hợp lệ
+        if (storedAvatar && storedAvatar !== 'null' && storedAvatar.trim() !== "") {
+            if (storedAvatar.startsWith('http') || storedAvatar.startsWith('https')) {
+                // Link online (Google/Facebook/Cloud)
+                finalSrc = storedAvatar;
+            } else {
+                // File upload local
+                finalSrc = `../../assets/images/avatar/${storedAvatar}`;
+            }
+        }
+
+        avatarImg.src = finalSrc;
+        
+        // Xử lý fallback: Nếu link ảnh bị lỗi (404) -> chuyển về mặc định
+        avatarImg.onerror = function() {
+            this.src = DEFAULT_AVATAR;
+        };
     }
   }
 
