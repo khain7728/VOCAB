@@ -1,178 +1,416 @@
-/* ==========================================================================
-   FILE: assets/css/admin/lichsuthaotac.css
-   ========================================================================== */
-
-
-/* --- 1. FIX LAYOUT (BẮT BUỘC PHẢI CÓ ĐỂ KHÔNG LỖI MENU) --- */
+/* --- 1. CẤU TRÚC CƠ BẢN --- */
 
 * {
     box-sizing: border-box;
 }
 
 body {
-    display: flex !important;
-    /* Layout Ngang */
-    min-height: 100vh;
-    margin: 0;
-    background-color: #f4f7f6;
     font-family: 'Roboto', sans-serif;
-    overflow-x: hidden;
+    background-color: #f4f7f6;
 }
 
-
-/* Menu Trái */
-
-#menu_admin {
-    position: sticky !important;
-    top: 0;
-    height: 100vh;
-    flex-shrink: 0;
-    z-index: 1000;
-    background: #fff;
-    border-right: 1px solid #ddd;
-    width: auto;
-    min-width: 72px;
-}
-
-
-/* Nội dung Phải */
-
-.main-wrapper {
-    flex-grow: 1;
-    display: flex;
-    flex-direction: column;
-    min-width: 0;
-    width: 100%;
-}
-
-
-/* Header */
-
-#header_admin {
-    position: sticky;
-    top: 0;
-    z-index: 900;
-    width: 100%;
-    background: #fff;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
-}
-
-#content {
+.page-content {
     padding: 20px;
-    flex-grow: 1;
 }
 
 
-/* Mobile Responsive */
-
-@media (max-width: 768px) {
-    body {
-        display: block;
-    }
-    #menu_admin {
-        display: none;
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 240px;
-    }
-    body.menu-open #menu_admin {
-        display: flex;
-    }
-}
-
-
-/* --- 2. STYLE RIÊNG CHO TRANG LỊCH SỬ --- */
+/* --- 2. HEADER --- */
 
 .page-header {
-    margin-bottom: 20px;
-    padding-bottom: 10px;
-    border-bottom: 1px solid #eee;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid #e0e0e0;
 }
 
 .page-title {
     margin: 0;
-    font-size: 1.75rem;
-    font-weight: 700;
+    font-size: 24px;
     color: #333;
+    font-weight: 700;
+}
+
+.page-subtitle {
+    margin: 4px 0 0;
+    color: #666;
+    font-size: 14px;
 }
 
 
-/* Thanh tìm kiếm */
+/* Nút Export */
 
-.search-bar {
-    margin-bottom: 20px;
-    background: #fff;
-    padding: 10px 15px;
-    border-radius: 8px;
-    border: 1px solid #eee;
-    display: flex;
-    width: fit-content;
-}
-
-.search-bar i {
-    color: #888;
-    margin-right: 10px;
+.btn-export {
+    background-color: #10B981;
+    /* Màu xanh lá */
+    color: white;
+    border: none;
+    padding: 10px 16px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 500;
     display: flex;
     align-items: center;
+    gap: 8px;
+    transition: background 0.2s;
 }
 
-.search-bar input {
-    border: none;
-    outline: none;
+.btn-export:hover {
+    background-color: #059669;
+}
+
+
+/* --- 3. TOOLBAR (SEARCH & FILTER) --- */
+
+.toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    margin-bottom: 20px;
+    justify-content: space-between;
+    align-items: center;
+    background: #fff;
+    padding: 16px;
+    border-radius: 8px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.filter-group {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+
+/* Search Box */
+
+.search-bar {
+    position: relative;
     width: 300px;
 }
 
-
-/* Bảng */
-
-.admin-table-container {
-    background: #fff;
-    border-radius: 8px;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
-    overflow-x: auto;
+.search-bar i {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #999;
 }
 
-table {
+.search-bar input {
+    width: 100%;
+    padding: 10px 10px 10px 36px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    outline: none;
+    transition: border-color 0.2s;
+}
+
+.search-bar input:focus {
+    border-color: #3B82F6;
+}
+
+
+/* Date Filter */
+
+.date-group label {
+    font-size: 14px;
+    color: #555;
+    font-weight: 500;
+}
+
+.date-input {
+    padding: 8px 12px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    font-family: inherit;
+    color: #333;
+}
+
+.separator {
+    color: #999;
+}
+
+
+/* --- 4. TABLE (BẢNG DỮ LIỆU) --- */
+
+.table-container {
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    overflow-x: auto;
+    margin-bottom: 20px;
+}
+
+.admin-table {
     width: 100%;
     border-collapse: collapse;
 }
 
-th,
-td {
-    padding: 12px 15px;
+.admin-table th,
+.admin-table td {
+    padding: 14px 16px;
     text-align: left;
     border-bottom: 1px solid #eee;
+    font-size: 14px;
+}
+
+.admin-table th {
+    background-color: #f8fafc;
+    color: #475569;
+    font-weight: 600;
     white-space: nowrap;
 }
 
-th {
-    background-color: #f8f9fa;
-    font-weight: 700;
-    color: #555;
+
+/* Định nghĩa độ rộng cột */
+
+.col-stt {
+    width: 60px;
+    text-align: center !important;
+}
+
+.col-action {
+    min-width: 200px;
+}
+
+.col-id {
+    width: 120px;
+    text-align: center !important;
+}
+
+.col-admin {
+    width: 180px;
+}
+
+.col-ip {
+    width: 140px;
+    color: #64748b;
+    font-size: 13px;
+}
+
+.col-time {
+    width: 180px;
 }
 
 
-/* Status Pill */
+/* Căn giữa nội dung TD tương ứng */
 
-.status-pill {
+.admin-table td:first-child,
+
+/* STT */
+
+.admin-table td:nth-child(3)
+/* ID */
+
+{
+    text-align: center;
+}
+
+
+/* Sort Header */
+
+th.sortable {
+    cursor: pointer;
+    user-select: none;
+    transition: background 0.2s;
+}
+
+th.sortable:hover {
+    background-color: #e2e8f0;
+}
+
+th.sortable i {
+    margin-left: 6px;
+    font-size: 12px;
+    color: #94a3b8;
+}
+
+
+/* --- 5. PAGINATION (PHÂN TRANG) --- */
+
+.pagination {
+    display: flex;
+    justify-content: center;
+    gap: 6px;
+    padding: 10px 0;
+}
+
+.page-btn {
+    min-width: 36px;
+    height: 36px;
+    padding: 0 10px;
+    border: 1px solid #e2e8f0;
+    background: #fff;
+    border-radius: 6px;
+    cursor: pointer;
+    color: #64748b;
+    font-weight: 500;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.page-btn:hover:not(:disabled) {
+    border-color: #3B82F6;
+    color: #3B82F6;
+}
+
+.page-btn.active {
+    background-color: #3B82F6;
+    color: #fff;
+    border-color: #3B82F6;
+}
+
+.page-btn:disabled {
+    background-color: #f1f5f9;
+    color: #cbd5e1;
+    cursor: not-allowed;
+}
+
+
+/* --- 6. TOAST NOTIFICATION --- */
+
+#toast-container {
+    position: fixed;
+    top: 24px;
+    right: 24px;
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.toast-message {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-width: 280px;
+    padding: 14px 20px;
+    color: #fff;
+    border-radius: 6px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    font-size: 14px;
+    animation: slideInRight 0.3s ease forwards;
+}
+
+.toast-message.success {
+    background-color: #10B981;
+}
+
+.toast-message.error {
+    background-color: #EF4444;
+}
+
+.toast-message.warning {
+    background-color: #F59E0B;
+}
+
+@keyframes slideInRight {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+
+/* Responsive Mobile */
+
+@media (max-width: 768px) {
+    .toolbar {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    .search-bar {
+        width: 100%;
+    }
+    .date-group {
+        justify-content: space-between;
+    }
+    .page-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
+    .btn-export {
+        width: 100%;
+        justify-content: center;
+    }
+}
+
+.btn-export {
+    background-color: #7BB7EE;
+    /* Màu xanh biển (Blue 500) */
+    color: white;
+    border: none;
+    padding: 10px 16px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: background 0.2s;
+}
+
+.btn-export:hover {
+    background-color: #5B9BD5;
+    /* Màu xanh biển đậm hơn khi di chuột (Blue 600) */
+}
+
+.col-ip {
+    width: 130px;
+    /* Thu nhỏ lại chút để nhường chỗ */
+    color: #64748b;
+    font-size: 13px;
+}
+
+.col-ua {
+    width: 150px;
+    font-size: 13px;
+    color: #64748b;
+}
+
+.admin-table td {
+    max-width: 250px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.filter-group.date-group {
+    background: #f8f9fa;
     padding: 5px 10px;
-    border-radius: 15px;
-    font-size: 0.8rem;
-    font-weight: bold;
+    border-radius: 6px;
+    border: 1px solid #e9ecef;
 }
 
-.status-green {
-    background: #EAF7E9;
-    color: #28a745;
+.form-select {
+    font-size: 14px;
+    color: #333;
+    background-color: #fff;
+    cursor: pointer;
 }
 
-.status-red {
-    background: #FCE8E6;
-    color: #dc3545;
+.form-select:hover {
+    border-color: #b0b0b0;
 }
 
-.status-blue {
-    background: #E7F3FF;
-    color: #007bff;
+@media (max-width: 600px) {
+    .custom-date-inputs {
+        flex-direction: column;
+    }
+}
+
+
+/* Riêng cột Action cho phép xuống dòng nếu cần hoặc giữ nguyên tùy ý */
+
+.admin-table td:nth-child(2) {
+    white-space: normal;
 }

@@ -1,49 +1,54 @@
 <?php
-// FILE: api/admin/user_get_list.php
+// Xóa bộ nhớ đệm đầu ra để tránh file bị lẫn text lạ
+ob_end_clean(); 
 
-// BẮT ĐẦU OUTPUT BUFFERING
-ob_start();
-ini_set('display_errors', 0);
-error_reporting(E_ALL);
+// Kết nối CSDL
+$conn = new mysqli("localhost", "root", "", "ten_database_cua_ban");
+$conn->set_charset("utf8");
 
-header('Content-Type: application/json; charset=utf-8');
-header('Access-Control-Allow-Origin: *');
+// Lấy tham số lọc (giống hệt phần log_get_list nhưng KHÔNG CÓ LIMIT)
+$search = isset($_GET['search']) ? $_GET['search'] : '';
+$where = " WHERE 1=1 ";
 
-require_once __DIR__ . '/../../config/config.php';
-
-try {
-    // ✅ BẢO MẬT: Chỉ admin mới được truy cập
-    api_require_admin();
-    
-    if (!$conn) throw new Exception("Lỗi kết nối CSDỄ: " . mysqli_connect_error());
-
-    // Chỉ lấy user thường (role = 'user') hoặc lấy tất cả tùy nhu cầu
-    // Ở đây lấy tất cả user có role='user' theo code cũ của bạn
-    $sql = "SELECT user_id, name, email, created_at, status FROM user WHERE role = 'user' ORDER BY user_id DESC";
-    $result = $conn->query($sql);
-
-    if (!$result) throw new Exception("Lỗi truy vấn: " . $conn->error);
-
-    $data = [];
-    while($row = $result->fetch_assoc()) {
-        $data[] = [
-            'id' => $row['user_id'],
-            'fullname' => $row['name'], // Cột trong DB là 'name'
-            'email' => $row['email'],
-            'created_at' => $row['created_at'],
-            // status trong DB: 1 là active, 0 là locked
-            'status' => ($row['status'] == 1) ? 'active' : 'locked'
-        ];
-    }
-    
-    ob_clean(); // Xóa sạch bộ đệm trước khi in JSON
-    echo json_encode(['status' => 'success', 'data' => $data]);
-
-} catch (Exception $e) {
-    ob_clean();
-    echo json_encode(['status' => 'error', 'message' => $e->getMessage()]);
+if (!empty($search)) {
+    $s = $conn->real_escape_string($search);
+    $where .= " AND (action LIKE '%$s%' OR admin_id LIKE '%$s%') ";
+}
+if (!empty($_GET['start_date'])) {
+    $where .= " AND DATE(created_at) >= '" . $conn->real_escape_string($_GET['start_date']) . "'";
+}
+if (!empty($_GET['end_date'])) {
+    $where .= " AND DATE(created_at) <= '" . $conn->real_escape_string($_GET['end_date']) . "'";
 }
 
-if (isset($conn)) $conn->close();
-ob_end_flush();
+// Query lấy toàn bộ dữ liệu
+$sql = "SELECT id, action, target_id, admin_id, ip_address, created_at FROM system_logs $where ORDER BY created_at DESC";
+$result = $conn->query($sql);
+
+// --- PHẦN QUAN TRỌNG ĐỂ XUẤT FILE ---
+
+// 1. Thiết lập Header để trình duyệt hiểu đây là file tải về
+$filename = "Lich_su_thao_tac_" . date('Y-m-d') . ".csv";
+header('Content-Type: text/csv; charset=utf-8');
+header('Content-Disposition: attachment; filename="' . $filename . '"');
+
+// 2. Mở output stream
+$output = fopen('php://output', 'w');
+
+// 3. [QUAN TRỌNG] Thêm BOM để Excel đọc được tiếng Việt không bị lỗi font
+fprintf($output, chr(0xEF).chr(0xBB).chr(0xBF));
+
+// 4. Ghi dòng tiêu đề
+fputcsv($output, ['ID', 'Hành động', 'ID Đối tượng', 'Admin ID', 'IP Address', 'Thời gian']);
+
+// 5. Ghi dữ liệu
+if ($result->num_rows > 0) {
+    while ($row = $result->fetch_assoc()) {
+        fputcsv($output, $row);
+    }
+}
+
+// 6. Đóng file
+fclose($output);
+exit();
 ?>
