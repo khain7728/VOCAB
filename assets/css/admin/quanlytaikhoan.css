@@ -1,27 +1,32 @@
-/* --- Cấu trúc trang --- */
+/* --- 1. CẤU TRÚC TRANG --- */
 
 .page-content {
     padding: 24px;
+    font-family: 'Roboto', sans-serif;
 }
 
 .page-header {
     margin-bottom: 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
 }
 
 .page-title {
     margin: 0 0 5px 0;
-    font-size: 22px;
+    font-size: 24px;
     color: #111;
+    font-weight: 700;
 }
 
-.page-header p {
+.header-text p {
     margin: 0;
     color: #666;
     font-size: 14px;
 }
 
 
-/* --- Toolbar --- */
+/* --- 2. TOOLBAR & SEARCH --- */
 
 .toolbar {
     background: #fff;
@@ -30,7 +35,6 @@
     border: 1px solid #E5E7EB;
     border-bottom: none;
     display: flex;
-    justify-content: space-between;
     align-items: center;
 }
 
@@ -64,7 +68,7 @@
 }
 
 
-/* --- Table --- */
+/* --- 3. TABLE --- */
 
 .table-container {
     background: #fff;
@@ -85,13 +89,14 @@
     color: #374151;
     font-weight: 600;
     font-size: 13px;
-    text-transform: none;
     padding: 12px 16px;
     border-bottom: 1px solid #E5E7EB;
+    white-space: nowrap;
+    text-align: left;
 }
 
 .admin-table td {
-    padding: 14px 16px;
+    padding: 12px 16px;
     border-bottom: 1px solid #F3F4F6;
     color: #4B5563;
     font-size: 14px;
@@ -103,9 +108,49 @@
 }
 
 
-/* --- User Info in Table --- */
+/* Sort Icons */
 
-.user-info-cell {
+th.sortable {
+    cursor: pointer;
+    user-select: none;
+}
+
+th.sortable:hover {
+    background-color: #f3f4f6;
+}
+
+th.sortable i {
+    margin-left: 5px;
+    color: #9CA3AF;
+    font-size: 12px;
+}
+
+
+/* Căn chỉnh cột */
+
+.col-stt {
+    width: 60px;
+    text-align: center !important;
+}
+
+.col-date {
+    width: 150px;
+}
+
+.col-status {
+    width: 130px;
+    text-align: center !important;
+}
+
+.col-action {
+    width: 120px;
+    text-align: center !important;
+}
+
+
+/* User Info Cell */
+
+.user-info-wrapper {
     display: flex;
     align-items: center;
     gap: 12px;
@@ -115,6 +160,11 @@
     width: 40px;
     height: 40px;
     border-radius: 50%;
+    object-fit: cover;
+    border: 1px solid #e5e7eb;
+}
+
+.user-avatar.placeholder {
     background-color: #E0E7FF;
     color: #4F46E5;
     display: flex;
@@ -122,26 +172,33 @@
     justify-content: center;
     font-weight: bold;
     font-size: 16px;
+    border: none;
 }
 
-.user-details div {
+.user-text {
+    display: flex;
+    flex-direction: column;
+}
+
+.user-name {
     font-weight: 500;
     color: #111;
 }
 
-.user-details span {
+.user-email {
     font-size: 12px;
     color: #6B7280;
 }
 
 
-/* --- Badges --- */
+/* --- 4. TRẠNG THÁI (BADGES) --- */
 
 .status-badge {
     padding: 4px 10px;
     border-radius: 20px;
     font-size: 12px;
-    font-weight: 500;
+    font-weight: 600;
+    display: inline-block;
 }
 
 .status-badge.active {
@@ -155,47 +212,127 @@
 }
 
 
-/* --- Buttons --- */
+/* --- 5. NÚT HÀNH ĐỘNG (GIAO DIỆN CŨ - HÌNH VUÔNG MÀU) --- */
 
 .btn-action {
+    width: 34px;
+    height: 34px;
     border: none;
-    background: transparent;
+    border-radius: 6px;
     cursor: pointer;
-    padding: 6px;
-    border-radius: 4px;
-    font-size: 16px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     transition: all 0.2s;
+    color: white;
+    font-size: 14px;
     margin: 0 4px;
 }
 
-.btn-lock {
-    color: #9CA3AF;
+.btn-action:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15);
 }
 
-.btn-lock:hover {
-    background-color: #FDE8E8;
-    color: #F05252;
+.btn-action:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
 }
 
-.btn-unlock {
-    color: #F05252;
-}
 
-.btn-unlock:hover {
-    background-color: #DEF7EC;
-    color: #0E9F6E;
-}
+/* Nút Xem chi tiết (Màu xanh dương) */
 
 .btn-view {
-    color: #5B9BD5;
+    background-color: #3B82F6;
 }
 
 .btn-view:hover {
-    background-color: #EBF5FF;
+    background-color: #2563EB;
 }
 
 
-/* --- MODAL (POPUP) STYLES (MỚI) --- */
+/* Nút Khóa (Màu đỏ) */
+
+.btn-lock {
+    background-color: #EF4444;
+}
+
+.btn-lock:hover {
+    background-color: #DC2626;
+}
+
+
+/* Nút Mở khóa (Màu xanh lá) */
+
+.btn-unlock {
+    background-color: #10B981;
+}
+
+.btn-unlock:hover {
+    background-color: #059669;
+}
+
+
+/* --- 6. PAGINATION (KIỂU LỊCH SỬ THAO TÁC) --- */
+
+.pagination-container {
+    padding: 20px;
+    display: flex;
+    justify-content: center;
+}
+
+.pagination {
+    display: flex;
+    gap: 5px;
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.page-btn {
+    min-width: 36px;
+    height: 36px;
+    padding: 0 10px;
+    border: 1px solid #E5E7EB;
+    background: #fff;
+    border-radius: 6px;
+    cursor: pointer;
+    color: #6B7280;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+}
+
+.page-btn:hover:not(:disabled) {
+    background-color: #F3F4F6;
+    color: #111;
+    border-color: #D1D5DB;
+}
+
+.page-btn.active {
+    background-color: #3B82F6;
+    color: #fff;
+    border-color: #3B82F6;
+}
+
+.page-btn:disabled {
+    background-color: #F9FAFB;
+    color: #D1D5DB;
+    cursor: not-allowed;
+}
+
+.page-dots {
+    display: flex;
+    align-items: end;
+    padding: 0 5px;
+    color: #9CA3AF;
+}
+
+
+/* --- 7. MODAL --- */
 
 .modal {
     display: none;
@@ -255,10 +392,6 @@
     cursor: pointer;
 }
 
-.close-btn:hover {
-    color: #000;
-}
-
 .modal-body {
     padding: 20px;
 }
@@ -268,19 +401,15 @@
     align-items: center;
     gap: 15px;
     margin-bottom: 20px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid #eee;
 }
 
 .large-avatar {
     width: 60px;
     height: 60px;
     border-radius: 50%;
-    background: #E0E7FF;
-    color: #4F46E5;
-    font-size: 24px;
-    font-weight: bold;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    object-fit: cover;
 }
 
 .profile-basic h3 {
@@ -289,20 +418,18 @@
 }
 
 .profile-basic p {
-    margin: 0 0 8px 0;
+    margin: 0;
     color: #666;
     font-size: 13px;
 }
 
-.profile-info-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 15px;
+.info-item {
+    margin-bottom: 15px;
 }
 
 .info-item label {
     font-size: 12px;
-    color: #666;
+    color: #888;
     display: block;
     margin-bottom: 4px;
 }
@@ -327,96 +454,97 @@
     cursor: pointer;
 }
 
-.btn-secondary:hover {
-    background: #f1f1f1;
+
+/* --- 8. TOAST NOTIFICATION (CỐ ĐỊNH GÓC PHẢI) --- */
+
+#toast-container {
+    position: fixed;
+    top: 80px;
+    /* Cách top để tránh đè Header */
+    right: 20px;
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
 }
 
-
-/* --- HELPER CLASSES (Thay thế Inline Style) --- */
-
-.text-center {
-    text-align: center !important;
-}
-
-.text-left {
-    text-align: left !important;
-}
-
-.w-60 {
-    width: 60px;
-}
-
-
-/* Status Badge Colors */
-
-.status-badge.active {
-    background-color: #DEF7EC;
-    color: #03543F;
-}
-
-.status-badge.locked {
-    background-color: #FDE8E8;
-    color: #9B1C1C;
-}
-
-
-/* User Info Cell Styling */
-
-.user-info-cell {
+.toast-message {
+    background: #fff;
+    color: #333;
+    padding: 15px 20px;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
     display: flex;
     align-items: center;
     gap: 12px;
+    animation: slideInLeft 0.3s ease forwards;
+    min-width: 300px;
+    border-left: 5px solid #ccc;
+    font-family: 'Roboto', sans-serif;
+    font-size: 14px;
 }
 
-.user-avatar {
-    width: 36px;
-    height: 36px;
-    background-color: #EBF5FF;
-    color: #1C64F2;
-    border-radius: 50%;
+.toast-message.success {
+    border-left-color: #10B981;
+}
+
+.toast-message.success i {
+    color: #10B981;
+    font-size: 18px;
+}
+
+.toast-message.error {
+    border-left-color: #EF4444;
+}
+
+.toast-message.error i {
+    color: #EF4444;
+    font-size: 18px;
+}
+
+@keyframes slideInLeft {
+    from {
+        opacity: 0;
+        transform: translateX(100%);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+.loading-row td {
+    text-align: center;
+    padding: 50px 0;
+    background-color: #fff;
+}
+
+.loading-container {
     display: flex;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
-    font-weight: bold;
-    font-size: 16px;
+    color: #6B7280;
 }
 
-.user-details div {
+.loading-icon {
+    font-size: 32px;
+    color: #3B82F6;
+    margin-bottom: 15px;
+    animation: spin 1s linear infinite;
+}
+
+.loading-text {
+    font-size: 14px;
     font-weight: 500;
-    color: #111;
+    color: #374151;
 }
 
-.user-details span {
-    font-size: 13px;
-    color: #666;
-}
-
-
-/* Modal Styling */
-
-.large-avatar {
-    width: 60px;
-    height: 60px;
-    background: #EBF5FF;
-    color: #1C64F2;
-    font-size: 24px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 50%;
-    margin-right: 15px;
-}
-
-.user-profile-header {
-    display: flex;
-    align-items: center;
-    margin-bottom: 20px;
-    padding-bottom: 20px;
-    border-bottom: 1px solid #eee;
-}
-
-.profile-info-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 15px;
+@keyframes spin {
+    0% {
+        transform: rotate(0deg);
+    }
+    100% {
+        transform: rotate(360deg);
+    }
 }

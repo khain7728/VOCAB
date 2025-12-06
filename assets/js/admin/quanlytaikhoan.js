@@ -1,151 +1,154 @@
 /**
- * QUẢN LÝ TÀI KHOẢN - LOGIC SCRIPT
+ * Tệp: js/admin/quanlytaikhoan.js
+ * Phiên bản: Updated (Loading Effect giống Lịch sử thao tác)
  */
 
-// --- BIẾN TOÀN CỤC & CẤU HÌNH ---
-const API_URL = '../../api/admin/';
-let allUsersData = [];
-
-const UI = {
-    table: 'user_table_body',
-    search: 'searchBox',
-    modal: 'modalUserDetail',
-    btnCloseHead: 'btnCloseModalHeader',
-    btnCloseFoot: 'btnCloseModalFooter',
-    // Modal fields
-    mName: 'modal_fullname',
-    mEmail: 'modal_email',
-    mStatus: 'modal_status',
-    mId: 'modal_id',
-    mJoined: 'modal_joined',
-    mAvatar: 'modal_avatar'
-};
-
-// --- 1. KHỞI TẠO (DOM READY) ---
 document.addEventListener("DOMContentLoaded", function() {
-    // 1.1 Load dữ liệu
     fetchUsers();
-
-    // 1.2 Sự kiện tìm kiếm
-    const searchBox = document.getElementById(UI.search);
-    if (searchBox) searchBox.addEventListener('keyup', searchTable);
-
-    // 1.3 Sự kiện Modal (Đóng)
-    const btnHead = document.getElementById(UI.btnCloseHead);
-    const btnFoot = document.getElementById(UI.btnCloseFoot);
-    if (btnHead) btnHead.addEventListener('click', closeModal);
-    if (btnFoot) btnFoot.addEventListener('click', closeModal);
-
-    // Click outside để đóng modal
-    window.addEventListener('click', (e) => {
-        const modal = document.getElementById(UI.modal);
-        if (e.target === modal) closeModal();
-    });
-
-    // 1.4 EVENT DELEGATION: Xử lý các nút trong bảng (Xem, Khóa/Mở)
-    const tbody = document.getElementById(UI.table);
-    if (tbody) {
-        tbody.addEventListener('click', handleTableActions);
-    }
+    setupEventListeners();
 });
 
-// --- 2. XỬ LÝ API ---
+// --- 1. QUẢN LÝ TRẠNG THÁI (STATE) ---
+let currentPage = 1;
+let currentSort = { col: 'created_at', order: 'DESC' };
+let searchTimer = null;
+const apiCache = new Map(); // Cache API
 
-async function fetchUsers() {
-    const tableBody = document.getElementById(UI.table);
-    tableBody.innerHTML = `<tr><td colspan="5" class="text-center" style="padding:20px;">Đang tải dữ liệu...</td></tr>`;
+// --- 2. HÀM GỌI API (FETCH DATA) ---
+async function fetchUsers(forceReload = false) {
+    const tableBody = document.getElementById('user_table_body');
+    const searchEl = document.getElementById('searchUserBox');
 
-    try {
-        const response = await fetch(`${API_URL}user_get_list.php`);
-        const result = await response.json();
+    // Lấy giá trị thực tế tại thời điểm gọi hàm
+    const currentSearchVal = searchEl ? searchEl.value.trim() : '';
 
-        if (result.status === 'success') {
-            allUsersData = result.data;
-            renderTable(allUsersData);
-        } else {
-            tableBody.innerHTML = `<tr><td colspan="5" class="text-center" style="color:red;">${result.message || 'Lỗi tải dữ liệu'}</td></tr>`;
-        }
-    } catch (error) {
-        console.error("Lỗi API:", error);
-        tableBody.innerHTML = `<tr><td colspan="5" class="text-center" style="color:red;">Lỗi kết nối server</td></tr>`;
+    // Tạo tham số gửi lên Server
+    const params = new URLSearchParams({
+        page: currentPage,
+        limit: 10,
+        sort_by: currentSort.col,
+        order: currentSort.order,
+        search: currentSearchVal
+    });
+
+    const cacheKey = params.toString();
+
+    // 1. Kiểm tra Cache
+    if (!forceReload && apiCache.has(cacheKey)) {
+        const cachedData = apiCache.get(cacheKey);
+        // Kiểm tra lại xem ô tìm kiếm có bị thay đổi trong lúc lấy cache không
+        if (searchEl && searchEl.value.trim() !== currentSearchVal) return;
+
+        renderUserTable(cachedData.data, (currentPage - 1) * 10);
+        renderPagination(cachedData.pagination);
+        updateSortIcons();
+        return;
     }
-}
 
-async function toggleUserStatus(userId, currentStatus) {
-    const actionName = (currentStatus === 'locked') ? "Mở khóa" : "Khóa";
-    if (!confirm(`Bạn có chắc muốn ${actionName} tài khoản này?`)) return;
+    // 2. Hiển thị Loading (GIỐNG TRANG LỊCH SỬ THAO TÁC)
+    if (tableBody) {
+        tableBody.innerHTML = `
+            <tr>
+                <td colspan="5" style="text-align: center; padding: 40px; color: #666;">
+                    <i class="fa-solid fa-spinner fa-spin fa-2x"></i>
+                    <div style="margin-top: 10px;">Đang tải dữ liệu...</div>
+                </td>
+            </tr>`;
+    }
 
     try {
-        const response = await fetch(`${API_URL}user_update_status.php`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ user_id: userId, status: currentStatus })
-        });
+        const response = await fetch(`../../api/admin/user_get_list.php?${params.toString()}`);
+
+        // Xử lý khi hết phiên đăng nhập (Lỗi 403)
+        if (response.status === 403) {
+            showToast("Phiên đăng nhập hết hạn", "error");
+            setTimeout(() => window.location.href = '../../pages/login.html', 1500);
+            return;
+        }
+
+        if (!response.ok) throw new Error(`Lỗi kết nối (${response.status})`);
+
         const result = await response.json();
 
-        if (result.status === 'success') {
-            alert(`Đã ${actionName} thành công!`);
+        // Kiểm tra xem lúc dữ liệu tải xong, người dùng có xóa/sửa ô tìm kiếm chưa?
+        const nowSearchVal = searchEl ? searchEl.value.trim() : '';
+        if (nowSearchVal !== currentSearchVal) {
+            return; // Bỏ qua kết quả cũ
+        }
 
-            // Cập nhật lại data local để không phải load lại API
-            const userIndex = allUsersData.findIndex(u => u.id == userId);
-            if (userIndex > -1) {
-                // Đảo trạng thái: active <-> locked
-                allUsersData[userIndex].status = (currentStatus === 'active') ? 'locked' : 'active';
-                // Render lại bảng
-                searchTable();
+        if (result.status === 'success') {
+            apiCache.set(cacheKey, result);
+            renderUserTable(result.data, (currentPage - 1) * 10);
+            renderPagination(result.pagination);
+            updateSortIcons();
+        } else {
+            throw new Error(result.message || "Lỗi server");
+        }
+
+    } catch (error) {
+        // Chỉ hiện lỗi nếu không phải do người dùng đang gõ tiếp
+        if (searchEl && searchEl.value.trim() === currentSearchVal) {
+            console.error("Fetch Error:", error);
+            if (tableBody) {
+                tableBody.innerHTML = `<tr><td colspan="5" style="text-align:center; color:red; padding:20px;">Lỗi: ${error.message}</td></tr>`;
             }
-        } else {
-            alert(`Lỗi: ${result.message}`);
+            showToast("Lỗi kết nối server", "error");
         }
-    } catch (error) {
-        alert("Lỗi kết nối server!");
     }
 }
 
-// --- 3. RENDER UI ---
+// --- 3. HÀM VẼ BẢNG ---
+function renderUserTable(users, startIndex) {
+    const tableBody = document.getElementById('user_table_body');
+    if (!tableBody) return;
 
-function renderTable(users) {
-    const tableBody = document.getElementById(UI.table);
     if (!users || users.length === 0) {
-        tableBody.innerHTML = `<tr><td colspan="5" class="text-center" style="padding:20px; color:#666;">Không tìm thấy người dùng nào.</td></tr>`;
+        tableBody.innerHTML = `
+            <tr>
+                <td colspan="5" style="text-align:center; padding: 40px; color: #999;">
+                    <i class="fa-regular fa-folder-open fa-3x" style="margin-bottom:10px; opacity: 0.5;"></i>
+                    <div>Không tìm thấy tài khoản nào.</div>
+                </td>
+            </tr>`;
         return;
     }
 
     let html = '';
-    users.forEach((user, index) => {
-        // Map dữ liệu
-        const userId = user.id;
-        const userName = user.fullname || "No Name";
-        const userEmail = user.email || "";
-        const isActive = (user.status === 'active');
-        const firstLetter = userName.charAt(0).toUpperCase();
+    users.forEach((u, index) => {
+        const isActive = u.status == 1;
 
+        // Nút Action (Giữ nguyên logic Khóa/Mở khóa)
+        const btnAction = isActive ?
+            `<button class="btn-action btn-lock" onclick="toggleStatus(this, ${u.user_id}, 'locked')" title="Khóa tài khoản"><i class="fa-solid fa-lock"></i></button>` :
+            `<button class="btn-action btn-unlock" onclick="toggleStatus(this, ${u.user_id}, 'active')" title="Mở khóa tài khoản"><i class="fa-solid fa-lock-open"></i></button>`;
+
+        // Badge trạng thái
         const statusBadge = isActive ?
             `<span class="status-badge active">Hoạt động</span>` :
             `<span class="status-badge locked">Đã khóa</span>`;
 
-        // Tạo nút hành động: Dùng data-id và class để bắt sự kiện, KHÔNG dùng onclick
-        const actionBtn = isActive ?
-            `<button class="btn-action btn-lock" data-id="${userId}" data-status="active" title="Khóa tài khoản"><i class="fa-solid fa-lock-open"></i></button>` :
-            `<button class="btn-action btn-unlock" data-id="${userId}" data-status="locked" title="Mở khóa tài khoản"><i class="fa-solid fa-lock"></i></button>`;
+        // Avatar
+        const initial = u.name ? u.name.charAt(0).toUpperCase() : '?';
+        const avatarHtml = u.avatar ?
+            `<img src="${escapeHtml(u.avatar)}" class="user-avatar" alt="A">` :
+            `<div class="user-avatar placeholder">${initial}</div>`;
 
         html += `
             <tr>
-                <td class="text-center">${index + 1}</td>
+                <td class="col-stt">${startIndex + index + 1}</td>
                 <td>
-                    <div class="user-info-cell">
-                        <div class="user-avatar">${firstLetter}</div>
-                        <div class="user-details">
-                            <div>${userName}</div>
-                            <span>${userEmail}</span>
+                    <div class="user-info-wrapper">
+                        ${avatarHtml}
+                        <div class="user-text">
+                            <div class="user-name">${escapeHtml(u.name)}</div>
+                            <small class="user-email">${escapeHtml(u.email)}</small>
                         </div>
                     </div>
                 </td>
-                <td class="text-center">${formatDate(user.created_at)}</td>
-                <td class="text-center">${statusBadge}</td>
-                <td class="text-center">
-                    <button class="btn-action btn-view" data-id="${userId}" title="Xem chi tiết"><i class="fa-solid fa-eye"></i></button>
-                    ${actionBtn}
+                <td class="col-date">${new Date(u.created_at).toLocaleDateString('vi-VN')}</td>
+                <td class="col-status">${statusBadge}</td>
+                <td class="col-action">
+                    ${btnAction}
                 </td>
             </tr>
         `;
@@ -153,71 +156,146 @@ function renderTable(users) {
     tableBody.innerHTML = html;
 }
 
-function searchTable() {
-    const term = document.getElementById(UI.search).value.toLowerCase();
-    const filtered = allUsersData.filter(user => {
-        const uName = (user.fullname || "").toLowerCase();
-        const uEmail = (user.email || "").toLowerCase();
-        return uName.includes(term) || uEmail.includes(term);
-    });
-    renderTable(filtered);
-}
+// --- 4. CÁC HÀM HÀNH ĐỘNG ---
 
-// --- 4. XỬ LÝ SỰ KIỆN (EVENT DELEGATION) ---
+window.toggleStatus = async(btnElement, userId, targetStatus) => {
+    const actionText = targetStatus === 'active' ? 'MỞ KHÓA' : 'KHÓA';
+    if (!confirm(`Bạn có chắc chắn muốn ${actionText} tài khoản này không?`)) return;
 
-function handleTableActions(e) {
-    // Tìm button gần nhất được click (tránh click vào icon i bên trong)
-    const btn = e.target.closest('button');
-    if (!btn) return;
+    // Loading effect trên nút
+    const originalContent = btnElement.innerHTML;
+    btnElement.disabled = true;
+    btnElement.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin"></i>`;
 
-    const id = btn.dataset.id;
-
-    // Nút Xem chi tiết
-    if (btn.classList.contains('btn-view')) {
-        viewUserDetail(id);
-    }
-    // Nút Khóa / Mở khóa
-    else if (btn.classList.contains('btn-lock') || btn.classList.contains('btn-unlock')) {
-        const currentStatus = btn.dataset.status;
-        toggleUserStatus(id, currentStatus);
-    }
-}
-
-// --- 5. LOGIC MODAL ---
-
-function viewUserDetail(id) {
-    const user = allUsersData.find(u => u.id == id);
-    if (!user) return;
-
-    const userName = user.fullname || "No Name";
-
-    // Fill data
-    document.getElementById(UI.mName).innerText = userName;
-    document.getElementById(UI.mEmail).innerText = user.email;
-    document.getElementById(UI.mId).innerText = user.id;
-    document.getElementById(UI.mJoined).innerText = formatDate(user.created_at);
-    document.getElementById(UI.mAvatar).innerText = userName.charAt(0).toUpperCase();
-
-    const badgeEl = document.getElementById(UI.mStatus);
-    if (user.status === 'active') {
-        badgeEl.className = 'status-badge active';
-        badgeEl.innerText = 'Đang hoạt động';
-    } else {
-        badgeEl.className = 'status-badge locked';
-        badgeEl.innerText = 'Đã bị khóa';
-    }
-
-    document.getElementById(UI.modal).classList.add('show');
-}
-
-function closeModal() {
-    document.getElementById(UI.modal).classList.remove('show');
-}
-
-// Helper: Format ngày
-function formatDate(dateString) {
-    if (!dateString) return "";
     try {
-        return new Date(dateString).toLocaleDateString('vi-VN');
-    } catch (e) { return dateString; }
+        const res = await fetch('../../api/admin/user_update_status.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ user_id: userId, status: targetStatus })
+        });
+        const data = await res.json();
+
+        if (data.status === 'success') {
+            showToast(data.message, 'success');
+            apiCache.clear(); // Xóa cache
+            fetchUsers(true); // Force reload
+        } else {
+            showToast(data.message, 'error');
+            btnElement.disabled = false;
+            btnElement.innerHTML = originalContent;
+        }
+    } catch (e) {
+        showToast('Lỗi hệ thống', 'error');
+        btnElement.disabled = false;
+        btnElement.innerHTML = originalContent;
+    }
+};
+
+// --- 5. PHÂN TRANG (GIỐNG LỊCH SỬ THAO TÁC) ---
+function renderPagination(paging) {
+    const container = document.getElementById('pagination');
+    if (!container) return;
+
+    if (paging.total_pages <= 1) {
+        container.innerHTML = '';
+        return;
+    }
+
+    let html = '';
+
+    // Prev
+    html += `<button class="page-btn" onclick="changePage(${paging.current_page - 1})" ${paging.current_page === 1 ? 'disabled' : ''}>
+                <i class="fa-solid fa-chevron-left"></i>
+             </button>`;
+
+    // Pages
+    for (let i = 1; i <= paging.total_pages; i++) {
+        if (i === 1 || i === paging.total_pages || (i >= paging.current_page - 1 && i <= paging.current_page + 1)) {
+            const activeClass = i === paging.current_page ? 'active' : '';
+            html += `<button class="page-btn ${activeClass}" onclick="changePage(${i})">${i}</button>`;
+        } else if (i === paging.current_page - 2 || i === paging.current_page + 2) {
+            html += `<span style="padding: 0 6px; color: #999;">...</span>`;
+        }
+    }
+
+    // Next
+    html += `<button class="page-btn" onclick="changePage(${paging.current_page + 1})" ${paging.current_page === paging.total_pages ? 'disabled' : ''}>
+                <i class="fa-solid fa-chevron-right"></i>
+             </button>`;
+
+    container.innerHTML = html;
+}
+
+window.changePage = (page) => {
+    if (page < 1) return;
+    currentPage = page;
+    fetchUsers();
+};
+
+// --- 6. UTILS & EVENTS ---
+
+function showToast(message, type = 'success') {
+    const container = document.getElementById('toast-container');
+    if (!container) return;
+    const toast = document.createElement('div');
+    toast.className = `toast-message ${type}`;
+    const icon = type === 'success' ? 'fa-circle-check' : 'fa-circle-exclamation';
+
+    toast.innerHTML = `<i class="fa-solid ${icon}"></i><span>${escapeHtml(message)}</span>`;
+    container.appendChild(toast);
+    setTimeout(() => {
+        toast.style.opacity = '0';
+        toast.style.transform = 'translateX(100%)';
+        setTimeout(() => toast.remove(), 300);
+    }, 3000);
+}
+
+function escapeHtml(text) {
+    if (!text) return '';
+    return text.toString().replace(/[&<>"']/g, function(m) {
+        return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' }[m];
+    });
+}
+
+function updateSortIcons() {
+    document.querySelectorAll('th.sortable i').forEach(i => i.className = 'fa-solid fa-sort text-muted');
+    const activeTh = document.querySelector(`th[data-sort="${currentSort.col}"]`);
+    if (activeTh) {
+        const icon = activeTh.querySelector('i');
+        icon.className = currentSort.order === 'ASC' ? 'fa-solid fa-sort-up text-dark' : 'fa-solid fa-sort-down text-dark';
+    }
+}
+
+function setupEventListeners() {
+    const searchBox = document.getElementById('searchUserBox');
+    if (searchBox) {
+        searchBox.addEventListener('input', (e) => {
+            const keyword = e.target.value;
+            clearTimeout(searchTimer);
+
+            if (keyword.length === 0) {
+                currentPage = 1;
+                fetchUsers();
+                return;
+            }
+
+            searchTimer = setTimeout(() => {
+                currentPage = 1;
+                fetchUsers();
+            }, 300);
+        });
+    }
+
+    document.querySelectorAll('th.sortable').forEach(th => {
+        th.addEventListener('click', () => {
+            const col = th.getAttribute('data-sort');
+            if (currentSort.col === col) {
+                currentSort.order = currentSort.order === 'ASC' ? 'DESC' : 'ASC';
+            } else {
+                currentSort.col = col;
+                currentSort.order = 'DESC';
+            }
+            fetchUsers();
+        });
+    });
 }
