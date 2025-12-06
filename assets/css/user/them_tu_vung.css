@@ -357,4 +357,55 @@
         gap: 1.25rem;
         /* Giữ gap */
     }
+    
+}
+/* --- TOAST NOTIFICATION STYLES --- */
+
+/* Container: Khung chứa các thông báo, ghim cố định góc phải trên */
+#toast-container {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 9999; /* Đảm bảo luôn nằm trên cùng */
+    display: flex;
+    flex-direction: column; /* Xếp chồng dọc nếu có nhiều thông báo */
+    gap: 10px; /* Khoảng cách giữa các thông báo */
+}
+
+/* Style của từng hộp thông báo */
+.toast-msg {
+    background-color: #28a745; /* Màu xanh lá (thành công) */
+    color: white;
+    padding: 12px 20px;
+    border-radius: 6px; /* Bo góc mềm mại */
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15); /* Đổ bóng đẹp hơn */
+    
+    /* Font chữ & Bố cục nội dung */
+    font-family: Arial, sans-serif;
+    font-size: 15px;
+    display: flex;
+    align-items: center;
+    min-width: 200px; /* Độ rộng tối thiểu */
+
+    /* Trạng thái ban đầu (Ẩn) */
+    opacity: 0;
+    transform: translateY(-20px); /* Dịch lên trên */
+    transition: all 0.4s cubic-bezier(0.68, -0.55, 0.27, 1.55); /* Hiệu ứng nảy nhẹ khi hiện */
+}
+
+/* Class kích hoạt hiển thị (JS sẽ thêm class này) */
+.toast-msg.show {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* Style icon bên trong (nếu dùng font-awesome) */
+.toast-msg i {
+    margin-right: 10px;
+    font-size: 1.2em;
+}
+
+/* Tùy chọn: Màu đỏ nếu báo lỗi (thêm class .error vào .toast-msg) */
+.toast-msg.error {
+    background-color: #dc3545;
 }
