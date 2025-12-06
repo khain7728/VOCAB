@@ -1,50 +1,73 @@
 <?php
-error_reporting(0);
+// FILE: api/admin/course_update_status.php
+error_reporting(E_ALL);
+ini_set('display_errors', 0);
+ob_start();
+
+header('Access-Control-Allow-Origin: *');
 header('Content-Type: application/json; charset=utf-8');
-$rootPath = dirname(__DIR__);
-require_once $rootPath . '/../../config/config.php';
-require_once $rootPath . '/../includes/log_helper.php';
 
-$input = json_decode(file_get_contents('php://input'), true);
-$admin_id = $_SESSION['user_id']; // Lấy admin_id từ session đăng nhập
+require_once '../../config/config.php';
+require_once '../../includes/auth_check.php';
+require_once '../../includes/log_helper.php';
 
-// Kiểm tra đầy đủ dữ liệu cần thiết
-if (isset($input['id']) && isset($input['code']) && isset($input['name']) && isset($input['status']) && isset($input['tags']) && isset($input['description'])) {
+try {
+    // 1. KIỂM TRA BẢO MẬT (AUTH)
+    if (session_status() === PHP_SESSION_NONE) session_start();
     
+    // Kiểm tra session timeout & security
+    if (!check_session_timeout() || !validate_session_security()) {
+        throw new Exception("Phiên đăng nhập hết hạn.");
+    }
+    
+    // Kiểm tra quyền Admin
+    if (!isset($_SESSION['user_id']) || (isset($_SESSION['role']) && $_SESSION['role'] !== 'admin')) {
+        throw new Exception("Không đủ quyền truy cập.");
+    }
+
+    $admin_id = $_SESSION['user_id'];
+    $input = json_decode(file_get_contents('php://input'), true);
+
+    // 2. KIỂM TRA CSRF
+    if (!isset($input['csrf_token']) || $input['csrf_token'] !== $_SESSION['csrf_token']) {
+        throw new Exception("Lỗi bảo mật CSRF (Token không hợp lệ).");
+    }
+
+    // 3. KIỂM TRA DỮ LIỆU ĐẦU VÀO
+    if (!isset($input['id']) || !isset($input['status'])) {
+        throw new Exception("Thiếu dữ liệu ID hoặc Status.");
+    }
+
     $id = (int)$input['id'];
-    $code = trim($input['code']);
-    $name = trim($input['name']);
-    $status = ($input['status'] === 'active') ? 'public' : 'private'; // Xử lý status từ JS
-    $tags = trim($input['tags']);
-    $description = trim($input['description']);
+    $statusRaw = $input['status']; // Mong đợi: 'active' hoặc 'hidden' từ JS
+    
+    // Map trạng thái sang DB (public/private)
+    $visibility = ($statusRaw === 'active' || $statusRaw === 'public') ? 'public' : 'private';
 
-    // 1. Kiểm tra trùng Mã (trừ mã hiện tại)
-    $check = $conn->prepare("SELECT course_id FROM course WHERE course_code = ? AND course_id != ?");
-    $check->bind_param("si", $code, $id);
-    $check->execute();
-    if ($check->get_result()->num_rows > 0) {
-        die(json_encode(['status' => 'error', 'message' => 'Mã khóa học đã tồn tại!']));
-    }
-    
-    // 2. CẬP NHẬT CÁC TRƯỜNG MỚI VÀ TRẠNG THÁI
-    $stmt = $conn->prepare("UPDATE course SET 
-        course_code = ?, 
-        course_name = ?, 
-        visibility = ?, 
-        course_tags = ?, 
-        course_description = ? 
-        WHERE course_id = ?");
-        
-    $stmt->bind_param("sssssi", $code, $name, $status, $tags, $description, $id);
-    
+    // 4. CẬP NHẬT DATABASE
+    $stmt = $conn->prepare("UPDATE course SET visibility = ? WHERE course_id = ?");
+    $stmt->bind_param("si", $visibility, $id);
+
     if ($stmt->execute()) {
-        if(function_exists('writeAdminLog')) writeAdminLog($conn, $admin_id, "Cập nhật khóa học ID: " . $id, $id);
-        echo json_encode(['status' => 'success', 'message' => 'Cập nhật thành công!']);
+        // Ghi log
+        if (function_exists('writeAdminLog')) {
+            $actionName = ($visibility === 'public') ? "Mở khóa học (Public)" : "Ẩn khóa học (Private)";
+            writeAdminLog($conn, $admin_id, "$actionName", $id);
+        }
+
+        ob_clean();
+        echo json_encode([
+            'status' => 'success', 
+            'message' => 'Cập nhật trạng thái thành công!',
+            'data' => ['visibility' => $visibility]
+        ]);
     } else {
-        echo json_encode(['status' => 'error', 'message' => 'Lỗi thực thi: ' . $conn->error]);
+        throw new Exception("Lỗi Database: " . $stmt->error);
     }
-} else {
-    echo json_encode(['status' => 'error', 'message' => 'Thiếu dữ liệu để cập nhật.']);
+
+} catch (Exception $e) {
+    ob_clean();
+    http_response_code(400);
+    echo json_encode(['status' => 'error', 'message' => $e->getMessage()]);
 }
-$conn->close();
 ?>

@@ -1,203 +1,120 @@
+/**
+ * Tệp: assets/js/admin/quanlykhoahoc.js
+ */
+
 document.addEventListener("DOMContentLoaded", function() {
-    loadCourses(); // Tải danh sách khóa học khi vào trang
-
-    // --- GÁN SỰ KIỆN (EVENT LISTENERS) ---
-    const el = (id) => document.getElementById(id);
-
-    // Tìm kiếm
-    if (el('searchBox')) el('searchBox').addEventListener('keyup', searchTable);
-
-    // Nút mở modal Thêm mới
-    if (el('btnOpenAddModal')) el('btnOpenAddModal').addEventListener('click', () => openModal('add'));
-
-    // Các nút Đóng/Hủy Modal Khóa học
-    if (el('btnCloseCourseModal')) el('btnCloseCourseModal').addEventListener('click', closeModal);
-    if (el('btnCancelCourseModal')) el('btnCancelCourseModal').addEventListener('click', closeModal);
-
-    // Nút Lưu (Chính là nút "Thêm từ vựng")
-    if (el('saveCourseBtn')) el('saveCourseBtn').addEventListener('click', handleSaveCourse);
-
-    // --- Xử lý Modal Tag ---
-    if (el('btnOpenTagModal')) el('btnOpenTagModal').addEventListener('click', (e) => {
-        e.preventDefault();
-        openTagModal();
-    });
-    if (el('btnCloseTagModal')) el('btnCloseTagModal').addEventListener('click', closeTagModal);
-    if (el('btnConfirmTag')) el('btnConfirmTag').addEventListener('click', confirmTagSelection);
-
-    // Click ra ngoài để đóng modal
-    window.addEventListener('click', (e) => {
-        if (e.target == el('courseModal')) closeModal();
-        if (e.target == el('tagModal')) closeTagModal();
-    });
-
-    // --- Xử lý sự kiện trong Bảng (Sửa / Xóa) ---
-    const tbody = el('course_table_body');
-    if (tbody) {
-        tbody.addEventListener('click', (e) => {
-            // Tìm nút button gần nhất được click (tránh click vào icon i)
-            const btn = e.target.closest('button');
-            if (!btn) return;
-
-            const id = btn.dataset.id;
-
-            // Nếu click nút Sửa
-            if (btn.classList.contains('btn-edit')) {
-                openModal('edit', id);
-            }
-
-            // Nếu click nút Xóa
-            if (btn.classList.contains('btn-delete')) {
-                handleDelete(id);
-            }
-        });
-    }
+    loadCsrfToken(); // 1. Lấy Token bảo mật
+    fetchCourses(); // 2. Tải dữ liệu bảng
+    setupEventListeners(); // 3. Gán sự kiện
 });
 
-let allCourses = [];
+// --- 1. STATE & CONFIG ---
+let currentPage = 1;
+let currentSort = { col: 'created_at', order: 'DESC' };
+let searchTimer = null;
+let csrfToken = '';
+
+// Dữ liệu cho Modal Tag (Giữ nguyên logic cũ)
 let selectedTags = [];
 const suggestedTags = ['Ngữ pháp', 'Từ vựng', 'Giao tiếp', 'IELTS', 'TOEFL', 'Business', 'CNTT', 'Y học'];
+let allCourses = []; // Dùng để tham chiếu nếu cần
 
-// --- 1. CÁC HÀM API (FETCH DATA) ---
+// --- 2. HÀM API CHÍNH ---
 
-async function loadCourses() {
-    const tbody = document.getElementById('course_table_body');
-    tbody.innerHTML = `<tr><td colspan="7" class="text-center">Đang tải dữ liệu...</td></tr>`;
-
+async function loadCsrfToken() {
     try {
-        // Gọi API lấy danh sách
-        const res = await fetch('../../api/admin/course_get_list.php');
+        const res = await fetch('../../api/common/get_csrf.php');
         const data = await res.json();
-
-        if (data.status === 'success') {
-            allCourses = data.data; // Lưu dữ liệu gốc để dùng cho search/edit
-            renderTable(allCourses);
-        } else {
-            tbody.innerHTML = `<tr><td colspan="7" class="text-center text-red">${data.message}</td></tr>`;
+        if (data.token) {
+            csrfToken = data.token;
+            const inputCsrf = document.getElementById('csrf_token');
+            if (inputCsrf) inputCsrf.value = data.token;
         }
-    } catch (e) {
-        console.error(e);
-        tbody.innerHTML = `<tr><td colspan="7" class="text-center text-red">Lỗi kết nối máy chủ!</td></tr>`;
-    }
+    } catch (e) { console.error("Lỗi lấy CSRF Token", e); }
 }
 
-// --- QUAN TRỌNG: Hàm xử lý Lưu và Chuyển trang ---
-async function handleSaveCourse() {
-    const id = document.getElementById('courseId').value;
-    const name = document.getElementById('courseName').value.trim();
+async function fetchCourses() {
+    const tableBody = document.getElementById('course_table_body');
+    const searchVal = document.getElementById('searchCourseBox').value.trim();
+    const statusVal = document.getElementById('filterStatus') ? document.getElementById('filterStatus').value : '';
 
-    if (!name) { alert("Vui lòng nhập tên khóa học!"); return; }
+    // Loading State
+    tableBody.innerHTML = `<tr><td colspan="8" class="text-center py-4"><i class="fa-solid fa-spinner fa-spin"></i> Đang tải dữ liệu...</td></tr>`;
 
-    const payload = {
-        id: id,
-        name: name,
-        status: document.getElementById('courseStatus').value,
-        tags: document.getElementById('courseTag').value,
-        description: document.getElementById('courseDescription').value
-    };
-
-    // Xác định API: Nếu có ID là Update, không có là Create
-    const url = id ? '../../api/admin/course_update.php' : '../../api/admin/course_create.php';
+    const params = new URLSearchParams({
+        page: currentPage,
+        limit: 10,
+        sort_by: currentSort.col,
+        order: currentSort.order,
+        search: searchVal,
+        status: statusVal
+    });
 
     try {
-        const res = await fetch(url, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
-        });
+        const res = await fetch(`../../api/admin/course_get_list.php?${params.toString()}`);
         const result = await res.json();
 
         if (result.status === 'success') {
-            // Đóng modal
-            closeModal();
-
-            // Lấy ID: Ưu tiên lấy từ kết quả trả về (thêm mới), nếu không thì lấy từ input (sửa)
-            const targetCourseId = (result.data && result.data.id) ? result.data.id : id;
-
-            if (targetCourseId) {
-                // --- SỬA Ở ĐÂY ---
-                // Chuyển sang trang "them_tu_vung.html" của ADMIN (nằm cùng thư mục)
-                // Không chuyển sang trang user nữa
-                window.location.href = `themtuvung.html?id=${targetCourseId}`;
-
-            } else {
-                alert("Đã lưu thành công nhưng không lấy được ID.");
-                loadCourses();
-            }
+            allCourses = result.data; // Lưu lại để dùng cho việc edit nhanh nếu cần
+            renderTable(result.data, (currentPage - 1) * 10);
+            renderPagination(result.pagination);
         } else {
-            alert("Lỗi: " + result.message);
+            tableBody.innerHTML = `<tr><td colspan="8" class="text-center text-red">${escapeHtml(result.message)}</td></tr>`;
         }
     } catch (e) {
         console.error(e);
-        alert("Lỗi hệ thống khi lưu khóa học!");
+        tableBody.innerHTML = `<tr><td colspan="8" class="text-center text-red">Lỗi kết nối máy chủ (JSON Parse Error)!</td></tr>`;
     }
 }
 
-async function handleDelete(id) {
-    if (!confirm("Bạn có chắc chắn muốn xóa khóa học này không?")) return;
-    try {
-        const res = await fetch('../../api/admin/course_delete.php', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ id: id })
-        });
-        const result = await res.json();
-        if (result.status === 'success') {
-            alert("Đã xóa khóa học!");
-            loadCourses();
-        } else {
-            alert(result.message);
-        }
-    } catch (e) { alert("Lỗi kết nối!"); }
+// --- 3. RENDER UI ---
+
+function escapeHtml(text) {
+    if (text === null || text === undefined) return '';
+    return text.toString().replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
 }
 
-
-// --- 2. CÁC HÀM RENDER GIAO DIỆN ---
-
-// Hàm định dạng ngày tháng
 function formatDate(dateString) {
     if (!dateString) return '---';
     const date = new Date(dateString);
-    // Định dạng: dd/mm/yyyy HH:MM
     return date.toLocaleDateString('vi-VN') + ' ' + date.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
 }
 
-function renderTable(data) {
+function renderTable(data, startIndex) {
     const tbody = document.getElementById('course_table_body');
-
-    // Kiểm tra dữ liệu
-    if (!data || !Array.isArray(data) || data.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="7" class="text-center">Không tìm thấy khóa học nào.</td></tr>`;
+    if (!data || data.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="8" class="text-center">Không tìm thấy khóa học nào.</td></tr>`;
         return;
     }
 
     let html = '';
     data.forEach((item, index) => {
-        // Lấy dữ liệu an toàn
-        const id = item.course_id || item.id;
-        const code = item.course_code || '---';
-        const name = item.course_name || item.name || '(Chưa đặt tên)';
-        const author = item.author_name || 'Admin';
+        const id = item.course_id;
 
-        // Lấy ngày tạo (item.created_at phải trùng với tên cột trong CSDL)
-        const dateCreated = formatDate(item.created_at);
+        // Render Tags dạng badge
+        let tagsHtml = '';
+        if (item.tags) {
+            tagsHtml = item.tags.split(',').map(t =>
+                `<span style="background:#EEF2FF; color:#4F46E5; padding:2px 6px; border-radius:4px; font-size:11px; margin-right:2px;">${escapeHtml(t.trim())}</span>`
+            ).join('');
+        }
 
-        // Badge trạng thái
-        const statusBadge = (item.visibility === 'public' || item.status === 'active') ?
+        const statusBadge = (item.visibility === 'public') ?
             `<span class="status-badge public" style="background:#DEF7EC; color:#03543F; padding:4px 8px; border-radius:12px; font-size:12px;">Công khai</span>` :
             `<span class="status-badge private" style="background:#F3F4F6; color:#6B7280; padding:4px 8px; border-radius:12px; font-size:12px;">Riêng tư</span>`;
 
         html += `
             <tr>
-                <td class="text-center">${index + 1}</td>
-                <td><strong>${code}</strong></td>
-                <td>${name}</td>
-                <td>${author}</td>
-                <td>${dateCreated}</td> 
+                <td class="text-center">${startIndex + index + 1}</td>
+                <td><strong>${escapeHtml(item.course_code)}</strong></td>
+                <td>${escapeHtml(item.course_name)}</td>
+                <td>${tagsHtml}</td>
+                <td>${escapeHtml(item.author_name)}</td>
+                <td>${formatDate(item.created_at)}</td>
                 <td class="text-center">${statusBadge}</td>
                 <td class="text-center">
-                    <button class="btn-action btn-edit" data-id="${id}" title="Sửa thông tin"><i class="fa-solid fa-pen"></i></button>
-                    <button class="btn-action btn-delete" data-id="${id}" title="Xóa khóa học"><i class="fa-solid fa-trash"></i></button>
+                    <button class="btn-action btn-edit" onclick="openModal('edit', ${id})" style="color:#2563EB; border:none; background:none; cursor:pointer;"><i class="fa-solid fa-pen"></i></button>
+                    <button class="btn-action btn-delete" onclick="handleDelete(${id})" style="color:#DC2626; border:none; background:none; cursor:pointer;"><i class="fa-solid fa-trash"></i></button>
                 </td>
             </tr>
         `;
@@ -205,50 +122,127 @@ function renderTable(data) {
     tbody.innerHTML = html;
 }
 
-function searchTable() {
-    const term = document.getElementById('searchBox').value.toLowerCase();
-    const filtered = allCourses.filter(c =>
-        (c.course_name || c.name || '').toLowerCase().includes(term) ||
-        (c.course_code || '').toLowerCase().includes(term)
-    );
-    renderTable(filtered);
+function renderPagination(paging) {
+    const container = document.getElementById('pagination');
+    if (!container || paging.total_pages <= 1) {
+        container.innerHTML = '';
+        return;
+    }
+
+    let html = '';
+    const btnStyle = "padding: 5px 10px; margin: 0 2px; border: 1px solid #ddd; background: #fff; cursor: pointer; border-radius: 4px;";
+    const activeStyle = "padding: 5px 10px; margin: 0 2px; border: 1px solid #2563EB; background: #2563EB; color: #fff; cursor: pointer; border-radius: 4px;";
+
+    html += `<button onclick="changePage(${paging.current_page - 1})" ${paging.current_page === 1 ? 'disabled style="opacity:0.5; '+btnStyle+'"' : 'style="'+btnStyle+'"'}><i class="fa-solid fa-chevron-left"></i></button>`;
+
+    for (let i = 1; i <= paging.total_pages; i++) {
+        if (i === 1 || i === paging.total_pages || (i >= paging.current_page - 1 && i <= paging.current_page + 1)) {
+            html += `<button onclick="changePage(${i})" style="${i === paging.current_page ? activeStyle : btnStyle}">${i}</button>`;
+        } else if (i === paging.current_page - 2 || i === paging.current_page + 2) {
+            html += `<span style="padding:0 5px;">...</span>`;
+        }
+    }
+
+    html += `<button onclick="changePage(${paging.current_page + 1})" ${paging.current_page === paging.total_pages ? 'disabled style="opacity:0.5; '+btnStyle+'"' : 'style="'+btnStyle+'"'}><i class="fa-solid fa-chevron-right"></i></button>`;
+    container.innerHTML = html;
 }
 
-// --- 3. MODAL LOGIC (KHÓA HỌC) ---
+window.changePage = function(page) {
+    if (page < 1) return;
+    currentPage = page;
+    fetchCourses();
+}
 
-function openModal(mode, id = null) {
+// --- 4. XỬ LÝ SỰ KIỆN (MODAL, BUTTON) ---
+
+function setupEventListeners() {
+    // Tìm kiếm (Debounce)
+    const searchBox = document.getElementById('searchCourseBox');
+    if (searchBox) {
+        searchBox.addEventListener('input', () => {
+            clearTimeout(searchTimer);
+            searchTimer = setTimeout(() => {
+                currentPage = 1;
+                fetchCourses();
+            }, 500);
+        });
+    }
+
+    // Lọc trạng thái
+    const filterStatus = document.getElementById('filterStatus');
+    if (filterStatus) {
+        filterStatus.addEventListener('change', () => {
+            currentPage = 1;
+            fetchCourses();
+        });
+    }
+
+    // Sắp xếp cột
+    document.querySelectorAll('th.sortable').forEach(th => {
+        th.addEventListener('click', () => {
+            const col = th.getAttribute('data-sort');
+            if (currentSort.col === col) {
+                currentSort.order = currentSort.order === 'ASC' ? 'DESC' : 'ASC';
+            } else {
+                currentSort.col = col;
+                currentSort.order = 'DESC';
+            }
+            // Update icon visually
+            document.querySelectorAll('th.sortable i').forEach(i => i.className = 'fa-solid fa-sort');
+            th.querySelector('i').className = currentSort.order === 'ASC' ? 'fa-solid fa-sort-up' : 'fa-solid fa-sort-down';
+
+            fetchCourses();
+        });
+    });
+
+    // Các nút Modal
+    if (document.getElementById('btnOpenAddModal')) document.getElementById('btnOpenAddModal').onclick = () => openModal('add');
+    if (document.getElementById('btnCloseCourseModal')) document.getElementById('btnCloseCourseModal').onclick = closeModal;
+    if (document.getElementById('btnCancelCourseModal')) document.getElementById('btnCancelCourseModal').onclick = closeModal;
+    if (document.getElementById('saveCourseBtn')) document.getElementById('saveCourseBtn').onclick = handleSaveCourse;
+
+    // Các nút Tag Modal
+    if (document.getElementById('btnOpenTagModal')) document.getElementById('btnOpenTagModal').onclick = (e) => {
+        e.preventDefault();
+        openTagModal();
+    };
+    if (document.getElementById('btnCloseTagModal')) document.getElementById('btnCloseTagModal').onclick = closeTagModal;
+    if (document.getElementById('btnConfirmTag')) document.getElementById('btnConfirmTag').onclick = confirmTagSelection;
+}
+
+// --- 5. LOGIC MODAL & TAG (GIỮ NGUYÊN NHƯ FILE GỐC CỦA BẠN) ---
+
+window.openModal = async function(mode, id = null) {
     const modal = document.getElementById('courseModal');
     const title = document.getElementById('modalTitle');
     const btn = document.getElementById('saveCourseBtn');
 
-    // Reset form
+    // Reset Form
     document.getElementById('courseId').value = '';
-    document.getElementById('courseCode').value = ''; // Input này ẩn
     document.getElementById('courseName').value = '';
-    document.getElementById('courseStatus').value = 'active';
+    document.getElementById('courseStatus').value = 'active'; // Mặc định
     document.getElementById('courseTag').value = '';
     document.getElementById('courseDescription').value = '';
-    selectedTags = []; // Reset mảng tag
+    selectedTags = [];
 
     if (mode === 'add') {
         title.innerText = "Thêm Khóa học Mới";
-        btn.innerText = "Thêm từ vựng"; // Nút đổi tên theo yêu cầu
+        btn.innerText = "Thêm từ vựng";
     } else {
         title.innerText = "Cập nhật Khóa học";
         btn.innerText = "Lưu & Thêm từ vựng";
 
-        // Tìm dữ liệu cũ để điền vào form
-        const item = allCourses.find(c => (c.course_id || c.id) == id);
+        // Lấy dữ liệu chi tiết (Tìm trong mảng allCourses hoặc gọi API)
+        const item = allCourses.find(c => c.course_id == id);
         if (item) {
-            document.getElementById('courseId').value = item.course_id || item.id;
-            document.getElementById('courseCode').value = item.course_code;
-            document.getElementById('courseName').value = item.course_name || item.name;
-            document.getElementById('courseStatus').value = (item.visibility === 'public' || item.status === 'active') ? 'active' : 'hidden';
-            document.getElementById('courseDescription').value = item.description || '';
-            document.getElementById('courseTag').value = item.tags || '';
+            document.getElementById('courseId').value = item.course_id;
+            document.getElementById('courseName').value = item.course_name;
+            document.getElementById('courseStatus').value = (item.visibility === 'public') ? 'active' : 'hidden';
+            document.getElementById('courseDescription').value = item.description || ''; // Dùng value, không dùng innerText
 
-            // Cập nhật mảng selectedTags nếu có tags
+            // Xử lý tags
             if (item.tags) {
+                document.getElementById('courseTag').value = item.tags;
                 selectedTags = item.tags.split(',').map(t => t.trim()).filter(Boolean);
             }
         }
@@ -256,26 +250,18 @@ function openModal(mode, id = null) {
     modal.classList.add('show');
 }
 
-function closeModal() {
-    document.getElementById('courseModal').classList.remove('show');
-}
+function closeModal() { document.getElementById('courseModal').classList.remove('show'); }
 
-
-// --- 4. MODAL LOGIC (TAGS) ---
-// Giữ nguyên logic chọn Tag để không bị lỗi chức năng này
-
+// Logic Tag Modal (Giữ nguyên)
 function openTagModal() {
+    // Load từ input vào biến selectedTags
     const val = document.getElementById('courseTag').value;
-    // Đồng bộ input vào biến mảng
     selectedTags = val ? val.split(',').map(t => t.trim()).filter(Boolean) : [];
     renderTagUI();
-
     document.getElementById('tagModal').classList.add('show');
 }
 
-function closeTagModal() {
-    document.getElementById('tagModal').classList.remove('show');
-}
+function closeTagModal() { document.getElementById('tagModal').classList.remove('show'); }
 
 function confirmTagSelection() {
     document.getElementById('courseTag').value = selectedTags.join(', ');
@@ -290,10 +276,10 @@ function renderTagUI() {
 
     const lowerSel = selectedTags.map(t => t.toLowerCase());
 
-    // Render tag đã chọn
+    // Tag đã chọn
     selectedTags.forEach(t => boxSel.appendChild(createTagEl(t, true)));
 
-    // Render tag gợi ý (trừ những cái đã chọn)
+    // Tag gợi ý (trừ cái đã chọn)
     suggestedTags.forEach(t => {
         if (!lowerSel.includes(t.toLowerCase())) boxSug.appendChild(createTagEl(t, false));
     });
@@ -302,29 +288,103 @@ function renderTagUI() {
 function createTagEl(text, isSelected) {
     const span = document.createElement('span');
     span.textContent = text;
-    span.className = 'tag-item';
-    span.style.cursor = 'pointer';
-    span.style.margin = '4px';
-    span.style.padding = '5px 10px';
-    span.style.borderRadius = '15px';
-    span.style.display = 'inline-block';
-    span.style.fontSize = '13px';
+    span.style.cssText = "display:inline-block; padding:5px 10px; margin:4px; border-radius:15px; cursor:pointer; font-size:13px;";
 
     if (isSelected) {
         span.style.background = '#DEF7EC';
         span.style.color = '#03543F';
-        span.innerHTML += ' <i class="fa-solid fa-times" style="font-size:10px; margin-left:4px"></i>';
+        span.innerHTML += ' <i class="fa-solid fa-times" style="margin-left:5px; font-size:10px;"></i>';
         span.onclick = () => {
             selectedTags = selectedTags.filter(x => x !== text);
             renderTagUI();
-        }
+        };
     } else {
         span.style.background = '#F3F4F6';
         span.style.color = '#4B5563';
         span.onclick = () => {
             selectedTags.push(text);
             renderTagUI();
-        }
+        };
     }
     return span;
+}
+
+// --- 6. XỬ LÝ LƯU & XÓA (CÓ CSRF & AUTH CHECK) ---
+
+async function handleSaveCourse() {
+    const btn = document.getElementById('saveCourseBtn');
+    const id = document.getElementById('courseId').value;
+    const name = document.getElementById('courseName').value.trim();
+    const desc = document.getElementById('courseDescription').value.trim();
+
+    // Validate
+    if (!name) { alert("Vui lòng nhập tên khóa học!"); return; }
+    if (name.length < 5) { alert("Tên khóa học quá ngắn!"); return; }
+
+    const payload = {
+        id: id,
+        name: name,
+        description: desc,
+        status: document.getElementById('courseStatus').value,
+        tags: document.getElementById('courseTag').value,
+        csrf_token: csrfToken // Gửi token
+    };
+
+    const url = id ? '../../api/admin/course_update.php' : '../../api/admin/course_create.php';
+
+    btn.disabled = true;
+    const originalText = btn.innerText;
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Đang lưu...';
+
+    try {
+        const res = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+        const result = await res.json();
+
+        if (result.status === 'success') {
+            closeModal();
+            // Nếu tạo mới, chuyển trang thêm từ vựng
+            if (!id && result.data && result.data.id) {
+                if (confirm("Tạo thành công! Chuyển đến trang thêm từ vựng ngay?")) {
+                    window.location.href = `themtuvung.html?id=${result.data.id}`;
+                } else {
+                    fetchCourses();
+                }
+            } else {
+                fetchCourses();
+                alert(result.message);
+            }
+        } else {
+            alert(result.message);
+            // Nếu lỗi CSRF, load lại token
+            if (result.message.includes('CSRF')) loadCsrfToken();
+        }
+    } catch (e) {
+        alert("Lỗi hệ thống hoặc phiên đăng nhập hết hạn!");
+        console.error(e);
+    } finally {
+        btn.disabled = false;
+        btn.innerText = originalText;
+    }
+}
+
+window.handleDelete = async function(id) {
+    if (!confirm("CẢNH BÁO: Xóa khóa học sẽ xóa toàn bộ bài học và lịch sử liên quan.\nTiếp tục?")) return;
+
+    try {
+        const res = await fetch('../../api/admin/course_delete.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id: id, csrf_token: csrfToken })
+        });
+        const result = await res.json();
+        if (result.status === 'success') {
+            fetchCourses();
+        } else {
+            alert(result.message);
+        }
+    } catch (e) { alert("Lỗi kết nối!"); }
 }

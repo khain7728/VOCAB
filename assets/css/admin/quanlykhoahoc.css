@@ -1,3 +1,11 @@
+/* ========================================= */
+
+
+/* 1. LAYOUT & PAGE HEADER */
+
+
+/* ========================================= */
+
 .page-content {
     padding: 24px;
 }
@@ -7,6 +15,9 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
+    flex-wrap: wrap;
+    /* Cho phép xuống dòng nếu tiêu đề quá dài */
+    gap: 10px;
 }
 
 .page-title {
@@ -22,7 +33,13 @@
 }
 
 
-/* Toolbar & Search */
+/* ========================================= */
+
+
+/* 2. TOOLBAR & SEARCH (FIX RESPONSIVE & ZOOM) */
+
+
+/* ========================================= */
 
 .toolbar {
     background: #fff;
@@ -30,11 +47,24 @@
     border-radius: 8px 8px 0 0;
     border: 1px solid #E5E7EB;
     border-bottom: none;
+    /* Flexbox Layout */
+    display: flex;
+    flex-wrap: wrap;
+    /* QUAN TRỌNG: Cho phép xuống dòng */
+    gap: 15px;
+    /* Khoảng cách giữa các phần tử */
+    align-items: center;
 }
+
+
+/* Thanh tìm kiếm: Tự động chiếm khoảng trống còn lại */
 
 .search-bar {
     position: relative;
-    width: 350px;
+    flex: 1 1 300px;
+    /* Grow: 1, Shrink: 1, Basis: 300px */
+    /* Nghĩa là: Cố gắng rộng 300px, nhưng nếu còn chỗ thì dãn ra, hết chỗ thì co lại (nhưng không nhỏ hơn min-width) */
+    min-width: 250px;
 }
 
 .search-bar i {
@@ -43,6 +73,7 @@
     top: 50%;
     transform: translateY(-50%);
     color: #9CA3AF;
+    z-index: 1;
 }
 
 .search-bar input {
@@ -52,6 +83,9 @@
     border-radius: 6px;
     outline: none;
     box-sizing: border-box;
+    height: 40px;
+    /* Cố định chiều cao */
+    font-size: 14px;
 }
 
 .search-bar input:focus {
@@ -59,7 +93,28 @@
 }
 
 
-/* Nút Tạo khóa học (Trên trang chủ) */
+/* Bộ lọc trạng thái: Không được co nhỏ (Fix biến dạng) */
+
+.filter-group {
+    flex: 0 0 auto;
+    /* Grow: 0, Shrink: 0 (KHÔNG CO LẠI), Auto width */
+}
+
+.filter-group select {
+    height: 40px;
+    /* Cố định chiều cao bằng ô search */
+    width: 200px;
+    /* Cố định chiều rộng */
+    border: 1px solid #D1D5DB;
+    border-radius: 6px;
+    padding: 0 10px;
+    cursor: pointer;
+    background-color: #fff;
+    font-size: 14px;
+}
+
+
+/* Nút Tạo khóa học */
 
 .btn-primary {
     background-color: #5B9BD5;
@@ -72,6 +127,10 @@
     display: flex;
     align-items: center;
     gap: 8px;
+    height: 40px;
+    /* Cố định chiều cao */
+    white-space: nowrap;
+    /* Không xuống dòng chữ bên trong nút */
 }
 
 .btn-primary:hover {
@@ -79,19 +138,27 @@
 }
 
 
-/* Table Styles */
+/* ========================================= */
+
+
+/* 3. TABLE & PAGINATION */
+
+
+/* ========================================= */
 
 .table-container {
     background: #fff;
     border: 1px solid #E5E7EB;
     border-radius: 0 0 8px 8px;
     overflow-x: auto;
+    /* Cho phép cuộn ngang nếu bảng quá lớn */
 }
 
 .admin-table {
     width: 100%;
     border-collapse: collapse;
     min-width: 800px;
+    /* Đảm bảo bảng không bị bóp méo nội dung */
 }
 
 .admin-table th {
@@ -101,6 +168,8 @@
     border-bottom: 1px solid #E5E7EB;
     text-align: left;
     font-size: 13px;
+    white-space: nowrap;
+    /* Giữ tiêu đề cột trên 1 dòng */
 }
 
 .admin-table td {
@@ -122,6 +191,7 @@
     border-radius: 20px;
     font-size: 12px;
     font-weight: 500;
+    white-space: nowrap;
 }
 
 .status-badge.public {
@@ -163,10 +233,60 @@
 }
 
 
+/* Pagination Container */
+
+.pagination-container {
+    margin-top: 20px;
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 5px;
+    flex-wrap: wrap;
+}
+
+
 /* ========================================= */
 
 
-/* 2. MODAL BASE & Z-INDEX */
+/* 4. MEDIA QUERIES (MOBILE / ZOOM) */
+
+
+/* ========================================= */
+
+
+/* Khi màn hình nhỏ hơn 768px (Tablet dọc / Mobile / Zoom lớn) */
+
+@media (max-width: 768px) {
+    .toolbar {
+        flex-direction: column;
+        /* Xếp dọc các phần tử */
+        align-items: stretch;
+        /* Kéo dãn full chiều ngang */
+    }
+    .search-bar {
+        flex: none;
+        /* Tắt flex tự động */
+        width: 100%;
+    }
+    .filter-group {
+        flex: none;
+        width: 100%;
+    }
+    .filter-group select {
+        width: 100%;
+        /* Select box full chiều ngang */
+    }
+    .pagination-container {
+        justify-content: center;
+        /* Ra giữa màn hình */
+    }
+}
+
+
+/* ========================================= */
+
+
+/* 5. MODAL STYLES (GIỮ NGUYÊN) */
 
 
 /* ========================================= */
@@ -190,9 +310,6 @@
     opacity: 1;
 }
 
-
-/* QUAN TRỌNG: Phân tầng Z-Index để Tag đè lên Course */
-
 #courseModal {
     z-index: 1050;
 }
@@ -201,19 +318,10 @@
     z-index: 1100;
 }
 
-
-/* ========================================= */
-
-
-/* 3. MODAL KHÓA HỌC (GIAO DIỆN HIỆN ĐẠI) */
-
-
-/* ========================================= */
-
 .modal-content.modern-modal {
     background-color: #fff;
     border-radius: 16px;
-    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
     width: 600px;
     max-width: 95%;
     padding: 0;
@@ -233,12 +341,9 @@
     }
 }
 
-
-/* Header */
-
 .modal-header.no-border {
     padding: 24px 24px 10px 24px;
-    border-bottom: none;
+    border: none;
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
@@ -247,36 +352,29 @@
 .modal-title-bold {
     font-size: 20px;
     font-weight: 700;
-    color: #111827;
+    color: #111;
     margin: 0 0 5px 0;
 }
 
 .modal-subtitle {
     font-size: 14px;
-    color: #6B7280;
+    color: #666;
     margin: 0;
 }
 
 .close-btn {
     font-size: 24px;
-    color: #9CA3AF;
+    color: #999;
     cursor: pointer;
-    line-height: 1;
 }
 
 .close-btn:hover {
-    color: #111;
+    color: #333;
 }
-
-
-/* Body */
 
 .modal-body {
     padding: 10px 24px 20px 24px;
 }
-
-
-/* Modern Inputs */
 
 .input-modern {
     width: 100%;
@@ -284,16 +382,13 @@
     border: 1px solid #E5E7EB;
     border-radius: 8px;
     font-size: 14px;
-    color: #111;
-    background-color: #fff;
     box-sizing: border-box;
-    transition: border 0.2s, box-shadow 0.2s;
 }
 
 .input-modern:focus {
     border-color: #3B82F6;
-    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
     outline: none;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
 }
 
 .form-group {
@@ -309,12 +404,8 @@
 }
 
 .text-red {
-    color: #EF4444;
-    margin-left: 2px;
+    color: red;
 }
-
-
-/* Layout 2 cột */
 
 .form-row {
     display: flex;
@@ -331,19 +422,10 @@
     text-decoration: none;
     margin-top: 6px;
     display: inline-block;
-    font-weight: 500;
 }
-
-.link-modal:hover {
-    text-decoration: underline;
-}
-
-
-/* Footer Buttons */
 
 .modal-footer.no-border {
     padding: 10px 24px 24px 24px;
-    border-top: none;
     display: flex;
     justify-content: flex-end;
     gap: 12px;
@@ -351,17 +433,12 @@
 
 .btn-cancel-gray {
     background: #fff;
-    border: 1px solid #D1D5DB;
-    color: #374151;
+    border: 1px solid #ddd;
+    color: #333;
     padding: 9px 20px;
     border-radius: 8px;
-    font-weight: 500;
     cursor: pointer;
     font-size: 14px;
-}
-
-.btn-cancel-gray:hover {
-    background: #F9FAFB;
 }
 
 .btn-save-blue {
@@ -370,34 +447,20 @@
     color: white;
     padding: 9px 20px;
     border-radius: 8px;
-    font-weight: 500;
     cursor: pointer;
     font-size: 14px;
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
-}
-
-.btn-save-blue:hover {
-    background: #1D4ED8;
 }
 
 
-/* ========================================= */
-
-
-/* 4. MODAL TAG (CHỈNH SỬA ĐỂ BÙ CHO HTML SẠCH) */
-
-
-/* ========================================= */
+/* Modal Tag Small */
 
 .modal-content.small-modal {
     background: #fff;
     width: 450px;
     max-width: 90%;
     border-radius: 12px;
-    overflow: hidden;
-    animation: fadeIn 0.2s ease-out;
     position: relative;
-    /* Đảm bảo stacking context */
+    animation: fadeIn 0.2s ease-out;
 }
 
 @keyframes fadeIn {
@@ -413,108 +476,85 @@
 
 .small-modal .modal-header {
     padding: 15px 20px;
-    border-bottom: 1px solid #F3F4F6;
+    border-bottom: 1px solid #eee;
     display: flex;
     justify-content: space-between;
     align-items: center;
 }
 
-
-/* Style cho tiêu đề modal tag */
-
 .small-modal .modalTitle {
-    margin: 0;
     font-size: 16px;
     font-weight: 700;
-    color: #111;
+    margin: 0;
 }
-
-
-/* Style cho tiêu đề con (Tag đã chọn/Gợi ý) */
 
 .small-title {
     font-size: 13px;
     font-weight: 600;
-    color: #6B7280;
+    color: #666;
     text-transform: uppercase;
     margin: 15px 0 8px 0;
-    /* Margin top thay cho inline style */
-}
-
-.small-title:first-child {
-    margin-top: 0;
 }
 
 .tag-list-container {
-    border: 1px solid #E5E7EB;
-    background-color: #FAFAFA;
+    border: 1px solid #eee;
+    background: #fafafa;
     border-radius: 8px;
     padding: 10px;
     min-height: 60px;
     display: flex;
     flex-wrap: wrap;
     gap: 8px;
-    align-content: flex-start;
 }
-
-
-/* Style từng viên Tag */
-
-.tag-item {
-    display: inline-flex;
-    align-items: center;
-    font-size: 13px;
-    padding: 5px 12px;
-    border-radius: 20px;
-    cursor: pointer;
-    transition: all 0.2s;
-    border: 1px solid transparent;
-}
-
-
-/* Tag chưa chọn (Màu xám) */
-
-.tag-item {
-    background-color: #fff;
-    border-color: #E5E7EB;
-    color: #4B5563;
-}
-
-.tag-item:hover {
-    border-color: #3B82F6;
-    color: #3B82F6;
-}
-
-
-/* Tag ĐÃ chọn (được ghi đè bằng style inline từ JS, nhưng thêm CSS dự phòng) */
-
-.tag-item.selected {
-    background-color: #DEF7EC;
-    color: #03543F;
-    border-color: transparent;
-}
-
-
-/* Footer Modal Tag */
 
 .modal-footer.one-button {
     padding: 15px 20px;
-    border-top: 1px solid #F3F4F6;
+    border-top: 1px solid #eee;
     display: flex;
     justify-content: flex-end;
 }
 
-.modal-footer.one-button .btn-save {
-    background: #2563EB;
-    color: white;
-    border: none;
-    padding: 8px 24px;
-    border-radius: 6px;
-    cursor: pointer;
-    margin: 0;
-    /* Reset margin */
+
+/* ========================================= */
+
+
+/* 7. FIX CỘT HÀNH ĐỘNG (ACTION COLUMN) */
+
+
+/* ========================================= */
+
+
+/* Nhắm vào cột cuối cùng (Cột Hành động) */
+
+.admin-table th:last-child,
+.admin-table td:last-child {
+    white-space: nowrap;
+    /* Bắt buộc thẳng hàng, KHÔNG xuống dòng */
+    width: 100px;
+    /* Chiều rộng cố định */
+    min-width: 100px;
+    /* Đảm bảo không bị bóp méo */
+    text-align: center;
+    /* Căn giữa icon */
+    border-right: none;
+    /* Xóa viền phải nếu có */
 }
 
-.modal-footer.one-button .btn-save:hover {
-    background: #1D4ED8;
+
+/* Đảm bảo nút bấm có khoảng cách */
+
+.btn-action {
+    display: inline-block;
+    /* Để margin hoạt động tốt */
+    margin: 0 5px;
+    /* Cách nhau ra 1 chút */
+    padding: 6px;
+    vertical-align: middle;
+}
+
+.btn-action i {
+    pointer-events: none;
+    /* Tránh click nhầm vào icon thay vì nút */
+    display: block;
+    /* Căn chỉnh icon chuẩn */
 }
