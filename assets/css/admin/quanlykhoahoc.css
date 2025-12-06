@@ -8,6 +8,7 @@
 
 .page-content {
     padding: 24px;
+    font-family: 'Roboto', sans-serif;
 }
 
 .page-header {
@@ -16,7 +17,6 @@
     justify-content: space-between;
     align-items: center;
     flex-wrap: wrap;
-    /* Cho phép xuống dòng nếu tiêu đề quá dài */
     gap: 10px;
 }
 
@@ -24,6 +24,7 @@
     margin: 0 0 5px 0;
     font-size: 22px;
     color: #111;
+    font-weight: 700;
 }
 
 .page-header p {
@@ -36,7 +37,7 @@
 /* ========================================= */
 
 
-/* 2. TOOLBAR & SEARCH (FIX RESPONSIVE & ZOOM) */
+/* 2. TOOLBAR & SEARCH */
 
 
 /* ========================================= */
@@ -47,23 +48,15 @@
     border-radius: 8px 8px 0 0;
     border: 1px solid #E5E7EB;
     border-bottom: none;
-    /* Flexbox Layout */
     display: flex;
     flex-wrap: wrap;
-    /* QUAN TRỌNG: Cho phép xuống dòng */
     gap: 15px;
-    /* Khoảng cách giữa các phần tử */
     align-items: center;
 }
-
-
-/* Thanh tìm kiếm: Tự động chiếm khoảng trống còn lại */
 
 .search-bar {
     position: relative;
     flex: 1 1 300px;
-    /* Grow: 1, Shrink: 1, Basis: 300px */
-    /* Nghĩa là: Cố gắng rộng 300px, nhưng nếu còn chỗ thì dãn ra, hết chỗ thì co lại (nhưng không nhỏ hơn min-width) */
     min-width: 250px;
 }
 
@@ -84,7 +77,6 @@
     outline: none;
     box-sizing: border-box;
     height: 40px;
-    /* Cố định chiều cao */
     font-size: 14px;
 }
 
@@ -92,19 +84,13 @@
     border-color: #5B9BD5;
 }
 
-
-/* Bộ lọc trạng thái: Không được co nhỏ (Fix biến dạng) */
-
 .filter-group {
     flex: 0 0 auto;
-    /* Grow: 0, Shrink: 0 (KHÔNG CO LẠI), Auto width */
 }
 
 .filter-group select {
     height: 40px;
-    /* Cố định chiều cao bằng ô search */
     width: 200px;
-    /* Cố định chiều rộng */
     border: 1px solid #D1D5DB;
     border-radius: 6px;
     padding: 0 10px;
@@ -112,9 +98,6 @@
     background-color: #fff;
     font-size: 14px;
 }
-
-
-/* Nút Tạo khóa học */
 
 .btn-primary {
     background-color: #5B9BD5;
@@ -128,9 +111,7 @@
     align-items: center;
     gap: 8px;
     height: 40px;
-    /* Cố định chiều cao */
     white-space: nowrap;
-    /* Không xuống dòng chữ bên trong nút */
 }
 
 .btn-primary:hover {
@@ -141,7 +122,7 @@
 /* ========================================= */
 
 
-/* 3. TABLE & PAGINATION */
+/* 3. TABLE STYLES */
 
 
 /* ========================================= */
@@ -151,14 +132,12 @@
     border: 1px solid #E5E7EB;
     border-radius: 0 0 8px 8px;
     overflow-x: auto;
-    /* Cho phép cuộn ngang nếu bảng quá lớn */
 }
 
 .admin-table {
     width: 100%;
     border-collapse: collapse;
     min-width: 800px;
-    /* Đảm bảo bảng không bị bóp méo nội dung */
 }
 
 .admin-table th {
@@ -169,7 +148,6 @@
     text-align: left;
     font-size: 13px;
     white-space: nowrap;
-    /* Giữ tiêu đề cột trên 1 dòng */
 }
 
 .admin-table td {
@@ -181,6 +159,34 @@
 
 .admin-table tr:hover {
     background-color: #F9FAFB;
+}
+
+.admin-table th:nth-child(6),
+.admin-table td:nth-child(6) {
+    white-space: nowrap;
+    width: 150px;
+    min-width: 150px;
+}
+
+.admin-table th:last-child,
+.admin-table td:last-child {
+    white-space: nowrap;
+    width: 120px;
+    min-width: 120px;
+    text-align: center;
+    box-sizing: border-box;
+}
+
+
+/* Sort Icons */
+
+th.sortable {
+    cursor: pointer;
+    user-select: none;
+}
+
+th.sortable:hover {
+    background-color: #f3f4f6;
 }
 
 
@@ -208,85 +214,109 @@
 /* Action Buttons */
 
 .btn-action {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 4px;
+    margin: 0 4px;
     border: none;
     background: transparent;
     cursor: pointer;
-    padding: 6px;
-    font-size: 16px;
-    margin: 0 4px;
+    transition: background-color 0.2s;
+    font-size: 14px;
+}
+
+.btn-action:hover {
+    background-color: #F3F4F6;
 }
 
 .btn-edit {
-    color: #5B9BD5;
+    color: #2563EB;
 }
 
 .btn-delete {
-    color: #EF4444;
+    color: #DC2626;
 }
 
 .text-center {
     text-align: center !important;
 }
 
-.w-50 {
-    width: 50px;
+.text-red {
+    color: red;
 }
 
 
-/* Pagination Container */
+/* ========================================= */
+
+
+/* 4. PAGINATION (NEW STYLE - CENTERED) */
+
+
+/* ========================================= */
 
 .pagination-container {
-    margin-top: 20px;
+    padding: 20px;
     display: flex;
-    justify-content: flex-end;
+    justify-content: center;
+    /* Căn giữa */
     align-items: center;
     gap: 5px;
     flex-wrap: wrap;
+    background: #fff;
+    border-top: 1px solid #E5E7EB;
+}
+
+.page-btn {
+    min-width: 36px;
+    height: 36px;
+    padding: 0 10px;
+    border: 1px solid #E5E7EB;
+    background: #fff;
+    border-radius: 6px;
+    cursor: pointer;
+    color: #6B7280;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    margin: 0 2px;
+}
+
+.page-btn:hover:not(:disabled) {
+    background-color: #F3F4F6;
+    color: #111;
+    border-color: #D1D5DB;
+}
+
+.page-btn.active {
+    background-color: #3B82F6;
+    color: #fff;
+    border-color: #3B82F6;
+}
+
+.page-btn:disabled {
+    background-color: #F9FAFB;
+    color: #D1D5DB;
+    cursor: not-allowed;
+}
+
+.page-dots {
+    display: flex;
+    align-items: flex-end;
+    padding: 0 5px;
+    color: #9CA3AF;
+    font-weight: bold;
 }
 
 
 /* ========================================= */
 
 
-/* 4. MEDIA QUERIES (MOBILE / ZOOM) */
-
-
-/* ========================================= */
-
-
-/* Khi màn hình nhỏ hơn 768px (Tablet dọc / Mobile / Zoom lớn) */
-
-@media (max-width: 768px) {
-    .toolbar {
-        flex-direction: column;
-        /* Xếp dọc các phần tử */
-        align-items: stretch;
-        /* Kéo dãn full chiều ngang */
-    }
-    .search-bar {
-        flex: none;
-        /* Tắt flex tự động */
-        width: 100%;
-    }
-    .filter-group {
-        flex: none;
-        width: 100%;
-    }
-    .filter-group select {
-        width: 100%;
-        /* Select box full chiều ngang */
-    }
-    .pagination-container {
-        justify-content: center;
-        /* Ra giữa màn hình */
-    }
-}
-
-
-/* ========================================= */
-
-
-/* 5. MODAL STYLES (GIỮ NGUYÊN) */
+/* 5. MODAL STYLES */
 
 
 /* ========================================= */
@@ -301,6 +331,7 @@
     background-color: rgba(0, 0, 0, 0.5);
     align-items: center;
     justify-content: center;
+    z-index: 1050;
     opacity: 0;
     transition: opacity 0.3s ease;
 }
@@ -310,23 +341,13 @@
     opacity: 1;
 }
 
-#courseModal {
-    z-index: 1050;
-}
-
-#tagModal {
-    z-index: 1100;
-}
-
 .modal-content.modern-modal {
     background-color: #fff;
     border-radius: 16px;
     box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
     width: 600px;
     max-width: 95%;
-    padding: 0;
     overflow: hidden;
-    position: relative;
     animation: slideDown 0.3s ease-out;
 }
 
@@ -343,22 +364,13 @@
 
 .modal-header.no-border {
     padding: 24px 24px 10px 24px;
-    border: none;
     display: flex;
     justify-content: space-between;
-    align-items: flex-start;
 }
 
 .modal-title-bold {
     font-size: 20px;
     font-weight: 700;
-    color: #111;
-    margin: 0 0 5px 0;
-}
-
-.modal-subtitle {
-    font-size: 14px;
-    color: #666;
     margin: 0;
 }
 
@@ -368,12 +380,19 @@
     cursor: pointer;
 }
 
-.close-btn:hover {
-    color: #333;
-}
-
 .modal-body {
     padding: 10px 24px 20px 24px;
+}
+
+.form-group {
+    margin-bottom: 16px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 6px;
+    font-weight: 600;
+    font-size: 14px;
 }
 
 .input-modern {
@@ -388,40 +407,6 @@
 .input-modern:focus {
     border-color: #3B82F6;
     outline: none;
-    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-}
-
-.form-group {
-    margin-bottom: 16px;
-}
-
-.form-group label {
-    display: block;
-    margin-bottom: 6px;
-    font-weight: 600;
-    font-size: 14px;
-    color: #374151;
-}
-
-.text-red {
-    color: red;
-}
-
-.form-row {
-    display: flex;
-    gap: 16px;
-}
-
-.half-width {
-    flex: 1;
-}
-
-.link-modal {
-    font-size: 13px;
-    color: #2563EB;
-    text-decoration: none;
-    margin-top: 6px;
-    display: inline-block;
 }
 
 .modal-footer.no-border {
@@ -434,11 +419,9 @@
 .btn-cancel-gray {
     background: #fff;
     border: 1px solid #ddd;
-    color: #333;
     padding: 9px 20px;
     border-radius: 8px;
     cursor: pointer;
-    font-size: 14px;
 }
 
 .btn-save-blue {
@@ -448,52 +431,21 @@
     padding: 9px 20px;
     border-radius: 8px;
     cursor: pointer;
-    font-size: 14px;
 }
 
 
-/* Modal Tag Small */
+/* Tag Modal Small */
+
+#tagModal {
+    z-index: 1100;
+}
 
 .modal-content.small-modal {
     background: #fff;
     width: 450px;
     max-width: 90%;
     border-radius: 12px;
-    position: relative;
     animation: fadeIn 0.2s ease-out;
-}
-
-@keyframes fadeIn {
-    from {
-        opacity: 0;
-        transform: scale(0.95);
-    }
-    to {
-        opacity: 1;
-        transform: scale(1);
-    }
-}
-
-.small-modal .modal-header {
-    padding: 15px 20px;
-    border-bottom: 1px solid #eee;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-
-.small-modal .modalTitle {
-    font-size: 16px;
-    font-weight: 700;
-    margin: 0;
-}
-
-.small-title {
-    font-size: 13px;
-    font-weight: 600;
-    color: #666;
-    text-transform: uppercase;
-    margin: 15px 0 8px 0;
 }
 
 .tag-list-container {
@@ -507,54 +459,23 @@
     gap: 8px;
 }
 
-.modal-footer.one-button {
-    padding: 15px 20px;
-    border-top: 1px solid #eee;
-    display: flex;
-    justify-content: flex-end;
-}
-
 
 /* ========================================= */
 
 
-/* 7. FIX CỘT HÀNH ĐỘNG (ACTION COLUMN) */
+/* 6. MEDIA QUERIES */
 
 
 /* ========================================= */
 
-
-/* Nhắm vào cột cuối cùng (Cột Hành động) */
-
-.admin-table th:last-child,
-.admin-table td:last-child {
-    white-space: nowrap;
-    /* Bắt buộc thẳng hàng, KHÔNG xuống dòng */
-    width: 100px;
-    /* Chiều rộng cố định */
-    min-width: 100px;
-    /* Đảm bảo không bị bóp méo */
-    text-align: center;
-    /* Căn giữa icon */
-    border-right: none;
-    /* Xóa viền phải nếu có */
-}
-
-
-/* Đảm bảo nút bấm có khoảng cách */
-
-.btn-action {
-    display: inline-block;
-    /* Để margin hoạt động tốt */
-    margin: 0 5px;
-    /* Cách nhau ra 1 chút */
-    padding: 6px;
-    vertical-align: middle;
-}
-
-.btn-action i {
-    pointer-events: none;
-    /* Tránh click nhầm vào icon thay vì nút */
-    display: block;
-    /* Căn chỉnh icon chuẩn */
+@media (max-width: 768px) {
+    .toolbar {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    .search-bar,
+    .filter-group,
+    .filter-group select {
+        width: 100%;
+    }
 }
