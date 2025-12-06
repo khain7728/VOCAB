@@ -51,6 +51,11 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
+if (strpos($_SERVER['REQUEST_URI'], '/api/') !== false) {
+    require_once __DIR__ . '/../includes/rate_limiter.php';
+    checkApiRateLimit();
+}
+
 // ========================================
 // INCLUDE CÁC FILE CẤU HÌNH & HÀM
 // ========================================
