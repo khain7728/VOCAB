@@ -1,70 +1,48 @@
 <?php
-// FILE: api/admin/user_update_status.php
+session_start();
+header('Content-Type: application/json');
 
-// BẮT ĐẦU OUTPUT BUFFERING (Chống lỗi JSON)
-ob_start();
-error_reporting(E_ALL);
-ini_set('display_errors', 0); // Tắt lỗi hiển thị
-header('Content-Type: application/json; charset=utf-8');
+// #2: Check Admin
+if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'admin') {
+    http_response_code(403);
+    echo json_encode(["status" => "error", "message" => "Không có quyền truy cập"]);
+    exit();
+}
 
-// 1. Nạp file kết nối và file Log
-require_once __DIR__ . '/../../config/config.php';
+require_once __DIR__ . '/../../config/database.php';
 
-// Kiểm tra và nạp file log
-$logPath = __DIR__ . '/../../includes/log_helper.php';
-if (file_exists($logPath)) {
-    require_once $logPath;
+// Nhận JSON Input
+$input = json_decode(file_get_contents("php://input"), true);
+$userId = isset($input['user_id']) ? (int)$input['user_id'] : 0;
+// Quy ước: 'active' => 1, 'locked' => 0
+$status = (isset($input['status']) && $input['status'] == 'active') ? 1 : 0; 
+
+// #20: Validate ID
+if ($userId <= 0) {
+    echo json_encode(["status" => "error", "message" => "ID tài khoản không hợp lệ"]);
+    exit();
+}
+
+// #1: Prevent Admin self-lock (Dùng Session ID thật)
+if ($userId == $_SESSION['user_id']) {
+    echo json_encode(["status" => "error", "message" => "Bạn không thể tự khóa chính mình!"]);
+    exit();
 }
 
 try {
-    if (!$conn) throw new Exception("Mất kết nối Database.");
+    // #4: SQL Injection prevention
+    $stmt = $conn->prepare("UPDATE user SET status = ? WHERE user_id = ?");
+    $stmt->bind_param("ii", $status, $userId);
 
-    $input = json_decode(file_get_contents("php://input"), true);
-    $admin_id = $_SESSION['user_id']; // Lấy admin_id từ session đăng nhập
-
-    if (isset($input['user_id']) && isset($input['status'])) {
-        $userId = (int)$input['user_id'];
-        $currentStatusStr = $input['status']; // 'active' hoặc 'locked'
-
-        // Logic đảo ngược trạng thái: 
-        // Nếu đang active (1) -> Muốn khóa -> Thành 0
-        // Nếu đang locked (0) -> Muốn mở -> Thành 1
-        // (Dựa theo logic trong user_get_list: status == 1 là active)
-        $newStatusInt = ($currentStatusStr === 'active') ? 0 : 1; 
-        
-        $stmt = $conn->prepare("UPDATE user SET status = ? WHERE user_id = ?");
-        $stmt->bind_param("ii", $newStatusInt, $userId);
-        
-        if ($stmt->execute()) {
-            
-            // --- GHI LOG ---
-            if (function_exists('writeAdminLog')) {
-                // Xác định tên hành động cho rõ ràng
-                $actionName = ($newStatusInt === 0) ? "Khóa tài khoản" : "Mở khóa tài khoản";
-                
-                // Lấy thêm tên người bị khóa để log đẹp hơn (tùy chọn)
-                $userName = "ID " . $userId;
-                $uCheck = $conn->query("SELECT name FROM user WHERE user_id = $userId");
-                if($uCheck && $row = $uCheck->fetch_assoc()) $userName = $row['name'];
-
-                writeAdminLog($conn, $admin_id, "$actionName: $userName", $userId);
-            }
-            // ---------------
-
-            ob_clean();
-            echo json_encode(['status' => 'success', 'message' => 'Cập nhật thành công!']);
-        } else {
-            throw new Exception("Lỗi SQL: " . $stmt->error);
-        }
+    if ($stmt->execute()) {
+        $msg = $status == 1 ? "Đã mở khóa tài khoản thành công." : "Đã khóa tài khoản thành công.";
+        echo json_encode(["status" => "success", "message" => $msg]);
     } else {
-        throw new Exception("Thiếu dữ liệu user_id hoặc status.");
+        throw new Exception($stmt->error);
     }
-
 } catch (Exception $e) {
-    ob_clean();
-    echo json_encode(['status' => 'error', 'message' => $e->getMessage()]);
+    error_log($e->getMessage());
+    http_response_code(500);
+    echo json_encode(["status" => "error", "message" => "Lỗi cập nhật trạng thái."]);
 }
-
-$conn->close();
-ob_end_flush();
 ?>
