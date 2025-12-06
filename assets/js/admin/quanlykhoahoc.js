@@ -107,26 +107,18 @@ window.changePage = function(page) {
 }
 
 function setupEventListeners() {
-    document.getElementById('searchCourseBox').addEventListener('input', () => {
-        clearTimeout(searchTimer);
-        searchTimer = setTimeout(() => {
-            currentPage = 1;
-            fetchCourses();
-        }, 500);
-    });
-    document.getElementById('filterStatus').addEventListener('change', () => {
-        currentPage = 1;
-        fetchCourses();
-    });
+    document.getElementById('searchCourseBox').addEventListener('input', () => { clearTimeout(searchTimer);
+        searchTimer = setTimeout(() => { currentPage = 1;
+            fetchCourses(); }, 500); });
+    document.getElementById('filterStatus').addEventListener('change', () => { currentPage = 1;
+        fetchCourses(); });
 
     document.querySelectorAll('th.sortable').forEach(th => {
         th.addEventListener('click', () => {
             const col = th.getAttribute('data-sort');
             if (currentSort.col === col) currentSort.order = currentSort.order === 'ASC' ? 'DESC' : 'ASC';
-            else {
-                currentSort.col = col;
-                currentSort.order = 'DESC';
-            }
+            else { currentSort.col = col;
+                currentSort.order = 'DESC'; }
             updateSortIcons(col, currentSort.order);
             fetchCourses();
         });
@@ -209,10 +201,8 @@ function renderTagUI() {
             const chip = document.createElement('div');
             chip.className = 'tag-chip selected';
             chip.innerHTML = `<span>${escapeHtml(t)}</span> <i class="fa-solid fa-xmark"></i>`;
-            chip.onclick = () => {
-                selectedTags = selectedTags.filter(x => x !== t);
-                renderTagUI();
-            };
+            chip.onclick = () => { selectedTags = selectedTags.filter(x => x !== t);
+                renderTagUI(); };
             boxSel.appendChild(chip);
         });
     }
@@ -224,10 +214,8 @@ function renderTagUI() {
             const chip = document.createElement('div');
             chip.className = 'tag-chip suggested';
             chip.innerHTML = `<i class="fa-solid fa-plus"></i> <span>${escapeHtml(t)}</span>`;
-            chip.onclick = () => {
-                selectedTags.push(t);
-                renderTagUI();
-            };
+            chip.onclick = () => { selectedTags.push(t);
+                renderTagUI(); };
             boxSug.appendChild(chip);
         }
     });
@@ -235,7 +223,6 @@ function renderTagUI() {
 }
 
 async function handleSaveCourse() {
-    // ... (Phần lấy dữ liệu và validate giữ nguyên) ...
     const btn = document.getElementById('saveCourseBtn');
     const id = document.getElementById('courseId').value;
     const name = document.getElementById('courseName').value.trim();
@@ -264,59 +251,30 @@ async function handleSaveCourse() {
         const res = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
         const result = await res.json();
 
-        // --- LOGIC HIỂN THỊ TIN NHẮN CHÍNH XÁC ---
-        if (result.status === 'success' || result.status === 'warning') {
+        if (result.status === 'success') {
             closeModal();
-
             if (isCreate) {
-                // ... (Logic tạo mới giữ nguyên) ...
                 const newId = result.data && result.data.id ? result.data.id : null;
-                showToast(result.message, result.status);
+                showToast("Đang tạo bản nháp... Chuyển trang!", "success");
+
+                // TỰ ĐỘNG CHUYỂN TRANG
                 setTimeout(() => {
-                    if (newId) window.location.href = `themtuvung.html?id=${newId}`;
+                    if (newId) {
+                        window.location.href = `themtuvung.html?id=${newId}`;
+                    } else {
+                        showToast("Lỗi: Không lấy được ID khóa học.", "error");
+                    }
                 }, 1000);
             } else {
-                showToast(result.message, result.status);
+                showToast("Cập nhật thành công!", "success");
                 fetchCourses();
             }
         } else {
-            showToast(result.message, "error");
+            showToast(result.message, "success");
         }
-    } catch (e) {
-        showToast("Lỗi hệ thống!", "error");
-        console.error(e);
-    } finally {
-        btn.disabled = false;
-        btn.innerHTML = originalBtnText;
-    }
-}
-
-// SỬA HÀM TOAST ĐỂ HỖ TRỢ WARNING
-function showToast(message, type = 'success') {
-    const container = document.getElementById('toast-container');
-    if (!container) return;
-    const toast = document.createElement('div');
-    toast.className = `toast-message ${type}`;
-
-    // Chọn Icon và Tiêu đề dựa trên loại
-    let icon = 'fa-circle-check';
-    let title = 'Thành công';
-
-    if (type === 'error') {
-        icon = 'fa-circle-exclamation';
-        title = 'Lỗi';
-    } else if (type === 'warning') {
-        icon = 'fa-circle-info'; // Icon chữ i cho cảnh báo
-        title = 'Thông báo';
-    }
-
-    toast.innerHTML = `<i class="fa-solid ${icon}"></i><div class="toast-content"><span class="toast-title">${title}</span><span class="toast-desc">${escapeHtml(message)}</span></div>`;
-    container.appendChild(toast);
-    setTimeout(() => {
-        toast.style.opacity = '0';
-        toast.style.transform = 'translateX(100%)';
-        setTimeout(() => toast.remove(), 300);
-    }, 3000);
+    } catch (e) { showToast("Lỗi hệ thống!", "error");
+        console.error(e); } finally { btn.disabled = false;
+        btn.innerHTML = originalBtnText; }
 }
 
 function showToast(message, type = 'success') {
@@ -328,11 +286,9 @@ function showToast(message, type = 'success') {
     const title = type === 'success' ? 'Thông báo' : 'Lỗi';
     toast.innerHTML = `<i class="fa-solid ${icon}"></i><div class="toast-content"><span class="toast-title">${title}</span><span class="toast-desc">${escapeHtml(message)}</span></div>`;
     container.appendChild(toast);
-    setTimeout(() => {
-        toast.style.opacity = '0';
+    setTimeout(() => { toast.style.opacity = '0';
         toast.style.transform = 'translateX(100%)';
-        setTimeout(() => toast.remove(), 300);
-    }, 3000);
+        setTimeout(() => toast.remove(), 300); }, 3000);
 }
 
 window.handleDelete = async function(id) {
@@ -340,9 +296,7 @@ window.handleDelete = async function(id) {
     try {
         const res = await fetch('../../api/admin/course_delete.php', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: id, csrf_token: csrfToken }) });
         const result = await res.json();
-        if (result.status === 'success') {
-            showToast("Xóa thành công!", "success");
-            fetchCourses();
-        } else showToast(result.message, "error");
+        if (result.status === 'success') { showToast("Xóa thành công!", "success");
+            fetchCourses(); } else showToast(result.message, "error");
     } catch (e) { showToast("Lỗi kết nối!", "error"); }
 }

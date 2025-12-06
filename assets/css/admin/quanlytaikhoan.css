@@ -108,7 +108,7 @@
 }
 
 
-/* Sort Icons */
+/* Sort Icons & Columns */
 
 th.sortable {
     cursor: pointer;
@@ -124,9 +124,6 @@ th.sortable i {
     color: #9CA3AF;
     font-size: 12px;
 }
-
-
-/* Căn chỉnh cột */
 
 .col-stt {
     width: 60px;
@@ -191,7 +188,7 @@ th.sortable i {
 }
 
 
-/* --- 4. TRẠNG THÁI (BADGES) --- */
+/* --- 4. STATUS BADGES --- */
 
 .status-badge {
     padding: 4px 10px;
@@ -212,7 +209,7 @@ th.sortable i {
 }
 
 
-/* --- 5. NÚT HÀNH ĐỘNG (GIAO DIỆN CŨ - HÌNH VUÔNG MÀU) --- */
+/* --- 5. ACTION BUTTONS --- */
 
 .btn-action {
     width: 34px;
@@ -240,9 +237,6 @@ th.sortable i {
     transform: none;
 }
 
-
-/* Nút Xem chi tiết (Màu xanh dương) */
-
 .btn-view {
     background-color: #3B82F6;
 }
@@ -251,9 +245,6 @@ th.sortable i {
     background-color: #2563EB;
 }
 
-
-/* Nút Khóa (Màu đỏ) */
-
 .btn-lock {
     background-color: #EF4444;
 }
@@ -261,9 +252,6 @@ th.sortable i {
 .btn-lock:hover {
     background-color: #DC2626;
 }
-
-
-/* Nút Mở khóa (Màu xanh lá) */
 
 .btn-unlock {
     background-color: #10B981;
@@ -274,7 +262,7 @@ th.sortable i {
 }
 
 
-/* --- 6. PAGINATION (KIỂU LỊCH SỬ THAO TÁC) --- */
+/* --- 6. PAGINATION --- */
 
 .pagination-container {
     padding: 20px;
@@ -396,6 +384,9 @@ th.sortable i {
     padding: 20px;
 }
 
+
+/* USER PROFILE HEADER (MODIFIED FOR AVATAR UPLOAD) */
+
 .user-profile-header {
     display: flex;
     align-items: center;
@@ -405,11 +396,57 @@ th.sortable i {
     border-bottom: 1px solid #eee;
 }
 
-.large-avatar {
-    width: 60px;
-    height: 60px;
+
+/* Avatar Wrapper để xử lý hover */
+
+.avatar-wrapper {
+    position: relative;
+    width: 70px;
+    height: 70px;
     border-radius: 50%;
+    overflow: hidden;
+    cursor: pointer;
+    border: 2px solid #fff;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.avatar-wrapper img,
+.avatar-wrapper .user-avatar {
+    width: 100%;
+    height: 100%;
     object-fit: cover;
+}
+
+.avatar-wrapper .user-avatar.placeholder {
+    font-size: 28px;
+    width: 100%;
+    height: 100%;
+}
+
+
+/* Lớp phủ khi hover vào avatar */
+
+.avatar-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: opacity 0.2s;
+}
+
+.avatar-overlay i {
+    color: #fff;
+    font-size: 20px;
+}
+
+.avatar-wrapper:hover .avatar-overlay {
+    opacity: 1;
 }
 
 .profile-basic h3 {
@@ -421,6 +458,20 @@ th.sortable i {
     margin: 0;
     color: #666;
     font-size: 13px;
+}
+
+.change-avatar-text {
+    font-size: 12px;
+    color: #3B82F6;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    margin-top: 4px;
+}
+
+.change-avatar-text:hover {
+    text-decoration: underline;
 }
 
 .info-item {
@@ -455,12 +506,11 @@ th.sortable i {
 }
 
 
-/* --- 8. TOAST NOTIFICATION (CỐ ĐỊNH GÓC PHẢI) --- */
+/* --- 8. TOAST NOTIFICATION --- */
 
 #toast-container {
     position: fixed;
     top: 80px;
-    /* Cách top để tránh đè Header */
     right: 20px;
     z-index: 9999;
     display: flex;
@@ -510,41 +560,5 @@ th.sortable i {
     to {
         opacity: 1;
         transform: translateX(0);
-    }
-}
-
-.loading-row td {
-    text-align: center;
-    padding: 50px 0;
-    background-color: #fff;
-}
-
-.loading-container {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    color: #6B7280;
-}
-
-.loading-icon {
-    font-size: 32px;
-    color: #3B82F6;
-    margin-bottom: 15px;
-    animation: spin 1s linear infinite;
-}
-
-.loading-text {
-    font-size: 14px;
-    font-weight: 500;
-    color: #374151;
-}
-
-@keyframes spin {
-    0% {
-        transform: rotate(0deg);
-    }
-    100% {
-        transform: rotate(360deg);
     }
 }
