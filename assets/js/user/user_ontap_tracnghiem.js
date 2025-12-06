@@ -72,6 +72,7 @@ function generateWrongAnswers(correctAnswer, allAnswers) {
 
 /**
  * Tạo câu hỏi trắc nghiệm từ danh sách từ đã học
+ * MỖI TỪ XUẤT HIỆN 2 LẦN VỚI ĐÁP ÁN SAI KHÁC NHAU
  */
 function generateQuestions() {
     if (learnedWords.length === 0) {
@@ -80,21 +81,53 @@ function generateQuestions() {
         return;
     }
 
-    questions = learnedWords.map(word => {
-        const wrongAnswers = generateWrongAnswers(word.word, allWords.map(w => w.word));
-        const answers = shuffleArray([word.word, ...wrongAnswers]);
-        const correctIndex = answers.indexOf(word.word);
-
-        return {
+    const allAnswers = allWords.map(w => w.word);
+    const questionList = [];
+    
+    learnedWords.forEach(word => {
+        // Lần 1: Tạo 3 đáp án sai set 1
+        const wrongAnswers1 = generateWrongAnswers(word.word, allAnswers);
+        const answers1 = shuffleArray([word.word, ...wrongAnswers1]);
+        
+        questionList.push({
             word_id: word.word_id,
             question: word.meaning,
-            answers: answers,
-            correctIndex: correctIndex,
-            correctAnswer: word.word
-        };
+            answers: answers1,
+            correctIndex: answers1.indexOf(word.word),
+            correctAnswer: word.word,
+            attempt: 1
+        });
+        
+        // Lần 2: Tạo 3 đáp án sai set 2 (KHÁC với set 1)
+        const availableWrongAnswers = allAnswers.filter(ans => 
+            ans !== word.word && !wrongAnswers1.includes(ans)
+        );
+        
+        let wrongAnswers2;
+        if (availableWrongAnswers.length >= 3) {
+            wrongAnswers2 = getRandomElements(availableWrongAnswers, 3);
+        } else {
+            // Nếu không đủ đáp án khác, lấy lại 1 số đáp án từ set 1
+            wrongAnswers2 = [
+                ...availableWrongAnswers,
+                ...getRandomElements(wrongAnswers1, 3 - availableWrongAnswers.length)
+            ];
+        }
+        
+        const answers2 = shuffleArray([word.word, ...wrongAnswers2]);
+        
+        questionList.push({
+            word_id: word.word_id,
+            question: word.meaning,
+            answers: answers2,
+            correctIndex: answers2.indexOf(word.word),
+            correctAnswer: word.word,
+            attempt: 2
+        });
     });
 
-    questions = shuffleArray(questions);
+    // Random thứ tự câu hỏi
+    questions = shuffleArray(questionList);
     totalQuestions = questions.length;
 }
 

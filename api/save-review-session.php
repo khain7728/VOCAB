@@ -4,9 +4,10 @@
  * Endpoint: api/save-review-session.php
  * Method: POST
  * Body: {
- *   user_id, course_id, review_type, total_words, 
+ *   course_id, review_type, total_words, 
  *   correct_count, score, duration_seconds, details[]
  * }
+ * Note: user_id được lấy từ session (không cần gửi trong body)
  */
 
 header('Content-Type: application/json; charset=utf-8');
@@ -17,16 +18,18 @@ header('Access-Control-Allow-Headers: Content-Type');
 require_once '../config/config.php';
 
 try {
+    // BẢO MẬT: Lấy user_id từ session
+    $user_id = api_require_login();
+    
     // Lấy dữ liệu JSON
     $json = file_get_contents('php://input');
     $data = json_decode($json, true);
     
-    // Validate input
-    if (!isset($data['user_id']) || !isset($data['course_id']) || !isset($data['review_type'])) {
-        throw new Exception('Missing required fields');
+    // Validate input (KHÔNG cần user_id trong body nữa)
+    if (!isset($data['course_id']) || !isset($data['review_type'])) {
+        throw new Exception('Missing required fields: course_id or review_type');
     }
     
-    $user_id = intval($data['user_id']);
     $course_id = intval($data['course_id']);
     $review_type = $data['review_type'];
     $total_words = intval($data['total_words']);
@@ -77,11 +80,49 @@ try {
             );
             $insertDetail->execute();
             
-            // 3. Cập nhật trạng thái từ (gọi stored procedure)
-            $updateWord = $conn->prepare("CALL sp_update_word_after_review(?, ?, ?)");
-            $updateWord->bind_param("iii", $user_id, $word_id, $is_correct);
+            // 3. Cập nhật trạng thái từ trong bảng learned_word
+            $updateWord = $conn->prepare(
+                "INSERT INTO learned_word 
+                 (user_id, word_id, status, learning_progress, review_count, mastery_level, 
+                  consecutive_correct, consecutive_incorrect, last_reviewed_at, current_position)
+                 VALUES (?, ?, 'reviewing', 10, 1, 0, ?, 0, NOW(), 0)
+                 ON DUPLICATE KEY UPDATE
+                    status = CASE 
+                        WHEN learning_progress + ? >= 100 THEN 'mastered'
+                        WHEN learning_progress + ? > 0 THEN 'reviewing'
+                        ELSE 'learning'
+                    END,
+                    learning_progress = LEAST(100, GREATEST(0, learning_progress + ?)),
+                    review_count = review_count + 1,
+                    consecutive_correct = IF(? = 1, consecutive_correct + 1, 0),
+                    consecutive_incorrect = IF(? = 0, consecutive_incorrect + 1, 0),
+                    mastery_level = CASE
+                        WHEN ? = 1 AND consecutive_correct >= 3 THEN LEAST(5, mastery_level + 1)
+                        WHEN ? = 0 THEN GREATEST(0, mastery_level - 1)
+                        ELSE mastery_level
+                    END,
+                    last_reviewed_at = NOW()"
+            );
+            
+            $progress_increment = $is_correct ? 10 : -5;
+            $correct_int = $is_correct ? 1 : 0;
+            
+            // Bind: user_id, word_id, consecutive_correct_init, +5 lần progress_increment, +4 lần is_correct
+            $updateWord->bind_param(
+                "iiiiiiiiii", 
+                $user_id, 
+                $word_id, 
+                $correct_int,                    // consecutive_correct cho INSERT
+                $progress_increment,             // CASE 1
+                $progress_increment,             // CASE 2  
+                $progress_increment,             // learning_progress update
+                $correct_int,                    // consecutive_correct IF
+                $correct_int,                    // consecutive_incorrect IF
+                $correct_int,                    // mastery_level CASE 1
+                $correct_int                     // mastery_level CASE 2
+            );
             $updateWord->execute();
-            $updateWord->close(); // Phải close để tránh lỗi "Commands out of sync"
+            $updateWord->close();
         }
         
         $insertDetail->close();

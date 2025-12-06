@@ -78,6 +78,7 @@ function compareAnswers(userAnswer, correctAnswer) {
 
 /**
  * Tạo danh sách câu hỏi từ từ đã học
+ * MỖI TỪ XUẤT HIỆN 2 LẦN
  */
 function generateQuestions() {
     if (learnedWords.length === 0) {
@@ -86,13 +87,27 @@ function generateQuestions() {
         return;
     }
 
-    questions = learnedWords.map(word => ({
-        word_id: word.word_id,
-        question: word.meaning,
-        answer: word.word
-    }));
+    // Tạo câu hỏi: mỗi từ xuất hiện 2 lần
+    const questionList = [];
+    learnedWords.forEach(word => {
+        // Lần 1
+        questionList.push({
+            word_id: word.word_id,
+            question: word.meaning,
+            answer: word.word,
+            attempt: 1
+        });
+        // Lần 2
+        questionList.push({
+            word_id: word.word_id,
+            question: word.meaning,
+            answer: word.word,
+            attempt: 2
+        });
+    });
 
-    questions = shuffleArray(questions);
+    // Random thứ tự câu hỏi
+    questions = shuffleArray(questionList);
     dtTotal = questions.length;
 }
 
