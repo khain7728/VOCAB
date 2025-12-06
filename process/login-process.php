@@ -6,6 +6,10 @@
 
 // Load config
 require_once __DIR__ . '/../config/config.php';
+require_once __DIR__ . '/../includes/rate_limiter.php';
+
+// Rate limiting - Chống brute force
+checkLoginRateLimit();
 
 // Chỉ chấp nhận POST request
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
