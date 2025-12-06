@@ -1,6 +1,6 @@
 <?php
 /**
- * API LẤY THÔNG TIN HỒ SƠ USER
+ * API LẤY THÔNG TIN HỒ SƠ USER & THỐNG KÊ CHI TIẾT
  */
 ob_start();
 error_reporting(0);
@@ -19,7 +19,7 @@ try {
     $user_id = isset($_GET['user_id']) ? (int)$_GET['user_id'] : 0;
     if ($user_id <= 0) throw new Exception("User ID không hợp lệ");
 
-    // A. LẤY INFO
+    // --- A. LẤY THÔNG TIN USER (Bảng user) ---
     $sqlUser = "SELECT user_id, name, email, bio, avatar, created_at, role 
                 FROM user WHERE user_id = ?";
     $stmtUser = $conn->prepare($sqlUser);
@@ -29,35 +29,60 @@ try {
 
     if (!$userInfo) throw new Exception('User không tồn tại');
 
-    // B. LẤY THỐNG KÊ (Giữ nguyên logic của bạn)
-    $sqlStats = "SELECT total_courses, total_words_learned, total_quizzes_done, accuracy_rate, streak_days 
-                 FROM statistic WHERE user_id = ?";
-    $stmtStats = $conn->prepare($sqlStats);
-    $stmtStats->bind_param("i", $user_id);
-    $stmtStats->execute();
-    $statsInfo = $stmtStats->get_result()->fetch_assoc();
+    // --- B. TÍNH TOÁN THỐNG KÊ (Real-time) ---
 
-    if (!$statsInfo) {
-        $statsInfo = [
-            'total_courses' => 0, 'total_words_learned' => 0, 
-            'total_quizzes_done' => 0, 'accuracy_rate' => 0, 'streak_days' => 0
-        ];
+    // 1. Tổng số khóa học (Yêu cầu: Lấy từ bảng course, cột create_by)
+    $sqlCourse = "SELECT COUNT(*) as cnt FROM course WHERE create_by = ?";
+    $stmtCourse = $conn->prepare($sqlCourse);
+    $stmtCourse->bind_param("i", $user_id);
+    $stmtCourse->execute();
+    $totalCourses = $stmtCourse->get_result()->fetch_assoc()['cnt'];
+
+    // 2. Thống kê Quiz & Độ chính xác (Yêu cầu: Lấy từ bảng review_session)
+    // - total_quizzes: Đếm số dòng
+    // - accuracy: Trung bình cộng cột score
+    $sqlQuiz = "SELECT COUNT(*) as total_quiz, AVG(score) as avg_score 
+                FROM review_session WHERE user_id = ?";
+    $stmtQuiz = $conn->prepare($sqlQuiz);
+    $stmtQuiz->bind_param("i", $user_id);
+    $stmtQuiz->execute();
+    $quizData = $stmtQuiz->get_result()->fetch_assoc();
+
+    $totalQuizzes = (int)$quizData['total_quiz'];
+    // Làm tròn độ chính xác 1 chữ số thập phân (VD: 85.5)
+    $accuracy = $totalQuizzes > 0 ? round((float)$quizData['avg_score'], 1) : 0;
+
+    // 3. Tổng số từ đã học 
+    // (Logic cũ của bạn dùng bảng learned_word, nếu bảng này không tồn tại trong DB mới cung cấp
+    // thì bạn có thể dùng cột total_words_learned trong bảng statistic)
+    $totalWords = 0;
+    // Kiểm tra xem bảng learned_word có tồn tại không để chạy query, nếu không lấy từ statistic
+    $checkTable = $conn->query("SHOW TABLES LIKE 'learned_word'");
+    if ($checkTable && $checkTable->num_rows > 0) {
+        $sqlWord = "SELECT COUNT(*) as cnt FROM learned_word WHERE user_id = ? AND status != 'not_learned'";
+        $stmtWord = $conn->prepare($sqlWord);
+        $stmtWord->bind_param("i", $user_id);
+        $stmtWord->execute();
+        $totalWords = $stmtWord->get_result()->fetch_assoc()['cnt'];
+    } else {
+        // Fallback: Lấy từ bảng statistic nếu chưa có bảng learned_word
+        $sqlStatWord = "SELECT total_words_learned FROM statistic WHERE user_id = ?";
+        $stmtStatWord = $conn->prepare($sqlStatWord);
+        $stmtStatWord->bind_param("i", $user_id);
+        $stmtStatWord->execute();
+        $resStat = $stmtStatWord->get_result()->fetch_assoc();
+        $totalWords = $resStat ? (int)$resStat['total_words_learned'] : 0;
     }
-    
-    // Recount logic (Giữ nguyên)...
-    $sqlCountCourse = "SELECT COUNT(*) as cnt FROM user_course WHERE user_id = ?";
-    $stmtCount = $conn->prepare($sqlCountCourse);
-    $stmtCount->bind_param("i", $user_id);
-    $stmtCount->execute();
-    $statsInfo['total_courses'] = $stmtCount->get_result()->fetch_assoc()['cnt'];
 
-    $sqlCountWords = "SELECT COUNT(*) as cnt FROM learned_word WHERE user_id = ? AND status != 'not_learned'";
-    $stmtWord = $conn->prepare($sqlCountWords);
-    $stmtWord->bind_param("i", $user_id);
-    $stmtWord->execute();
-    $statsInfo['total_words_learned'] = $stmtWord->get_result()->fetch_assoc()['cnt'];
+    // 4. Chuỗi ngày học (Streak) - Lấy từ bảng statistic
+    $sqlStreak = "SELECT streak_days FROM statistic WHERE user_id = ?";
+    $stmtStreak = $conn->prepare($sqlStreak);
+    $stmtStreak->bind_param("i", $user_id);
+    $stmtStreak->execute();
+    $streakData = $stmtStreak->get_result()->fetch_assoc();
+    $streakDays = $streakData ? (int)$streakData['streak_days'] : 0;
 
-    // C. RESPONSE
+    // --- C. TRẢ VỀ KẾT QUẢ ---
     $response = [
         'success' => true,
         'data' => [
@@ -66,19 +91,18 @@ try {
                 'fullname' => $userInfo['name'],
                 'email' => $userInfo['email'],
                 'bio' => $userInfo['bio'] ?? 'Chưa cập nhật tiểu sử',
-                // Trả về nguyên gốc giá trị trong DB (hoặc null) để JS xử lý
                 'avatar' => $userInfo['avatar'], 
                 'joined_date' => date('d/m/Y', strtotime($userInfo['created_at'])),
                 'role' => $userInfo['role'],
-                'language' => 'Tiếng Anh',
-                'level' => 'Trung cấp' 
+                'language' => 'Tiếng Anh', // Hardcode hoặc lấy từ setting
+                'level' => 'Sơ cấp'       // Hardcode hoặc tính toán logic level
             ],
             'statistics' => [
-                'courses_joined' => (int)$statsInfo['total_courses'],
-                'words_learned' => (int)$statsInfo['total_words_learned'],
-                'quizzes_done' => (int)$statsInfo['total_quizzes_done'],
-                'accuracy' => (float)$statsInfo['accuracy_rate'],
-                'streak_days' => (int)$statsInfo['streak_days']
+                'courses_joined' => $totalCourses, // Đã sửa: Lấy từ course where create_by
+                'words_learned' => $totalWords,
+                'quizzes_done' => $totalQuizzes,   // Đã sửa: Lấy từ review_session count
+                'accuracy' => $accuracy,           // Đã sửa: Lấy từ review_session avg(score)
+                'streak_days' => $streakDays
             ]
         ]
     ];

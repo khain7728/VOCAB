@@ -26,7 +26,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
 }
 
 require_once '../config/config.php';
-
+require_once '../config/streak_helper.php';
 // Enable error logging for debugging
 error_log("[get-daily-goal] Request from user_id: " . ($_GET['user_id'] ?? 'none'));
 
@@ -37,6 +37,8 @@ try {
     if ($user_id <= 0) {
         throw new Exception('Invalid user_id');
     }
+    // Logic: Khi Dashboard load -> Gọi API này -> API này gọi updateStreak -> DB cập nhật -> Sau đó mới lấy dữ liệu hiển thị
+    updateStreak($conn, $user_id);
 
     // 1. Lấy thông tin mục tiêu của user
     // Kiểm tra bảng tồn tại trước khi query
