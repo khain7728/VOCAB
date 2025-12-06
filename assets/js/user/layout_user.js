@@ -43,7 +43,7 @@
       body.layout-user{ margin: 0; padding: 0; display: flex; flex-direction: row; min-height: 100vh; font-family: 'Roboto', sans-serif; }
       body.layout-user > #menu_user{ position: fixed; left: 0; top: 0; height: 100vh; z-index: 100; }
       body.layout-user #main_container{ flex: 1; display: flex; flex-direction: column; margin-left: 4.5rem; min-height: 100vh; }
-      body.layout-user #main_container > #header_user{ position: sticky; top: 0; z-index: 50; width: calc(100% - 4.5rem); margin-left: 0; padding-left: 1rem; box-sizing: border-box; }
+      body.layout-user #main_container > #header_user{ position: sticky; top: 0; z-index: 50; width: 100%; margin-left: 0; padding-left: 1rem; box-sizing: border-box; }
       
       /* Header User Info Style */
       body.layout-user #header_user #user-info { cursor: pointer; display: flex; align-items: center; gap: 10px; padding: 0 10px; }
@@ -59,7 +59,7 @@
       }
       body.layout-user.menu-open > #menu_user{ width: 15rem !important; align-items: stretch !important; }
       body.layout-user.menu-open #main_container{ margin-left: 15rem !important; }
-      body.layout-user.menu-open #main_container > #header_user{ width: calc(100% - 15rem); padding-left: 1rem; }
+      body.layout-user.menu-open #main_container > #header_user{ width: 100%; padding-left: 1rem; }
       
       /* Không có transition kéo mờ */
       body.layout-user #menu_user{ transition: width 250ms ease, font-size 250ms ease !important; }
@@ -142,8 +142,14 @@
 
   // --- Các hàm setup khác ---
   function setupMenuToggle() {
+    // ⚡ Bật transition CHỈ KHI user click nút toggle
+    document.addEventListener('click', function(e) {
+      if (e.target.closest('#menu-toggle')) {
+        // Lần đầu click → bật transition
+        document.body.classList.add('menu-allow-transition');
+      }
+    });
     // Menu toggle logic được xử lý bởi menu_manager.js
-    // File này chỉ giữ lại để tương thích, logic thực tế ở menu_manager.js
   }
 
   function setupLogout() {
@@ -183,8 +189,14 @@
   // --- INIT ---
   function init() {
     injectLayoutStyles();
-    // Ngăn transition lúc mới load trang
-    document.body.classList.add('menu-no-anim');
+    
+    // ⚡ BƯỚC 1: Restore menu state TRƯỚC KHI load menu (QUAN TRỌNG!)
+    const savedMenuState = localStorage.getItem('vocab_menu_state');
+    if (savedMenuState === 'open') {
+      document.body.classList.add('menu-open');
+    }
+    
+    // ⚡ BƯỚC 2: Load menu và header
     Promise.all([loadInclude(MENU_PATH, 'menu_user'), loadInclude(HEADER_PATH, 'header_user')])
       .then(() => {
         setupLayout();
@@ -200,11 +212,6 @@
         menuManagerScript.src = '../../assets/js/user/menu_manager.js';
         menuManagerScript.defer = true;
         document.head.appendChild(menuManagerScript);
-
-        // Bỏ class no-anim sau khi đã render xong
-        setTimeout(() => {
-          document.body.classList.remove('menu-no-anim');
-        }, 150);
       });
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);

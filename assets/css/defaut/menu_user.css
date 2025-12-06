@@ -20,17 +20,21 @@
   padding: 0.75rem 0;
   border-right: 1px solid var(--border-color);
   box-sizing: border-box;
-  transition: width 220ms ease, font-size 220ms ease, padding 0s linear;
-  min-height: 100vh; /* đảm bảo logout có thể đẩy xuống dưới */
-  /* collapsed trick: set base font-size 0 so text nodes are hidden by default */
-  font-size: 0;
+  transition: none; /* ⚡ MẶC ĐỊNH: KHÔNG có transition khi load trang */
+  min-height: 100vh;
+  font-size: 0; /* Ẩn text khi collapsed */
   overflow: hidden;
 }
 
-/* Khi menu được mở bằng click (class menu-open trên body) — mở rộng và cho phép chữ hiển thị */
+/* ⚡ CHỈ bật transition khi user đã click toggle (có class menu-allow-transition) */
+body.menu-allow-transition #menu_user{
+  transition: width 220ms ease, font-size 220ms ease;
+}
+
+/* Khi menu được mở (class menu-open trên body) — mở rộng và cho phép chữ hiển thị */
 body.menu-open #menu_user{
   width: var(--width-expanded);
-  font-size: 1rem; /* bật lại font-size để chữ hiện lên */
+  font-size: 1rem;
   align-items: stretch;
 }
 
