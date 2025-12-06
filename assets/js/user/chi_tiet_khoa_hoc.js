@@ -101,8 +101,6 @@ document.addEventListener('DOMContentLoaded', function() {
         
         if(giatriTienBo) {
             giatriTienBo.textContent = info.tienDo + '%';
-            // Fix #22: Đổi màu nếu 0% để người dùng biết
-            giatriTienBo.style.color = info.tienDo > 0 ? '#28a745' : '#666'; 
         }
         
         if(giatriTongTu) giatriTongTu.textContent = info.soTu;
@@ -190,9 +188,10 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
 
-        words.forEach(word => {
+        words.forEach((word, index) => {
             const div = document.createElement('div');
             div.className = 'the-tu-vung-chi-tiet';
+            div.setAttribute('data-index', index + 1); // Thêm số thứ tự
             
             const audioSrc = word.audio_file ? word.audio_file : '';
             
