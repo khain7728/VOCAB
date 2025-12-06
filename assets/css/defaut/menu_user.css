@@ -2,6 +2,7 @@
   --accent: #7BB7EE;
   --bg: #ffffff;
   --text: #111111;
+  --border-color: #D9D9D9;
   --width-collapsed: 4.5rem; /* ~72px */
   --width-expanded: 15rem;  /* chiều rộng khi mở rộng */
 }
@@ -17,9 +18,9 @@
   flex-direction: column;
   align-items: center;
   padding: 0.75rem 0;
-  border-right: #D9D9D9 1px solid;
+  border-right: 1px solid var(--border-color);
   box-sizing: border-box;
-  transition: width 220ms ease, font-size 220ms ease;
+  transition: width 220ms ease, font-size 220ms ease, padding 0s linear;
   min-height: 100vh; /* đảm bảo logout có thể đẩy xuống dưới */
   /* collapsed trick: set base font-size 0 so text nodes are hidden by default */
   font-size: 0;
@@ -39,9 +40,9 @@ body.menu-open #menu_user{
   align-items: center;
   gap: 0.5rem;
   width: 100%;
-  padding: 0rem 0.5rem 1rem 0.3rem ;
+  padding: 0.77rem 0.5rem;
   box-sizing: border-box;
-  border-bottom: #D9D9D9 1px solid;
+  border-bottom: 1px solid var(--border-color);
 }
 
 /* Kích cỡ khung logo: 40px = 2.5rem */
@@ -90,7 +91,6 @@ body.menu-open #menu_user #logo p{
   display: flex;
   align-items: center;
   justify-content: center; /* collapsed: icon centered to match logo */
-  gap: 0.75rem;
   width: calc(100% - 0.5rem);
   margin: 0.3rem 0.25rem;
   padding: 0.5rem 0.6rem;
@@ -128,18 +128,6 @@ body.menu-open #menu_user #logo p{
   color: #fff;
 }
 
-/* Hover chỉ hoạt động khi menu mở */
-body.menu-open #frame_menu > #main_menu a:hover {
-  background: var(--accent);
-  color: #fff;
-  font-weight: 700;
-  font-size: 1.2rem; /* 24px */
-}
-
-body.menu-open #frame_menu > #main_menu a:hover i {
-  color: #fff;
-}
-
 /* Logout luôn nằm ở dưới cùng */
 #logout{
   width: 100%;
@@ -163,8 +151,6 @@ body.menu-open #frame_menu > #main_menu a:hover i {
 
 #logout a i{ font-size: 1.25rem; width: 1.75rem; text-align:center; }
 
-#logout a:hover{ background: #f6f6f6; }
-
 /* Khi menu được mở rộng, canh lề cho phần anchor căn trái */
 /* Khi click icon: mở rộng menu, căn trái nội dung và đẩy icon + chữ vào vị trí bình thường */
 body.menu-open #menu_user #frame_menu > #main_menu a{
@@ -176,7 +162,10 @@ body.menu-open #menu_user #logout a{
   padding-left: 1rem;
 }
 
-
+/* Xóa transition rung lắc khi thay đổi margin của main container */
+body.menu-open #main_container{
+  transition: none !important;
+}
 
 /* Responsive nhỏ: nếu container quá nhỏ, thu gọn hơn */
 @media (max-width: 420px){
