@@ -1,130 +1,88 @@
 <?php
 // FILE: api/admin/course_create.php
-ob_start();
-session_start(); // Quan trọng: Phải start session để lấy user_id từ đăng nhập
 error_reporting(E_ALL);
 ini_set('display_errors', 0);
+ob_start();
+
 header('Access-Control-Allow-Origin: *');
 header('Content-Type: application/json; charset=utf-8');
 
 require_once '../../config/config.php';
-
-// Nạp file log helper nếu có
-if (file_exists('../../includes/log_helper.php')) {
-    require_once '../../includes/log_helper.php';
-}
+require_once '../../includes/auth_check.php';
+require_once '../../includes/log_helper.php';
 
 try {
-    // ✅ BẢO MẬT: Chỉ admin mới được tạo khóa học qua admin panel
-    $admin_user_id = api_require_admin();
+    // 1. AUTH CHECK
+    if (session_status() === PHP_SESSION_NONE) session_start();
+    if (!check_session_timeout() || !validate_session_security()) throw new Exception("Phiên hết hạn.");
+    if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') throw new Exception("Không đủ quyền.");
     
-    if (!$conn) throw new Exception("Mất kết nối Database.");
-
-    // Lấy dữ liệu JSON từ client
+    $admin_id = $_SESSION['user_id'];
     $input = json_decode(file_get_contents('php://input'), true);
+
+    // 2. CSRF CHECK
+    if (!isset($input['csrf_token']) || $input['csrf_token'] !== $_SESSION['csrf_token']) {
+        throw new Exception("Lỗi bảo mật CSRF.");
+    }
+
+    // 3. INPUT DATA
+    $name = trim($input['name'] ?? '');
+    $desc = trim($input['description'] ?? '');
+    $status = ($input['status'] === 'active') ? 'public' : 'private';
+    $tagsRaw = $input['tags'] ?? '';
     
-    // Lấy ID Admin từ session (nếu không có thì mặc định là 1 hoặc báo lỗi)
-    $admin_id = isset($_SESSION['user_id']) ? $_SESSION['user_id'] : 1; 
+    if (empty($name)) throw new Exception("Tên không được trống.");
 
-    $codePrefix = "ENG"; // Tiền tố mã
-
-    $name = isset($input['name']) ? trim($input['name']) : '';
-    $desc = isset($input['description']) ? trim($input['description']) : '';
-    $visibility = (isset($input['status']) && $input['status'] === 'active') ? 'public' : 'private';
-    
-    // Xử lý Tag input
-    $tagsInput = isset($input['tags']) ? $input['tags'] : [];
-    $tags = is_string($tagsInput) ? explode(',', $tagsInput) : $tagsInput;
-
-    if (empty($name)) throw new Exception('Tên khóa học không được để trống.');
-
-    // Kiểm tra trùng tên khóa học
-    $chk = $conn->prepare("SELECT course_id FROM course WHERE course_name = ?");
-    $chk->bind_param("s", $name);
-    $chk->execute();
-    if ($chk->get_result()->num_rows > 0) throw new Exception("Tên khóa học '$name' đã tồn tại!");
-
-    // --- BẮT ĐẦU TRANSACTION ---
+    // 4. INSERT DB
     $conn->begin_transaction();
 
-    // 1. Insert bảng Course (Tạm thời chưa có mã course_code, dùng ID để sinh sau)
-    $sqlInsert = "INSERT INTO course (course_name, description, visibility, create_by, created_at, hide) VALUES (?, ?, ?, ?, NOW(), 0)";
-    $stmt = $conn->prepare($sqlInsert);
-    $stmt->bind_param("sssi", $name, $desc, $visibility, $admin_id);
+    $stmt = $conn->prepare("INSERT INTO course (course_name, description, visibility, create_by, created_at, hide) VALUES (?, ?, ?, ?, NOW(), 0)");
+    $stmt->bind_param("sssi", $name, $desc, $status, $admin_id);
+    if (!$stmt->execute()) throw new Exception("Lỗi DB: " . $stmt->error);
     
-    if (!$stmt->execute()) throw new Exception("Lỗi Database: " . $stmt->error);
-    
-    // Lấy ID vừa tạo (QUAN TRỌNG)
-    $new_course_id = $conn->insert_id;
+    $new_id = $conn->insert_id;
 
-    // 2. Cập nhật Mã khóa học tự động (Ví dụ: ENG001, ENG012)
-    $autoCode = $codePrefix . str_pad($new_course_id, 3, '0', STR_PAD_LEFT);
-    
-    $sqlUpdate = $conn->prepare("UPDATE course SET course_code = ? WHERE course_id = ?");
-    $sqlUpdate->bind_param("si", $autoCode, $new_course_id);
-    
-    if (!$sqlUpdate->execute()) throw new Exception("Lỗi sinh mã: " . $sqlUpdate->error);
+    // Sinh mã tự động: ENG + ID
+    $code = "ENG" . str_pad($new_id, 3, '0', STR_PAD_LEFT);
+    $conn->query("UPDATE course SET course_code = '$code' WHERE course_id = $new_id");
 
-    // 3. Xử lý Tags (Thêm tag mới và liên kết vào khóa học)
-    if (!empty($tags)) {
-        $tags = array_unique(array_filter(array_map('trim', $tags)));
-        
-        // Chuẩn bị statement
-        $stmtChkTag = $conn->prepare("SELECT tag_id FROM tag WHERE tag_name = ?");
-        $stmtInsTag = $conn->prepare("INSERT INTO tag (tag_name) VALUES (?)");
-        $stmtLink   = $conn->prepare("INSERT IGNORE INTO course_tag (course_id, tag_id) VALUES (?, ?)");
+    // Xử lý TAGS
+    if (!empty($tagsRaw)) {
+        $tags = array_unique(array_filter(array_map('trim', explode(',', $tagsRaw))));
+        $stmtChk = $conn->prepare("SELECT tag_id FROM tag WHERE tag_name = ?");
+        $stmtIns = $conn->prepare("INSERT INTO tag (tag_name) VALUES (?)");
+        $stmtLnk = $conn->prepare("INSERT IGNORE INTO course_tag (course_id, tag_id) VALUES (?, ?)");
 
         foreach ($tags as $t) {
-            if(!$t) continue;
             $tid = 0;
-            
-            // Kiểm tra tag tồn tại chưa
-            $stmtChkTag->bind_param("s", $t); 
-            $stmtChkTag->execute();
-            $resTag = $stmtChkTag->get_result();
-            
-            if ($rowTag = $resTag->fetch_assoc()) {
-                $tid = $rowTag['tag_id'];
+            $stmtChk->bind_param("s", $t); $stmtChk->execute();
+            $res = $stmtChk->get_result();
+            if ($row = $res->fetch_assoc()) {
+                $tid = $row['tag_id'];
             } else {
-                // Nếu chưa có, thêm mới tag
-                $stmtInsTag->bind_param("s", $t);
-                if($stmtInsTag->execute()) $tid = $stmtInsTag->insert_id;
+                $stmtIns->bind_param("s", $t); 
+                if ($stmtIns->execute()) $tid = $stmtIns->insert_id;
             }
-            
-            // Liên kết Course - Tag
             if ($tid) {
-                $stmtLink->bind_param("ii", $new_course_id, $tid);
-                $stmtLink->execute();
+                $stmtLnk->bind_param("ii", $new_id, $tid);
+                $stmtLnk->execute();
             }
         }
     }
 
-    // 4. Ghi Lịch sử thao tác (LOGGING)
-    // Kiểm tra xem hàm writeAdminLog có tồn tại trong log_helper.php không
+    // GHI LOG: target_id phải là số (int)
     if (function_exists('writeAdminLog')) {
-        writeAdminLog($conn, $admin_id, "Thêm khóa học mới: $name ($autoCode)", "ID: $new_course_id");
-    } else {
-        // Fallback: Nếu không có hàm log helper, bạn có thể tự insert vào bảng log ở đây nếu muốn
-        // Ví dụ: $conn->query("INSERT INTO admin_logs ...");
+        writeAdminLog($conn, $admin_id, "Thêm khóa học: $name ($code)", $new_id);
     }
 
-    // Hoàn tất Transaction
     $conn->commit();
-
-    // 5. TRẢ VỀ KẾT QUẢ CHO JAVASCRIPT
     ob_clean();
-    echo json_encode([
-        'status' => 'success',
-        'message' => 'Thêm thành công! Mã: ' . $autoCode,
-        'data' => [
-            'id' => $new_course_id, // Dòng này giúp JS chuyển trang được
-            'code' => $autoCode
-        ]
-    ]);
+    echo json_encode(['status' => 'success', 'message' => 'Tạo thành công!', 'data' => ['id' => $new_id]]);
 
 } catch (Exception $e) {
-    if (isset($conn)) $conn->rollback();
+    if(isset($conn)) $conn->rollback();
     ob_clean();
+    http_response_code(400);
     echo json_encode(['status' => 'error', 'message' => $e->getMessage()]);
 }
 ?>
