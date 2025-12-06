@@ -41,10 +41,9 @@ try {
     if (!$stmt->execute()) throw new Exception("Lỗi DB: " . $stmt->error);
     
     $new_id = $conn->insert_id;
-
-    // Sinh mã tự động: ENG + ID
-    $code = "ENG" . str_pad($new_id, 3, '0', STR_PAD_LEFT);
-    $conn->query("UPDATE course SET course_code = '$code' WHERE course_id = $new_id");
+    //tạo mã tự động
+    $code = str_pad($new_id, 3, '0', STR_PAD_LEFT); 
+$conn->query("UPDATE course SET course_code = '$code' WHERE course_id = $new_id");
 
     // Xử lý TAGS
     if (!empty($tagsRaw)) {

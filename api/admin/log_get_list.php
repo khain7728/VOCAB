@@ -1,9 +1,8 @@
 <?php
-// Tắt lỗi HTML, chỉ trả JSON
+// FILE: api/admin/log_get_list.php
 ini_set('display_errors', 0);
 error_reporting(E_ALL);
 
-// Hàm bắt lỗi Fatal
 function fatalErrorHandler() {
     $error = error_get_last();
     if ($error !== NULL && $error['type'] === E_ERROR) {
@@ -13,79 +12,58 @@ function fatalErrorHandler() {
     }
 }
 register_shutdown_function('fatalErrorHandler');
-
 header('Content-Type: application/json; charset=utf-8');
 
 try {
-    // 1. Kết nối Database
-    $config_path = dirname(__DIR__, 2) . '/config/database.php';
-    if (!file_exists($config_path)) {
-        $config_path = $_SERVER['DOCUMENT_ROOT'] . '/VOCAB/config/database.php';
-    }
-    
-    if (!file_exists($config_path)) throw new Exception("Không tìm thấy file config.");
-    require_once $config_path;
-    
-    if (!isset($conn)) throw new Exception("Lỗi kết nối CSDL.");
+    require_once dirname(__DIR__, 2) . '/config/database.php';
     $conn->set_charset("utf8mb4");
 
-    // 2. Nhận tham số
+    // --- CẤU HÌNH TÊN CỘT USER TẠI ĐÂY ---
+    $colName = 'name'; // Sửa thành 'full_name' hoặc 'fullname' nếu DB của bạn dùng thế
+    // -------------------------------------
+
     $page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
     $limit = isset($_GET['limit']) ? (int)$_GET['limit'] : 10;
     $offset = ($page - 1) * $limit;
-    
-    // Nhận từ khóa tìm kiếm
     $search = isset($_GET['search']) ? trim($_GET['search']) : '';
 
-    // 3. XÂY DỰNG QUERY TÌM KIẾM THÔNG MINH
     $where = " WHERE 1=1 ";
-    
     if (!empty($search)) {
         $s = $conn->real_escape_string($search);
-        
-        // [QUAN TRỌNG] Logic tìm kiếm:
-        // LIKE '%$s%' nghĩa là: Tìm bất kỳ dòng nào CÓ CHỨA ký tự nhập vào
-        // Ví dụ nhập "t" -> Tìm thấy "Thêm", "Tạo", "Cập nhật"...
-        $where .= " AND (
-            action LIKE '%$s%' OR 
-            admin_id LIKE '%$s%' OR 
-            target_id LIKE '%$s%'
-        ) ";
+        $where .= " AND (l.action LIKE '%$s%' OR l.admin_id LIKE '%$s%' OR u.$colName LIKE '%$s%') ";
     }
     
-    // Lọc ngày
-    if (!empty($_GET['start_date'])) {
-        $d = $conn->real_escape_string($_GET['start_date']);
-        $where .= " AND DATE(created_at) >= '$d' ";
-    }
-    if (!empty($_GET['end_date'])) {
-        $d = $conn->real_escape_string($_GET['end_date']);
-        $where .= " AND DATE(created_at) <= '$d' ";
-    }
+    if (!empty($_GET['start_date'])) $where .= " AND DATE(l.created_at) >= '" . $conn->real_escape_string($_GET['start_date']) . "' ";
+    if (!empty($_GET['end_date'])) $where .= " AND DATE(l.created_at) <= '" . $conn->real_escape_string($_GET['end_date']) . "' ";
 
-    // Đếm tổng (Dùng bảng admin_log)
-    $count_res = $conn->query("SELECT COUNT(*) as total FROM admin_log $where");
-    if (!$count_res) throw new Exception("Lỗi SQL: " . $conn->error);
+    // Đếm tổng
+    $count_res = $conn->query("SELECT COUNT(*) as total FROM admin_log l LEFT JOIN user u ON l.admin_id = u.user_id $where");
     $total_records = $count_res->fetch_assoc()['total'];
     $total_pages = ceil($total_records / $limit);
 
     // Lấy dữ liệu
-    $sql = "SELECT log_id as id, admin_id, action, target_id, created_at FROM admin_log $where ORDER BY created_at DESC LIMIT $offset, $limit";
+    // QUAN TRỌNG: u.$colName as admin_name
+    $sql = "SELECT 
+                l.log_id as id, 
+                l.admin_id, 
+                l.action, 
+                l.target_id, 
+                l.created_at, 
+                l.ip_address, 
+                l.user_agent,
+                IFNULL(u.$colName, CONCAT('ID ', l.admin_id)) as admin_name
+            FROM admin_log l
+            LEFT JOIN user u ON l.admin_id = u.user_id
+            $where 
+            ORDER BY l.created_at DESC 
+            LIMIT $offset, $limit";
+
     $result = $conn->query($sql);
+    if (!$result) throw new Exception("Lỗi SQL: " . $conn->error);
     
     $data = [];
     while ($row = $result->fetch_assoc()) {
-        $data[] = [
-            'id' => $row['id'],
-            'admin_id' => $row['admin_id'],
-            'action' => $row['action'],
-            'target_id' => $row['target_id'],
-            'created_at' => $row['created_at'],
-            // Giả lập các cột thiếu để JS không lỗi
-            'ip_address' => null,
-            'user_agent' => null,
-            'admin_name' => null 
-        ];
+        $data[] = $row; // Các cột đã được alias đúng tên (admin_name) để JS hiểu
     }
 
     echo json_encode([

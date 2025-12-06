@@ -1,6 +1,10 @@
 <?php
+// FILE: api/admin/user_update_status.php
 session_start();
 header('Content-Type: application/json');
+
+// Include log helper để ghi lịch sử
+require_once __DIR__ . '/../../includes/log_helper.php';
 
 // #2: Check Admin
 if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'admin') {
@@ -30,12 +34,28 @@ if ($userId == $_SESSION['user_id']) {
 }
 
 try {
-    // #4: SQL Injection prevention
+    // Lấy thông tin user cũ để ghi log cho rõ ràng (VD: email)
+    $stmtInfo = $conn->prepare("SELECT email FROM user WHERE user_id = ?");
+    $stmtInfo->bind_param("i", $userId);
+    $stmtInfo->execute();
+    $resInfo = $stmtInfo->get_result();
+    $userInfo = $resInfo->fetch_assoc();
+    $userEmail = $userInfo ? $userInfo['email'] : "ID $userId";
+
+    // #4: Cập nhật trạng thái
     $stmt = $conn->prepare("UPDATE user SET status = ? WHERE user_id = ?");
     $stmt->bind_param("ii", $status, $userId);
 
     if ($stmt->execute()) {
         $msg = $status == 1 ? "Đã mở khóa tài khoản thành công." : "Đã khóa tài khoản thành công.";
+        
+        // --- [QUAN TRỌNG] GHI LOG ---
+        if (function_exists('writeAdminLog')) {
+            $actionLog = ($status == 1) ? "Mở khóa tài khoản ($userEmail)" : "Khóa tài khoản ($userEmail)";
+            writeAdminLog($conn, $_SESSION['user_id'], $actionLog, $userId);
+        }
+        // -----------------------------
+
         echo json_encode(["status" => "success", "message" => $msg]);
     } else {
         throw new Exception($stmt->error);

@@ -1,6 +1,6 @@
 /**
  * Tệp: assets/js/admin/lichsuthaotac.js
- * Phiên bản: Final (Đã fix lỗi cú pháp Export và Search)
+ * Phiên bản: Final (Đã cập nhật Pagination đồng bộ)
  */
 
 document.addEventListener("DOMContentLoaded", function() {
@@ -100,7 +100,7 @@ async function fetchLogs(forceReload = false) {
         }
     }
 }
-// --- 3. HÀM VẼ BẢNG ---
+// --- 3. HÀM VẼ BẢNG 
 function renderLogTable(logs, startIndex) {
     const tableBody = document.getElementById('log_table_body');
     if (!tableBody) return;
@@ -118,54 +118,67 @@ function renderLogTable(logs, startIndex) {
 
     let html = '';
     logs.forEach((item, index) => {
-        // Xử lý tên Admin
+        // 1. Tên Admin
         const adminDisplay = item.admin_name ?
             `<strong>${escapeHtml(item.admin_name)}</strong>` :
-            `<span style="color:#666">Admin ID: ${item.admin_id}</span>`;
+            `<span style="color:#999">ID: ${item.admin_id}</span>`;
 
-        // Format ngày tháng
+        // 2. Format ngày tháng
         let formattedDate = item.created_at;
         try {
             const dateObj = new Date(item.created_at);
-            formattedDate = new Intl.DateTimeFormat('vi-VN', {
-                year: 'numeric',
-                month: '2-digit',
-                day: '2-digit',
-                hour: '2-digit',
-                minute: '2-digit',
-                second: '2-digit'
-            }).format(dateObj);
+            formattedDate = dateObj.toLocaleDateString('vi-VN') + ' <small style="color:#888">' +
+                dateObj.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }) + '</small>';
         } catch (e) {}
 
-        // Xử lý cột thiếu (IP, UA)
-        const ipDisplay = item.ip_address || '<span style="color:#ccc; font-size:12px">-</span>';
+        // 3. Xử lý IP
+        const ipDisplay = item.ip_address || '-';
 
-        let uaDisplay = '<span style="color:#ccc; font-size:12px">-</span>';
-        if (item.user_agent) {
-            const uaShort = item.user_agent.length > 25 ? item.user_agent.substring(0, 25) + '...' : item.user_agent;
-            uaDisplay = `<span title="${escapeHtml(item.user_agent)}" style="cursor:help;">${escapeHtml(uaShort)}</span>`;
-        }
+        // 4. Xử lý User Agent (Thiết bị)
+        // Lấy chuỗi gốc để hiển thị tooltip
+        const uaFull = item.user_agent || 'Không xác định';
+
+        // Tự động nhận diện thiết bị sơ bộ (để hiển thị icon nếu muốn cho đẹp)
+        let deviceIcon = '<i class="fa-solid fa-desktop"></i>';
+        if (/mobile/i.test(uaFull)) deviceIcon = '<i class="fa-solid fa-mobile-screen"></i>';
+        else if (/tablet/i.test(uaFull)) deviceIcon = '<i class="fa-solid fa-tablet-screen-button"></i>';
 
         html += `
             <tr>
-                <td style="text-align: center;">${startIndex + index + 1}</td>
-                <td><div style="font-weight:500;">${escapeHtml(item.action)}</div></td>
-                <td style="text-align: center;">${escapeHtml(item.target_id || '-')}</td>
-                <td>${adminDisplay}</td>
-                <td style="text-align: center; font-size: 0.9em; color:#555;">${ipDisplay}</td>
-                <td style="text-align: center; font-size: 0.9em; color:#555;">${uaDisplay}</td>
-                <td style="font-size: 0.9em;">${formattedDate}</td>
+                <td class="col-stt">${startIndex + index + 1}</td>
+                
+                <td class="col-action truncate-cell" title="${escapeHtml(item.action)}">
+                    ${escapeHtml(item.action)}
+                </td>
+                
+                <td class="col-target">${escapeHtml(item.target_id || '-')}</td>
+                
+                <td class="col-admin truncate-cell" title="${item.admin_name || item.admin_id}">
+                    ${adminDisplay}
+                </td>
+                
+                <td class="col-ip truncate-cell" title="${escapeHtml(ipDisplay)}">
+                    ${escapeHtml(ipDisplay)}
+                </td>
+                
+                <td class="col-ua truncate-cell" title="${escapeHtml(uaFull)}">
+                    <span style="color:#9CA3AF; margin-right:5px;">${deviceIcon}</span>
+                    ${escapeHtml(uaFull)}
+                </td>
+                
+                <td class="col-time">${formattedDate}</td>
             </tr>
         `;
     });
     tableBody.innerHTML = html;
 }
 
-// --- 4. HÀM PHÂN TRANG ---
+// --- 4. HÀM PHÂN TRANG (CẬP NHẬT ĐỒNG BỘ) ---
 function renderPagination(paging) {
     const container = document.getElementById('pagination');
     if (!container) return;
 
+    // Nếu chỉ có 1 trang hoặc không có dữ liệu -> Xóa phân trang
     if (paging.total_pages <= 1) {
         container.innerHTML = '';
         return;
@@ -173,23 +186,26 @@ function renderPagination(paging) {
 
     let html = '';
 
-    // Prev
-    html += `<button class="page-btn" onclick="changePage(${paging.current_page - 1})" ${paging.current_page === 1 ? 'disabled' : ''}>
+    // --- NÚT PREVIOUS (<) ---
+    html += `<button type="button" class="page-btn" onclick="changePage(${paging.current_page - 1})" ${paging.current_page === 1 ? 'disabled' : ''}>
                 <i class="fa-solid fa-chevron-left"></i>
              </button>`;
 
-    // Pages
+    // --- CÁC NÚT SỐ TRANG ---
     for (let i = 1; i <= paging.total_pages; i++) {
+        // Hiển thị trang đầu, trang cuối, và các trang xung quanh trang hiện tại
         if (i === 1 || i === paging.total_pages || (i >= paging.current_page - 1 && i <= paging.current_page + 1)) {
             const activeClass = i === paging.current_page ? 'active' : '';
-            html += `<button class="page-btn ${activeClass}" onclick="changePage(${i})">${i}</button>`;
-        } else if (i === paging.current_page - 2 || i === paging.current_page + 2) {
-            html += `<span style="padding: 0 6px; color: #999;">...</span>`;
+            html += `<button type="button" class="page-btn ${activeClass}" onclick="changePage(${i})">${i}</button>`;
+        }
+        // Hiển thị dấu ...
+        else if (i === paging.current_page - 2 || i === paging.current_page + 2) {
+            html += `<span class="page-dots">...</span>`;
         }
     }
 
-    // Next
-    html += `<button class="page-btn" onclick="changePage(${paging.current_page + 1})" ${paging.current_page === paging.total_pages ? 'disabled' : ''}>
+    // --- NÚT NEXT (>) ---
+    html += `<button type="button" class="page-btn" onclick="changePage(${paging.current_page + 1})" ${paging.current_page === paging.total_pages ? 'disabled' : ''}>
                 <i class="fa-solid fa-chevron-right"></i>
              </button>`;
 
@@ -197,8 +213,11 @@ function renderPagination(paging) {
 }
 
 window.changePage = function(page) {
-    if (page < 1) return;
-    currentPage = page;
+    const pageInt = parseInt(page);
+    if (!pageInt || pageInt < 1) return;
+    if (pageInt === currentPage) return;
+
+    currentPage = pageInt;
     fetchLogs();
 }
 

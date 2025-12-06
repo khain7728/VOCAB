@@ -43,7 +43,6 @@ body {
 
 .btn-export {
     background-color: #10B981;
-    /* Màu xanh lá */
     color: white;
     border: none;
     padding: 10px 16px;
@@ -132,8 +131,23 @@ body {
     color: #999;
 }
 
+.form-select {
+    padding: 8px 12px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    font-size: 14px;
+    color: #333;
+    cursor: pointer;
+}
 
-/* --- 4. TABLE (BẢNG DỮ LIỆU) --- */
+
+/* ========================================= */
+
+
+/* 4. TABLE (BẢNG DỮ LIỆU) - QUAN TRỌNG      */
+
+
+/* ========================================= */
 
 .table-container {
     background: #fff;
@@ -141,71 +155,93 @@ body {
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
     overflow-x: auto;
     margin-bottom: 20px;
+    border: 1px solid #E5E7EB;
 }
 
 .admin-table {
     width: 100%;
     border-collapse: collapse;
+    /* FIX LỖI BIẾN DẠNG: Cố định layout bảng */
+    table-layout: fixed;
+    min-width: 1000px;
+    /* Đảm bảo độ rộng tối thiểu */
 }
 
 .admin-table th,
 .admin-table td {
-    padding: 14px 16px;
+    padding: 14px 12px;
     text-align: left;
     border-bottom: 1px solid #eee;
     font-size: 14px;
+    vertical-align: middle;
+    color: #4B5563;
 }
 
 .admin-table th {
-    background-color: #f8fafc;
-    color: #475569;
+    background-color: #F9FAFB;
+    color: #374151;
     font-weight: 600;
     white-space: nowrap;
 }
 
 
-/* Định nghĩa độ rộng cột */
+/* --- ĐỊNH NGHĨA ĐỘ RỘNG CỘT --- */
 
 .col-stt {
-    width: 60px;
+    width: 50px;
     text-align: center !important;
 }
 
 .col-action {
-    min-width: 200px;
+    width: 180px;
+    font-weight: 500;
+    color: #111;
 }
 
-.col-id {
-    width: 120px;
+.col-target {
+    width: 80px;
     text-align: center !important;
 }
 
 .col-admin {
-    width: 180px;
+    width: 150px;
 }
 
 .col-ip {
-    width: 140px;
+    width: 130px;
+    font-family: monospace;
     color: #64748b;
-    font-size: 13px;
 }
+
+
+/* Font số cho IP */
+
+.col-ua {
+    width: 250px;
+}
+
+
+/* Cột thiết bị rộng hơn chút */
 
 .col-time {
-    width: 180px;
+    width: 150px;
+    text-align: right !important;
 }
 
 
-/* Căn giữa nội dung TD tương ứng */
+/* --- CLASS CẮT CHỮ (TRUNCATE) --- */
 
-.admin-table td:first-child,
+.truncate-cell {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    /* Hiện dấu ... */
+    max-width: 0;
+    /* Kích hoạt ellipsis trong table-layout: fixed */
+}
 
-/* STT */
-
-.admin-table td:nth-child(3)
-/* ID */
-
-{
-    text-align: center;
+.admin-table tr:hover {
+    background-color: #F9FAFB;
 }
 
 
@@ -228,34 +264,47 @@ th.sortable i {
 }
 
 
-/* --- 5. PAGINATION (PHÂN TRANG) --- */
+/* ========================================= */
 
-.pagination {
-    display: flex;
-    justify-content: center;
+
+/* 5. PAGINATION (PHÂN TRANG) - UPDATE FIX   */
+
+
+/* ========================================= */
+
+#pagination {
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+    width: 100% !important;
+    padding: 20px 0;
     gap: 6px;
-    padding: 10px 0;
+    flex-wrap: wrap;
+    position: relative;
+    z-index: 10;
 }
 
 .page-btn {
     min-width: 36px;
     height: 36px;
     padding: 0 10px;
-    border: 1px solid #e2e8f0;
+    border: 1px solid #E5E7EB;
     background: #fff;
     border-radius: 6px;
     cursor: pointer;
-    color: #64748b;
+    color: #6B7280;
     font-weight: 500;
-    transition: all 0.2s;
     display: flex;
     align-items: center;
     justify-content: center;
+    transition: all 0.2s;
+    margin: 0 2px;
 }
 
 .page-btn:hover:not(:disabled) {
-    border-color: #3B82F6;
-    color: #3B82F6;
+    background-color: #F3F4F6;
+    color: #111;
+    border-color: #D1D5DB;
 }
 
 .page-btn.active {
@@ -265,9 +314,18 @@ th.sortable i {
 }
 
 .page-btn:disabled {
-    background-color: #f1f5f9;
-    color: #cbd5e1;
+    background-color: #F9FAFB;
+    color: #D1D5DB;
     cursor: not-allowed;
+    opacity: 0.8;
+}
+
+.page-dots {
+    display: flex;
+    align-items: flex-end;
+    padding: 0 5px;
+    color: #9CA3AF;
+    font-weight: bold;
 }
 
 
@@ -330,9 +388,6 @@ th.sortable i {
     .search-bar {
         width: 100%;
     }
-    .date-group {
-        justify-content: space-between;
-    }
     .page-header {
         flex-direction: column;
         align-items: flex-start;
@@ -342,75 +397,4 @@ th.sortable i {
         width: 100%;
         justify-content: center;
     }
-}
-
-.btn-export {
-    background-color: #7BB7EE;
-    /* Màu xanh biển (Blue 500) */
-    color: white;
-    border: none;
-    padding: 10px 16px;
-    border-radius: 6px;
-    cursor: pointer;
-    font-weight: 500;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    transition: background 0.2s;
-}
-
-.btn-export:hover {
-    background-color: #5B9BD5;
-    /* Màu xanh biển đậm hơn khi di chuột (Blue 600) */
-}
-
-.col-ip {
-    width: 130px;
-    /* Thu nhỏ lại chút để nhường chỗ */
-    color: #64748b;
-    font-size: 13px;
-}
-
-.col-ua {
-    width: 150px;
-    font-size: 13px;
-    color: #64748b;
-}
-
-.admin-table td {
-    max-width: 250px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-}
-
-.filter-group.date-group {
-    background: #f8f9fa;
-    padding: 5px 10px;
-    border-radius: 6px;
-    border: 1px solid #e9ecef;
-}
-
-.form-select {
-    font-size: 14px;
-    color: #333;
-    background-color: #fff;
-    cursor: pointer;
-}
-
-.form-select:hover {
-    border-color: #b0b0b0;
-}
-
-@media (max-width: 600px) {
-    .custom-date-inputs {
-        flex-direction: column;
-    }
-}
-
-
-/* Riêng cột Action cho phép xuống dòng nếu cần hoặc giữ nguyên tùy ý */
-
-.admin-table td:nth-child(2) {
-    white-space: normal;
 }
