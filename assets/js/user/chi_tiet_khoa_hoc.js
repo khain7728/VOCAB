@@ -10,7 +10,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const COURSE_ID = urlParams.get('id');
     const USER_ID = urlParams.get('user_id') || 1;
 
-    // Biến quản lý phân trang (Fix #42)
+    // Biến quản lý phân trang
     let currentPage = 1;
     const ITEMS_PER_PAGE = 20;
 
@@ -44,14 +44,16 @@ document.addEventListener('DOMContentLoaded', function() {
 
     const audioPlayer = document.getElementById('audio-player-an');
 
-    // Tạo container phân trang (Thêm mới cho Fix #42)
+    // Tạo container phân trang
     const paginationContainer = document.createElement('div');
     paginationContainer.id = 'pagination-controls';
     paginationContainer.className = 'pagination-container';
     paginationContainer.style.textAlign = 'center';
     paginationContainer.style.marginTop = '20px';
     // Chèn container phân trang vào sau danh sách từ
-    danhSachContainer.parentNode.insertBefore(paginationContainer, danhSachContainer.nextSibling);
+    if (danhSachContainer && danhSachContainer.parentNode) {
+        danhSachContainer.parentNode.insertBefore(paginationContainer, danhSachContainer.nextSibling);
+    }
 
     let courseData = null;
 
@@ -59,11 +61,9 @@ document.addEventListener('DOMContentLoaded', function() {
     // 2. GỌI API LẤY DỮ LIỆU
     // ============================================================
 
-    // Fix #42: Thêm tham số page vào hàm fetch
     async function fetchCourseDetails(page = 1) {
         try {
             console.log(`Đang tải chi tiết khóa học ID: ${COURSE_ID}, Page: ${page}...`);
-            // Gọi API với tham số page và limit
             const response = await fetch(`${API_BASE_URL}/get-course-details.php?course_id=${COURSE_ID}&user_id=${USER_ID}&page=${page}&limit=${ITEMS_PER_PAGE}`);
             const text = await response.text();
             
@@ -72,7 +72,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (result.success) {
                     courseData = result.data;
                     renderPage(courseData);
-                    // Render phân trang
                     renderPagination(result.data.pagination);
                 } else {
                     alert("Lỗi API: " + result.error);
@@ -101,7 +100,6 @@ document.addEventListener('DOMContentLoaded', function() {
         
         if(giatriTienBo) {
             giatriTienBo.textContent = info.tienDo + '%';
-            // Fix #22: Đổi màu nếu 0% để người dùng biết
             giatriTienBo.style.color = info.tienDo > 0 ? '#28a745' : '#666'; 
         }
         
@@ -132,16 +130,11 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
 
-        // C. Logic hiển thị nút Ôn tập / Kiểm tra (FIX LỖI #23)
-        // Logic mới: Luôn hiện nút Ôn tập nếu đã học được ít nhất 1 từ (dù 100%).
-        // Nút Kiểm tra hiện khi có đủ điều kiện hoặc progress cao.
+        // C. Logic hiển thị nút Ôn tập / Kiểm tra
         if (info.daHoc > 0) {
              if(btnOnTap) btnOnTap.style.display = 'inline-block';
-             
-             // Cho phép kiểm tra nếu đã học được 1 lượng nhất định hoặc 100%
              if(btnKiemTra) btnKiemTra.style.display = 'inline-block';
         } else {
-             // Chưa học từ nào
              if(btnOnTap) btnOnTap.style.display = 'none';
              if(btnKiemTra) btnKiemTra.style.display = 'none';
         }
@@ -150,13 +143,12 @@ document.addEventListener('DOMContentLoaded', function() {
         renderWordList(words, info.isOwner);
     }
 
-    // Fix #42: Hàm render phân trang
     function renderPagination(pagination) {
         paginationContainer.innerHTML = '';
         if (pagination.total_pages <= 1) return;
 
         const { current_page, total_pages } = pagination;
-        currentPage = current_page; // Update global state
+        currentPage = current_page; 
 
         // Nút Previous
         const btnPrev = document.createElement('button');
@@ -196,8 +188,7 @@ document.addEventListener('DOMContentLoaded', function() {
             
             const audioSrc = word.audio_file ? word.audio_file : '';
             
-            // Fix #32: Thêm nút EDIT
-            // Lưu ý: Cần tạo file edit_word.html hoặc popup để xử lý
+            // Nút Edit / Delete
             const btnEditHtml = canEdit 
                 ? `<button class="nut-icon nut-sua-tu" title="Sửa từ" onclick="editWord(${word.word_id})"><i class="fa-solid fa-pen"></i></button>`
                 : '';
@@ -206,12 +197,27 @@ document.addEventListener('DOMContentLoaded', function() {
                 ? `<button class="nut-icon nut-xoa-tu" title="Xóa từ" onclick="deleteWord(${word.word_id})"><i class="fa-solid fa-times"></i></button>` 
                 : '';
 
+            // --- [SỬA ĐỔI 1] Xử lý hiển thị Loại từ (Part of Speech) ---
+            // Chỉ hiển thị nếu có dữ liệu
+            const hienThiTuLoai = word.part_of_speech 
+                ? `<span style="font-size:0.8em; font-weight:normal; color:#666">(${word.part_of_speech})</span>` 
+                : '';
+
+            // --- [SỬA ĐỔI 2] Xử lý hiển thị Định nghĩa (Definition) ---
+            // Chỉ hiển thị nếu có dữ liệu
+            const hienThiDinhNghia = word.definition 
+                ? `<p class="mota-tu" style="font-style:italic; margin-top:5px; color:#555">${word.definition}</p>` 
+                : '';
+
             div.innerHTML = `
                 <div class="thong-tin-tu-chi-tiet">
-                    <p class="tu-vung-chinh">${word.word_en} <span style="font-size:0.8em; font-weight:normal; color:#666">(${word.part_of_speech || ''})</span></p>
+                    <p class="tu-vung-chinh">
+                        ${word.word_en} 
+                        ${hienThiTuLoai}
+                    </p>
                     <p class="phien-am-tu" style="font-size:0.9em; color:#888">${word.pronunciation || ''}</p>
                     <p class="nghia-tu">${word.word_vi}</p>
-                    <p class="mota-tu">${word.definition || ''}</p>
+                    ${hienThiDinhNghia}
                 </div>
                 <div class="hanh-dong-tu-chi-tiet">
                     <button class="nut-icon nut-phat-am" onclick="playAudio('${word.word_en}', '${audioSrc}')" title="Phát âm">
@@ -230,14 +236,12 @@ document.addEventListener('DOMContentLoaded', function() {
     // ============================================================
     
     window.playAudio = function(text, fileSrc) {
-        // Fix #40: Audio conflict - Dừng TTS cũ trước khi phát mới
         if ('speechSynthesis' in window) {
             window.speechSynthesis.cancel();
         }
 
         if (fileSrc && fileSrc.trim() !== '') {
             audioPlayer.src = fileSrc;
-            // Fix #40: Đảm bảo audio cũ dừng hẳn bằng cách load lại
             audioPlayer.load(); 
             audioPlayer.play().catch(e => {
                 console.warn("File lỗi, dùng TTS thay thế");
@@ -250,7 +254,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function speakTTS(text) {
         if ('speechSynthesis' in window) {
-            window.speechSynthesis.cancel(); // Fix #40
+            window.speechSynthesis.cancel(); 
             const utterance = new SpeechSynthesisUtterance(text);
             utterance.lang = 'en-US';
             window.speechSynthesis.speak(utterance);
@@ -259,7 +263,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    // Hàm chuyển hướng sang trang sửa (Fix #32)
     window.editWord = function(wordId) {
         window.location.href = `sua_tu_vung.html?id=${wordId}&course_id=${COURSE_ID}`;
     };
@@ -278,7 +281,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
             if (result.success) {
                 alert("Đã xóa từ vựng!");
-                // Load lại trang hiện tại (giữ pagination)
                 fetchCourseDetails(currentPage); 
             } else {
                 alert("Lỗi: " + result.error);
@@ -307,10 +309,7 @@ document.addEventListener('DOMContentLoaded', function() {
     };
     
     async function checkAndNavigate(page) {
-        // Chỉ lưu ý: Logic backend API get-words cần tương thích
         try {
-             // Sử dụng lại API get-course-details để check số lượng đã học thay vì get-words
-             // Hoặc giữ nguyên nếu get-words.php hoạt động tốt
              if (courseData && courseData.info.daHoc < 2) {
                  alert('Bạn cần học ít nhất 2 từ vựng trước khi có thể ôn tập hoặc kiểm tra!');
                  return;
@@ -326,6 +325,5 @@ document.addEventListener('DOMContentLoaded', function() {
     if (btnKiemTra) btnKiemTra.addEventListener('click', () => checkAndNavigate('user_kiem_tra.html'));
 
     // --- INIT ---
-    // Gọi lần đầu page 1
     fetchCourseDetails(1);
 });

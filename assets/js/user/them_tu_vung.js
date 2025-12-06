@@ -4,8 +4,9 @@ document.addEventListener('DOMContentLoaded', function() {
     const urlParams = new URLSearchParams(window.location.search);
     const COURSE_ID = urlParams.get('id');
 
+    let editingIndex = -1; 
 
-    // Tạo container chứa các thông báo nếu chưa có
+    // Toast Notification Container
     let toastContainer = document.getElementById('toast-container');
     if (!toastContainer) {
         toastContainer = document.createElement('div');
@@ -13,31 +14,17 @@ document.addEventListener('DOMContentLoaded', function() {
         document.body.appendChild(toastContainer);
     }
 
-    // --- [MỚI] 2. HÀM HIỂN THỊ THÔNG BÁO ---
     function showToast(message, duration = 2000) {
         const toast = document.createElement('div');
         toast.className = 'toast-msg';
         toast.innerHTML = `<i class="fa-solid fa-check-circle"></i> ${message}`;
-        
         toastContainer.appendChild(toast);
-
-        // Hiệu ứng hiện ra
-        requestAnimationFrame(() => {
-            toast.classList.add('show');
-        });
-
-        // Tự động ẩn sau 2s (hoặc thời gian tùy chỉnh)
+        requestAnimationFrame(() => { toast.classList.add('show'); });
         setTimeout(() => {
             toast.classList.remove('show');
-            // Xóa khỏi DOM sau khi hiệu ứng mờ kết thúc
-            setTimeout(() => {
-                if (toast.parentNode) {
-                    toast.parentNode.removeChild(toast);
-                }
-            }, 300);
+            setTimeout(() => { if (toast.parentNode) toast.parentNode.removeChild(toast); }, 300);
         }, duration);
     }
-    // -----------------------------------------------------------
 
     if (!COURSE_ID) {
         alert("Không tìm thấy ID khóa học.");
@@ -50,9 +37,10 @@ document.addEventListener('DOMContentLoaded', function() {
     // DOM ELEMENTS
     const formThemTu = document.getElementById('form-them-tu');
     const btnThemTu = formThemTu.querySelector('button[type="submit"]'); 
+    const originalBtnContent = btnThemTu.innerHTML; 
+
     const danhSachContainer = document.getElementById('danh-sach-tu-vung-container');
     const soLuongTuSpan = document.getElementById('so-luong-tu');
-
     const btnTroVe = document.getElementById('btn-tro-ve');
     const btnHuyBo = document.getElementById('btn-huy-bo');
     const btnLuuVaThoat = document.getElementById('btn-luu-va-thoat');
@@ -65,11 +53,20 @@ document.addEventListener('DOMContentLoaded', function() {
     const inputMoTa = document.getElementById('input-mo-ta');
     const audioPlayer = document.getElementById('audio-player-an');
     
-    // Upload Elements
     const linkTaiFileAm = document.getElementById('link-tai-file-am');
     const inputFileAn = document.getElementById('input-file-an');
 
-    // --- HÀM LOAD TỪ VỰNG CŨ TỪ SERVER ---
+    // --- VALIDATION FUNCTIONS ---
+    function isEnglishOnly(text) {
+        return /^[a-zA-Z0-9\s]+$/.test(text);
+    }
+
+    function isVietnameseValid(text) {
+        return /^[a-zA-Z0-9\s\u00C0-\u024F\u1E00-\u1EFF]+$/.test(text);
+    }
+    // ----------------------------
+
+    // --- LOAD EXISTING WORDS ---
     async function loadExistingWords() {
         try {
             const response = await fetch(`${API_BASE_URL}/get-words.php?course_id=${COURSE_ID}`);
@@ -79,10 +76,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 const wordsFromDB = result.data.words;
                 
                 const mappedWords = wordsFromDB.map(w => ({
+                    id: w.word_id, 
                     tiengAnh: w.word,
                     nghia: w.meaning,
-                    phienAm: w.ipa || '',
-                    tuLoai: w.part_of_speech || 'noun',
+                    phienAm: w.ipa || '', 
+                    tuLoai: w.part_of_speech || '',
                     linkAm: w.audio || '',
                     moTa: w.definition || '',
                     isExisting: true
@@ -96,7 +94,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    // --- RENDER FUNCTION ---
+    // --- RENDER ---
     function renderDanhSach() {
         danhSachContainer.innerHTML = '';
 
@@ -108,26 +106,34 @@ document.addEventListener('DOMContentLoaded', function() {
                 theTuVung.className = 'the-tu-vung';
                 if (tu.isExisting) theTuVung.classList.add('tu-cu');
                 
+                if (index === editingIndex) {
+                    theTuVung.style.border = '2px solid #007bff';
+                    theTuVung.style.backgroundColor = '#f0f8ff';
+                }
+
                 theTuVung.setAttribute('data-index', index);
+
+                const hienThiTuLoai = tu.tuLoai ? `<span style="font-weight:normal; font-size:0.9em">(${tu.tuLoai})</span>` : '';
+                const hienThiDaCo = tu.isExisting ? `<span style="font-size:0.7em; color:green; margin-left:5px">✔ Đã có</span>` : '';
+                const hienThiLink = tu.linkAm ? `<i class="fa-solid fa-link" style="font-size:0.8em; color:#888" title="Có link audio"></i>` : '';
+                const hienThiMoTa = tu.moTa ? `<p class="mo-ta-tu" style="font-size:0.9em; color:#555; font-style:italic; margin-top:4px;">${tu.moTa}</p>` : '';
 
                 theTuVung.innerHTML = `
                     <div class="thong-tin-tu">
                         <p class="tu-vung-chinh">
                             ${tu.tiengAnh} 
-                            <span style="font-weight:normal; font-size:0.9em">(${tu.tuLoai})</span>
-                            ${tu.isExisting ? '<span style="font-size:0.7em; color:green; margin-left:5px">✔ Đã có</span>' : ''}
+                            ${hienThiTuLoai}
+                            ${hienThiDaCo}
                         </p>
                         <p class="phien-am-tu">${tu.phienAm}</p>
                         <p class="nghia-tu">${tu.nghia}</p>
-                        ${tu.linkAm ? '<i class="fa-solid fa-link" style="font-size:0.8em; color:#888" title="Có link audio"></i>' : ''}
+                        ${hienThiMoTa}
+                        ${hienThiLink}
                     </div>
                     <div class="hanh-dong-tu">
-                        <button class="nut-icon nut-phat-am" data-action="phat-am" title="Nghe thử">
-                            <i class="fa-solid fa-volume-high"></i>
-                        </button>
-                        <button class="nut-icon nut-xoa-tu" data-action="xoa-tu" title="Xóa">
-                            <i class="fa-solid fa-times"></i>
-                        </button>
+                        <button class="nut-icon nut-sua-tu" data-action="sua-tu" title="Sửa từ này"><i class="fa-solid fa-pen-to-square"></i></button>
+                        <button class="nut-icon nut-phat-am" data-action="phat-am" title="Nghe thử"><i class="fa-solid fa-volume-high"></i></button>
+                        <button class="nut-icon nut-xoa-tu" data-action="xoa-tu" title="Xóa"><i class="fa-solid fa-times"></i></button>
                     </div>
                 `;
                 danhSachContainer.appendChild(theTuVung);
@@ -150,24 +156,14 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // --- UPLOAD AUDIO ---
     if (linkTaiFileAm && inputFileAn) {
-        linkTaiFileAm.addEventListener('click', function(e) {
-            e.preventDefault();
-            inputFileAn.click();
-        });
-
-        inputFileAn.addEventListener('change', function() {
-            if (this.files && this.files[0]) {
-                uploadAudioFile(this.files[0]);
-            }
-        });
+        linkTaiFileAm.addEventListener('click', function(e) { e.preventDefault(); inputFileAn.click(); });
+        inputFileAn.addEventListener('change', function() { if (this.files && this.files[0]) uploadAudioFile(this.files[0]); });
     }
 
     async function uploadAudioFile(file) {
         if (file.type !== 'audio/mpeg' && file.type !== 'audio/mp3' && !file.name.endsWith('.mp3')) {
-            alert('Vui lòng chỉ chọn file .mp3');
-            return;
+            alert('Vui lòng chỉ chọn file .mp3'); return;
         }
-
         const oldText = linkTaiFileAm.textContent;
         linkTaiFileAm.textContent = "Đang tải lên...";
         linkTaiFileAm.style.pointerEvents = "none";
@@ -176,82 +172,98 @@ document.addEventListener('DOMContentLoaded', function() {
         formData.append('audio_file', file);
 
         try {
-            const response = await fetch(`${API_BASE_URL}/upload_audio.php`, {
-                method: 'POST',
-                body: formData
-            });
-
+            const response = await fetch(`${API_BASE_URL}/upload_audio.php`, { method: 'POST', body: formData });
             const result = await response.json();
-
             if (result.success) {
-                inputLinkPhatAm.value = result.url; 
-                showToast("Đã tải file lên thành công!"); // Dùng showToast thay alert
+                inputLinkPhatAm.value = result.url; showToast("Đã tải file lên thành công!");
             } else {
                 alert("Lỗi upload: " + (result.error || "Không xác định"));
             }
         } catch (error) {
-            console.error(error);
-            alert("Lỗi kết nối server khi upload file.");
+            console.error(error); alert("Lỗi kết nối server khi upload file.");
         } finally {
-            linkTaiFileAm.textContent = oldText;
-            linkTaiFileAm.style.pointerEvents = "auto";
-            inputFileAn.value = '';
+            linkTaiFileAm.textContent = oldText; linkTaiFileAm.style.pointerEvents = "auto"; inputFileAn.value = '';
         }
     }
 
-    // --- HANDLERS (ĐÃ CẬP NHẬT SHOWTOAST) ---
+    // --- XỬ LÝ THÊM/SỬA TỪ ---
     function handleThemTu(event) {
         event.preventDefault();
-
         if (btnThemTu.disabled) return;
         btnThemTu.disabled = true;
 
         const tuTiengAnh = inputTuTiengAnh.value.trim();
         const phienAm = inputPhienAm.value.trim();
         const nghia = inputNghiaTiengViet.value.trim();
-        const tuLoai = inputTuLoai.value.trim() || 'n';
+        const tuLoai = inputTuLoai.value.trim(); 
         const linkAm = inputLinkPhatAm.value.trim();
         const moTa = inputMoTa.value.trim();
 
+        // 1. Validate bắt buộc
         if (!tuTiengAnh || !nghia) {
             alert('Vui lòng nhập đầy đủ "Từ tiếng Anh" và "Nghĩa tiếng Việt".');
-            btnThemTu.disabled = false;
-            return;
+            btnThemTu.disabled = false; return;
+        }
+
+        // 2. Validate ký tự đặc biệt
+        if (!isEnglishOnly(tuTiengAnh)) {
+            alert('Lỗi: Từ tiếng Anh chỉ được chứa chữ cái và số.');
+            inputTuTiengAnh.focus(); btnThemTu.disabled = false; return;
+        }
+        if (!isVietnameseValid(nghia)) {
+            alert('Lỗi: Nghĩa tiếng Việt không được chứa ký tự đặc biệt (@, !, #...).');
+            inputNghiaTiengViet.focus(); btnThemTu.disabled = false; return;
         }
 
         if (linkAm && linkAm.startsWith('http') && !isValidUrl(linkAm)) {
             alert('Link phát âm không hợp lệ.');
-            btnThemTu.disabled = false;
-            return;
+            btnThemTu.disabled = false; return;
         }
 
-        if (danhSachTu.some(t => t.tiengAnh.toLowerCase() === tuTiengAnh.toLowerCase())) {
-            alert('Từ này đã có trong danh sách!');
-            btnThemTu.disabled = false;
-            return;
+        // --- KIỂM TRA TRÙNG LẶP CHẶT CHẼ ---
+        const isDuplicate = danhSachTu.some((t, idx) => {
+            if (editingIndex > -1 && idx === editingIndex) return false; 
+
+            const matchEn = t.tiengAnh.toLowerCase() === tuTiengAnh.toLowerCase();
+            const matchVi = t.nghia.toLowerCase() === nghia.toLowerCase();
+            const matchType = t.tuLoai.toLowerCase() === tuLoai.toLowerCase();
+            const matchIpa = t.phienAm === phienAm;
+            const matchDef = t.moTa === moTa;
+            const matchAudio = t.linkAm === linkAm;
+            
+            return matchEn && matchVi && matchType && matchIpa && matchDef && matchAudio;
+        });
+
+        if (isDuplicate) {
+            alert('Dữ liệu này hoàn toàn trùng khớp với một từ đã có (giống cả nghĩa, loại từ, mô tả...).');
+            btnThemTu.disabled = false; return;
         }
 
-        const tuMoi = {
+        const tuData = {
+            id: editingIndex > -1 ? danhSachTu[editingIndex].id : null,
             tiengAnh: tuTiengAnh,
             phienAm: phienAm,
             nghia: nghia,
             tuLoai: tuLoai,
             linkAm: linkAm,
             moTa: moTa,
-            isExisting: false 
+            isExisting: editingIndex > -1 ? danhSachTu[editingIndex].isExisting : false 
         };
 
-        danhSachTu.push(tuMoi);
-        renderDanhSach();
-        
-        showToast(`Đã thêm: <b>${tuTiengAnh}</b>`);
-        // ------------------------------------------
+        if (editingIndex > -1) {
+            danhSachTu[editingIndex] = tuData;
+            showToast(`Đã cập nhật: <b>${tuTiengAnh}</b>`);
+            editingIndex = -1;
+            btnThemTu.innerHTML = originalBtnContent;
+        } else {
+            danhSachTu.push(tuData);
+            showToast(`Đã thêm: <b>${tuTiengAnh}</b>`);
+        }
 
+        renderDanhSach();
         formThemTu.reset();
-        
         window.scrollTo({ top: 0, behavior: 'smooth' });
         inputTuTiengAnh.focus();
-
         setTimeout(() => { btnThemTu.disabled = false; }, 300);
     }
 
@@ -265,8 +277,31 @@ document.addEventListener('DOMContentLoaded', function() {
         const hanhDong = nut.getAttribute('data-action');
 
         if (hanhDong === 'phat-am') handlePhatAm(tu);
+        
+        if (hanhDong === 'sua-tu') {
+            inputTuTiengAnh.value = tu.tiengAnh;
+            inputPhienAm.value = tu.phienAm;
+            inputNghiaTiengViet.value = tu.nghia;
+            inputTuLoai.value = tu.tuLoai;
+            inputLinkPhatAm.value = tu.linkAm;
+            inputMoTa.value = tu.moTa;
+
+            editingIndex = index;
+            btnThemTu.innerHTML = `<i class="fa-solid fa-save"></i> Cập nhật từ`;
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+            inputTuTiengAnh.focus();
+            renderDanhSach(); 
+        }
+
         if (hanhDong === 'xoa-tu') {
             if (confirm(`Bạn có chắc muốn xóa từ "${tu.tiengAnh}" không?`)) {
+                if (index === editingIndex) {
+                    editingIndex = -1;
+                    btnThemTu.innerHTML = originalBtnContent;
+                    formThemTu.reset();
+                } else if (index < editingIndex) {
+                    editingIndex--;
+                }
                 danhSachTu.splice(index, 1);
                 renderDanhSach();
             }
@@ -274,17 +309,11 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function handlePhatAm(tu) {
-        if (audioPlayer) {
-            audioPlayer.pause();
-            audioPlayer.currentTime = 0;
-        }
+        if (audioPlayer) { audioPlayer.pause(); audioPlayer.currentTime = 0; }
         window.speechSynthesis.cancel(); 
-
         if (tu.linkAm) {
             audioPlayer.src = tu.linkAm; 
-            audioPlayer.play().catch(e => {
-                phatAmBangAPI(tu.tiengAnh);
-            });
+            audioPlayer.play().catch(e => { phatAmBangAPI(tu.tiengAnh); });
         } else if (tu.tiengAnh) {
             phatAmBangAPI(tu.tiengAnh);
         }
@@ -304,21 +333,16 @@ document.addEventListener('DOMContentLoaded', function() {
         try {
             const url = new URL(string);
             return url.protocol === "http:" || url.protocol === "https:";
-        } catch (_) {
-            return false;
-        }
+        } catch (_) { return false; }
     }
 
-    // --- SAVE TO SERVER ---
+    // --- [ĐÃ SỬA ĐỔI] SAVE TO SERVER (SỬ DỤNG FILE update-words.php) ---
     async function handleLuuVaThoat() {
-        if (danhSachTu.length === 0) {
-            alert('Danh sách trống.');
-            return;
-        }
-
-        if (danhSachTu.length < 3) {
-            alert(`Bạn mới nhập ${danhSachTu.length} từ. Cần nhập tối thiểu 3 từ.`);
-            return;
+        if (danhSachTu.length === 0) { alert('Danh sách trống.'); return; }
+        if (danhSachTu.length < 3) { alert(`Bạn mới nhập ${danhSachTu.length} từ. Cần nhập tối thiểu 3 từ.`); return; }
+        
+        if (editingIndex > -1) {
+            if(!confirm("Bạn đang sửa một từ nhưng chưa ấn 'Cập nhật'. Dữ liệu đang sửa sẽ KHÔNG được lưu. Tiếp tục thoát?")) return;
         }
 
         if (!confirm(`Bạn sắp lưu ${danhSachTu.length} từ vựng. Tiếp tục?`)) return;
@@ -326,14 +350,25 @@ document.addEventListener('DOMContentLoaded', function() {
         btnLuuVaThoat.textContent = "Đang lưu...";
         btnLuuVaThoat.disabled = true;
 
+        // [QUAN TRỌNG] MAP DỮ LIỆU TỪ JS (tiengAnh, tuLoai...) -> DATABASE (word_en, part_of_speech...)
+        const wordsToSend = danhSachTu.map(w => ({
+            word_id: w.id,              // Server cần ID để biết là UPDATE
+            word_en: w.tiengAnh,        
+            word_vi: w.nghia,           
+            part_of_speech: w.tuLoai,   // Map đúng tên cột
+            pronunciation: w.phienAm,   
+            definition: w.moTa,         
+            audio_file: w.linkAm        
+        }));
+
         try {
-            // Lưu ý: Đã đổi tên API thành add-word.php như hướng dẫn trước
-            const response = await fetch(`${API_BASE_URL}/add-word.php`, {
+            // [QUAN TRỌNG] GỌI FILE API MỚI: update-words.php
+            const response = await fetch(`${API_BASE_URL}/add-words.php`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     course_id: COURSE_ID,
-                    words: danhSachTu
+                    words: wordsToSend // Gửi dữ liệu đã được map
                 })
             });
 
@@ -343,7 +378,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 result = JSON.parse(textResult);
             } catch (e) {
                 console.error("Server error:", textResult);
-                throw new Error("Phản hồi server lỗi (không phải JSON).");
+                throw new Error("Phản hồi server lỗi.");
             }
 
             if (result.success) {
@@ -353,22 +388,21 @@ document.addEventListener('DOMContentLoaded', function() {
                 alert(result.error || "Có lỗi xảy ra.");
                 renderDanhSach(); 
                 btnLuuVaThoat.textContent = "Lưu & Thoát";
+                btnLuuVaThoat.disabled = false;
             }
-
         } catch (error) {
             console.error(error);
             alert("Lỗi: " + error.message);
             renderDanhSach(); 
             btnLuuVaThoat.textContent = "Lưu & Thoát";
+            btnLuuVaThoat.disabled = false;
         }
     }
 
     function handleHuyBo() {
         if (danhSachTu.length > 0) {
             if (confirm('Bạn có chắc muốn hủy? Dữ liệu chưa lưu sẽ mất.')) history.back();
-        } else {
-            history.back();
-        }
+        } else { history.back(); }
     }
 
     if (formThemTu) formThemTu.addEventListener('submit', handleThemTu);
@@ -377,6 +411,5 @@ document.addEventListener('DOMContentLoaded', function() {
     if (btnHuyBo) btnHuyBo.addEventListener('click', handleHuyBo);
     if (btnLuuVaThoat) btnLuuVaThoat.addEventListener('click', handleLuuVaThoat);
 
-    // GỌI HÀM LOAD KHI TRANG SẴN SÀNG
     loadExistingWords();
 });
