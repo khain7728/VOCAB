@@ -23,7 +23,7 @@ if (isset($_COOKIE['user_token'])) {
 session_start();
 set_message('Đăng xuất thành công!', MSG_SUCCESS);
 
-// Redirect về trang chủ
-redirect('/VOCAB/index.html');
+// Redirect về trang đăng nhập
+redirect('/VOCAB/pages/dangnhap.html');
 
 ?>

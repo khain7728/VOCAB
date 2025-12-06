@@ -35,7 +35,16 @@ if (empty($email)) {
 } elseif (!validate_email($email)) {
     $errors[] = 'Email không hợp lệ!';
 } elseif (email_exists($conn, $email)) {
-    $errors[] = 'Email này đã được sử dụng!';
+    // Email đã tồn tại - Trả về JSON để hỏi user có muốn đăng nhập không
+    $_SESSION['login_email'] = $email;
+    header('Content-Type: application/json');
+    echo json_encode([
+        'success' => false,
+        'error_type' => 'email_exists',
+        'message' => 'Email "' . $email . '" đã được đăng ký.',
+        'email' => $email
+    ]);
+    exit;
 }
 
 if (empty($password)) {

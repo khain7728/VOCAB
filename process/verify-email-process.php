@@ -73,14 +73,12 @@ try {
     unset($_SESSION['pending_verification']);
     unset($_SESSION['verification_code_debug']);
     
-    // Tự động đăng nhập luôn
-    $_SESSION['user_id'] = $pending['user_id'];
-    $_SESSION['user_email'] = $pending['email'];
-    $_SESSION['user_name'] = $user['name'];
-    $_SESSION['user_role'] = ROLE_USER;
+    // Lưu email để tự động điền vào form đăng nhập
+    $_SESSION['login_email'] = $pending['email'];
     
-    set_message('Xác thực email thành công! Chào mừng bạn đến với VOCAB.', MSG_SUCCESS);
-    redirect('/VOCAB/pages/user/user_Dashboard.html');
+    // Thông báo thành công và yêu cầu đăng nhập
+    set_message('Xác thực email thành công! Vui lòng đăng nhập để tiếp tục.', MSG_SUCCESS);
+    redirect('/VOCAB/pages/dangnhap.html');
     
 } catch (Exception $e) {
     log_error($e->getMessage());
