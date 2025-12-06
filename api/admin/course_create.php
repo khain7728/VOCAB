@@ -12,7 +12,6 @@ require_once '../../includes/auth_check.php';
 require_once '../../includes/log_helper.php';
 
 try {
-    // 1. AUTH CHECK
     if (session_status() === PHP_SESSION_NONE) session_start();
     if (!check_session_timeout() || !validate_session_security()) throw new Exception("Phiên hết hạn.");
     if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') throw new Exception("Không đủ quyền.");
@@ -20,12 +19,8 @@ try {
     $admin_id = $_SESSION['user_id'];
     $input = json_decode(file_get_contents('php://input'), true);
 
-    // 2. CSRF CHECK
-    if (!isset($input['csrf_token']) || $input['csrf_token'] !== $_SESSION['csrf_token']) {
-        throw new Exception("Lỗi bảo mật CSRF.");
-    }
+    if (!isset($input['csrf_token']) || $input['csrf_token'] !== $_SESSION['csrf_token']) throw new Exception("Lỗi bảo mật CSRF.");
 
-    // 3. INPUT DATA
     $name = trim($input['name'] ?? '');
     $desc = trim($input['description'] ?? '');
     $status = ($input['status'] === 'active') ? 'public' : 'private';
@@ -33,19 +28,19 @@ try {
     
     if (empty($name)) throw new Exception("Tên không được trống.");
 
-    // 4. INSERT DB
     $conn->begin_transaction();
 
-    $stmt = $conn->prepare("INSERT INTO course (course_name, description, visibility, create_by, created_at, hide) VALUES (?, ?, ?, ?, NOW(), 0)");
+    // 1. Tạo khóa học (MẶC ĐỊNH HIDE = 1 ĐỂ TẠO DRAFT)
+    $stmt = $conn->prepare("INSERT INTO course (course_name, description, visibility, create_by, created_at, hide) VALUES (?, ?, ?, ?, NOW(), 1)");
     $stmt->bind_param("sssi", $name, $desc, $status, $admin_id);
-    if (!$stmt->execute()) throw new Exception("Lỗi DB: " . $stmt->error);
     
+    if (!$stmt->execute()) throw new Exception("Lỗi DB: " . $stmt->error);
     $new_id = $conn->insert_id;
-    //tạo mã tự động
-    $code = str_pad($new_id, 3, '0', STR_PAD_LEFT); 
-$conn->query("UPDATE course SET course_code = '$code' WHERE course_id = $new_id");
 
-    // Xử lý TAGS
+    $code = str_pad($new_id, 3, '0', STR_PAD_LEFT);
+    $conn->query("UPDATE course SET course_code = '$code' WHERE course_id = $new_id");
+
+    // 2. Add Tags
     if (!empty($tagsRaw)) {
         $tags = array_unique(array_filter(array_map('trim', explode(',', $tagsRaw))));
         $stmtChk = $conn->prepare("SELECT tag_id FROM tag WHERE tag_name = ?");
@@ -56,9 +51,8 @@ $conn->query("UPDATE course SET course_code = '$code' WHERE course_id = $new_id"
             $tid = 0;
             $stmtChk->bind_param("s", $t); $stmtChk->execute();
             $res = $stmtChk->get_result();
-            if ($row = $res->fetch_assoc()) {
-                $tid = $row['tag_id'];
-            } else {
+            if ($row = $res->fetch_assoc()) $tid = $row['tag_id'];
+            else {
                 $stmtIns->bind_param("s", $t); 
                 if ($stmtIns->execute()) $tid = $stmtIns->insert_id;
             }
@@ -69,14 +63,11 @@ $conn->query("UPDATE course SET course_code = '$code' WHERE course_id = $new_id"
         }
     }
 
-    // GHI LOG: target_id phải là số (int)
-    if (function_exists('writeAdminLog')) {
-        writeAdminLog($conn, $admin_id, "Thêm khóa học: $name ($code)", $new_id);
-    }
+    if (function_exists('writeAdminLog')) writeAdminLog($conn, $admin_id, "Tạo nháp khóa học: $name", $new_id);
 
     $conn->commit();
     ob_clean();
-    echo json_encode(['status' => 'success', 'message' => 'Tạo thành công!', 'data' => ['id' => $new_id]]);
+    echo json_encode(['status' => 'success', 'message' => "Đã tạo bản nháp. Đang chuyển hướng...", 'data' => ['id' => $new_id]]);
 
 } catch (Exception $e) {
     if(isset($conn)) $conn->rollback();

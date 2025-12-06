@@ -1,8 +1,8 @@
 <?php
 // FILE: api/admin/course_get_list.php
 error_reporting(E_ALL);
-ini_set('display_errors', 0); // Tắt lỗi HTML
-ob_start(); // Bắt đầu buffer
+ini_set('display_errors', 0);
+ob_start();
 
 header('Access-Control-Allow-Origin: *');
 header('Content-Type: application/json; charset=utf-8');
@@ -11,35 +11,20 @@ require_once '../../config/config.php';
 require_once '../../includes/auth_check.php'; 
 
 try {
-    // --- AUTHENTICATION (JSON STYLE) ---
     if (session_status() === PHP_SESSION_NONE) session_start();
+    if (!check_session_timeout() || !validate_session_security()) throw new Exception("Phiên hết hạn.");
+    if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') throw new Exception("Không quyền.");
 
-    // Dùng hàm từ auth_check.php của bạn nhưng tự xử lý lỗi
-    if (!check_session_timeout() || !validate_session_security()) {
-        throw new Exception("Phiên làm việc hết hạn. Vui lòng F5.");
-    }
-    if (!isset($_SESSION['user_id']) || (isset($_SESSION['role']) && $_SESSION['role'] !== 'admin')) {
-        throw new Exception("Không có quyền truy cập.");
-    }
-
-    if (!$conn) throw new Exception("Mất kết nối Database.");
-
-    // --- PARAMETERS ---
     $page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
-    $limit = isset($_GET['limit']) ? (int)$_GET['limit'] : 10;
+    $limit = 10;
+    $offset = ($page - 1) * $limit;
     $search = isset($_GET['search']) ? trim($_GET['search']) : '';
     $status = isset($_GET['status']) ? trim($_GET['status']) : '';
     $sort_by = isset($_GET['sort_by']) ? $_GET['sort_by'] : 'created_at';
     $order = isset($_GET['order']) && strtoupper($_GET['order']) === 'ASC' ? 'ASC' : 'DESC';
 
-    // Whitelist sort column
-    $allowed_sort = ['course_code', 'course_name', 'created_at', 'visibility'];
-    if (!in_array($sort_by, $allowed_sort)) $sort_by = 'created_at';
-
-    $offset = ($page - 1) * $limit;
-
-    // --- QUERY BUILDER ---
-    $where = "WHERE 1=1";
+    // CHỈ LẤY KHÓA HỌC ĐÃ HOÀN TẤT (HIDE = 0)
+    $where = "WHERE c.hide = 0"; 
     $params = [];
     $types = "";
 
@@ -51,14 +36,12 @@ try {
     }
 
     if (!empty($status)) {
-        // Map status front-end (active/hidden) -> DB (public/private)
-        $dbStatus = ($status === 'active') ? 'public' : (($status === 'hidden') ? 'private' : $status);
+        $dbStatus = ($status === 'active') ? 'public' : 'private';
         $where .= " AND c.visibility = ?";
         $params[] = $dbStatus;
         $types .= "s";
     }
 
-    // COUNT
     $sqlCount = "SELECT COUNT(*) as total FROM course c $where";
     $stmtCount = $conn->prepare($sqlCount);
     if (!empty($params)) $stmtCount->bind_param($types, ...$params);
@@ -66,11 +49,9 @@ try {
     $totalRecords = $stmtCount->get_result()->fetch_assoc()['total'];
     $totalPages = ceil($totalRecords / $limit);
 
-    // SELECT DATA
-    $sqlData = "SELECT 
-                    c.course_id, c.course_code, c.course_name, c.visibility, c.created_at, c.description,
-                    IFNULL(u.name, 'Admin') as author_name,
-                    GROUP_CONCAT(t.tag_name SEPARATOR ', ') as tags
+    $sqlData = "SELECT c.course_id, c.course_code, c.course_name, c.visibility, c.created_at, c.description,
+                       IFNULL(u.name, 'Admin') as author_name,
+                       GROUP_CONCAT(t.tag_name SEPARATOR ', ') as tags
                 FROM course c
                 LEFT JOIN user u ON c.create_by = u.user_id
                 LEFT JOIN course_tag ct ON c.course_id = ct.course_id
@@ -86,18 +67,13 @@ try {
     $stmt = $conn->prepare($sqlData);
     $stmt->bind_param($types, ...$params);
     $stmt->execute();
-    $result = $stmt->get_result();
-    $data = $result->fetch_all(MYSQLI_ASSOC);
+    $data = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
 
-    ob_clean(); // Xóa buffer rác
+    ob_clean();
     echo json_encode([
         'status' => 'success',
         'data' => $data,
-        'pagination' => [
-            'current_page' => $page,
-            'total_pages' => $totalPages,
-            'total_records' => $totalRecords
-        ]
+        'pagination' => ['current_page' => $page, 'total_pages' => $totalPages, 'total_records' => $totalRecords]
     ]);
 
 } catch (Exception $e) {
