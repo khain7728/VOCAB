@@ -43,8 +43,8 @@ try {
     // 1. Lưu session với review_type = 'multiple-choice' (vì có cả trắc nghiệm và điền từ)
     $insertSession = $conn->prepare(
         "INSERT INTO review_session 
-        (user_id, course_id, review_type, total_words, correct_count, incorrect_count, score, duration_seconds) 
-        VALUES (?, ?, 'multiple-choice', ?, ?, ?, ?, ?)"
+        (user_id, course_id, review_type, total_words, correct_count, incorrect_count, score, duration_seconds, completed_at) 
+        VALUES (?, ?, 'multiple-choice', ?, ?, ?, ?, ?, NOW())"
     );
     $insertSession->bind_param(
         "iiiiddi", 

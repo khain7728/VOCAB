@@ -140,9 +140,8 @@
     gap: 12px;
 }
 
-.btn-primary,
 .btn-secondary {
-    flex: 1;
+    width: 100%;
     padding: 14px 20px;
     border: none;
     border-radius: 10px;
@@ -151,14 +150,6 @@
     cursor: pointer;
     transition: all 0.3s ease;
     align-items: center;
-}
-
-.btn-primary {
-    background: linear-gradient(135deg, #4A90E2 0%, #357ABD 100%);
-    color: white;
-}
-
-.btn-secondary {
     background: white;
     color: #4A90E2;
     border: 2px solid #4A90E2;
@@ -317,6 +308,45 @@
 .btn-modal {
     flex: 1;
     padding: 14px 24px;
+    font-size: 16px;
+    font-weight: 600;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.btn-modal.btn-primary {
+    background: linear-gradient(135deg, #4A90E2 0%, #357ABD 100%);
+    color: white;
+    box-shadow: 0 4px 12px rgba(74, 144, 226, 0.3);
+}
+
+.btn-modal.btn-primary:hover {
+    background: linear-gradient(135deg, #357ABD 0%, #2868a8 100%);
+    box-shadow: 0 6px 16px rgba(74, 144, 226, 0.4);
+}
+
+.btn-modal.btn-primary:active {
+    transform: scale(0.98);
+    box-shadow: 0 2px 8px rgba(74, 144, 226, 0.3);
+}
+
+.btn-modal.btn-secondary {
+    background: white;
+    color: #4A90E2;
+    border: 2px solid #4A90E2;
+}
+
+.btn-modal.btn-secondary:hover {
+    background: #f0f7ff;
+}
+
+.btn-modal i {
     font-size: 16px;
 }
 

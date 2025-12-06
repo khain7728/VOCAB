@@ -65,25 +65,7 @@
                 <div class="chart-section">
                     <h2 class="section-title">Kết quả bài kiểm tra tuần này</h2>
                     <div class="chart-container">
-                        <svg viewBox="0 0 750 300" class="chart">
-                            <!-- Grid lines -->
-                            <line x1="50" y1="50" x2="50" y2="250" stroke="#ccc" stroke-width="1" />
-                            <line x1="50" y1="250" x2="720" y2="250" stroke="#ccc" stroke-width="1" />
-
-                            <!-- Y-axis labels -->
-                            <text x="30" y="255" font-size="12" fill="#666">0</text>
-                            <text x="30" y="205" font-size="12" fill="#666">25</text>
-                            <text x="30" y="155" font-size="12" fill="#666">50</text>
-                            <text x="30" y="105" font-size="12" fill="#666">75</text>
-                            <text x="30" y="55" font-size="12" fill="#666">100</text>
-
-                            <!-- Grid horizontal lines -->
-                            <line x1="50" y1="200" x2="720" y2="200" stroke="#e0e0e0" stroke-width="1" />
-                            <line x1="50" y1="150" x2="720" y2="150" stroke="#e0e0e0" stroke-width="1" />
-                            <line x1="50" y1="100" x2="720" y2="100" stroke="#e0e0e0" stroke-width="1" />
-
-                            <!-- Chart data will be drawn dynamically by JavaScript -->
-                        </svg>
+                        <canvas id="weeklyChart"></canvas>
                     </div>
                 </div>
 
@@ -139,9 +121,6 @@
                             </div>
 
                             <div class="goal-actions">
-                                <button class="btn-primary btn-large" onclick="window.location.href='user_hoc_tu_vung.html'">
-                                    <i class="fa-solid fa-play"></i> Bắt đầu học
-                                </button>
                                 <button class="btn-secondary btn-large" onclick="showGoalModal()">
                                     <i class="fa-solid fa-gear"></i> Thay đổi mục tiêu
                                 </button>
@@ -195,6 +174,9 @@
     </div>
 
    
+    <!-- Chart.js Library -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    
     <!-- Cross-tab Sync Scripts -->
     <script src="../../assets/js/defaut/sync_validator.js"></script>
     <script src="../../assets/js/defaut/sync_manager.js"></script>
@@ -205,7 +187,7 @@
     <!-- Script để load menu và header -->
     <script src="../../assets/js/user/layout_user.js"></script>
     <!-- Script dashboard -->
-    <script src="../../assets/js/user/user_dashboard.js"></script>
+    <script src="../../assets/js/user/user_Dashboard.js"></script>
 </body>
 
 </html>

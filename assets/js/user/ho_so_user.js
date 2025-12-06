@@ -1,6 +1,9 @@
 document.addEventListener('DOMContentLoaded', function () {
     const API_BASE_URL = 'http://localhost/VOCAB/api';
     const USER_ID = localStorage.getItem('user_id');
+    
+    // Link mặc định theo yêu cầu
+    const DEFAULT_AVATAR_URL = "https://upload.wikimedia.org/wikipedia/commons/9/99/Sample_User_Icon.png";
 
     // Elements
     const btnChinhSua = document.getElementById('btn-chinhsua');
@@ -16,7 +19,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const wrapperAvt = document.getElementById('wrapper-avt');
     const inputFileAvt = document.getElementById('input-file-avt');
     const imgAvt = document.getElementById('hien-thi-avt');
-    const iconDefault = document.getElementById('icon-mac-dinh');
+    const iconDefault = document.getElementById('icon-mac-dinh'); // Icon cũ (nếu có dùng font-awesome)
 
     // Modal Elements
     const modal = document.getElementById('modal-view-avt');
@@ -27,25 +30,44 @@ document.addEventListener('DOMContentLoaded', function () {
     let isEditing = false;
     let selectedFile = null;
 
-    // 1. Hiển thị Avatar
+    // --- 1. HÀM XỬ LÝ HIỂN THỊ AVATAR (LOGIC MỚI) ---
     function renderAvatar(avatarPath) {
-        if (avatarPath && avatarPath.trim() !== "") {
-            imgAvt.src = `../../assets/images/avatar/${avatarPath}`;
-            imgAvt.style.display = 'block';
-            iconDefault.style.display = 'none';
+        let finalSrc = "";
+
+        if (!avatarPath || avatarPath.trim() === "") {
+            // Trường hợp 1: Không có avatar trong DB -> Dùng ảnh Wikimedia
+            finalSrc = DEFAULT_AVATAR_URL;
         } else {
-            imgAvt.style.display = 'none';
-            iconDefault.style.display = 'block';
+            // Trường hợp 2: Có avatar
+            if (avatarPath.startsWith('http') || avatarPath.startsWith('https')) {
+                // Là link online (Google/Facebook/Link ngoài) -> Dùng trực tiếp
+                finalSrc = avatarPath;
+            } else {
+                // Là file upload local -> Thêm đường dẫn thư mục
+                finalSrc = `../../assets/images/avatar/${avatarPath}`;
+            }
         }
+
+        // Hiển thị ảnh
+        imgAvt.src = finalSrc;
+        imgAvt.style.display = 'block';
+        
+        // Ẩn icon mặc định (nếu HTML có div icon placeholder) vì giờ ta luôn có ảnh (ảnh thật hoặc ảnh default wikimedia)
+        if (iconDefault) iconDefault.style.display = 'none';
+        
+        // Xử lý lỗi nếu link ảnh bị chết -> fallback về mặc định
+        imgAvt.onerror = function() {
+            this.src = DEFAULT_AVATAR_URL;
+        };
     }
 
-    // 2. Click Avatar: Sửa thì chọn file, không sửa thì xem ảnh
+    // 2. Click Avatar
     wrapperAvt.addEventListener('click', () => {
         if (isEditing) {
             inputFileAvt.click();
         } else {
             // Mở Modal xem ảnh
-            if (imgAvt.style.display !== 'none' && imgAvt.src) {
+            if (imgAvt.src) {
                 modal.style.display = "flex";
                 modalImg.src = imgAvt.src;
             }
@@ -64,7 +86,7 @@ document.addEventListener('DOMContentLoaded', function () {
             selectedFile = file;
             imgAvt.src = URL.createObjectURL(file);
             imgAvt.style.display = 'block';
-            iconDefault.style.display = 'none';
+            if (iconDefault) iconDefault.style.display = 'none';
         }
     });
 
@@ -83,6 +105,8 @@ document.addEventListener('DOMContentLoaded', function () {
                 userJoinDate.textContent = u.joined_date;
                 userLanguage.textContent = u.language;
                 userLevel.textContent = u.level;
+                
+                // GỌI HÀM RENDER ĐÃ SỬA
                 renderAvatar(u.avatar);
 
                 if (achievementGrid) {
@@ -107,7 +131,7 @@ document.addEventListener('DOMContentLoaded', function () {
         } catch (e) { console.error(e); }
     }
 
-    // 6. Save Data
+    // 6. Save Data (Giữ nguyên logic của bạn, chỉ lưu ý phần render lại nếu cần)
     if (btnChinhSua) {
         btnChinhSua.addEventListener('click', async () => {
             if (!isEditing) {
@@ -122,6 +146,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
                 const newName = userNameField.textContent.trim();
                 const newBio = userBioField.textContent.trim();
+                
                 if (!newName) { alert("Tên không được trống!"); btnChinhSua.disabled = false; return; }
 
                 const formData = new FormData();
