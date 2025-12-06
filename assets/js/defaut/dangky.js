@@ -5,6 +5,9 @@
     // Đợi DOM load xong
     document.addEventListener('DOMContentLoaded', function() {
         
+        // Kiểm tra và hiển thị flash message từ server
+        checkFlashMessage();
+        
         // Lấy các elements
         const registerButton = document.querySelector('.login-button');
         const nameInput = document.getElementById('name');
@@ -139,10 +142,44 @@
                         window.location.href = response.url;
                         return;
                     }
+                    
+                    // Kiểm tra content-type
+                    const contentType = response.headers.get('content-type');
+                    if (contentType && contentType.includes('application/json')) {
+                        return response.json();
+                    }
                     return response.text();
                 })
                 .then(data => {
-                    if (data) {
+                    // Xử lý response JSON khi email đã tồn tại
+                    if (data && typeof data === 'object') {
+                        if (data.error_type === 'email_exists') {
+                            // Hỏi có muốn đăng nhập không (không cần flash message vì confirm đã rõ)
+                            const userConfirm = confirm(
+                                data.message + '\n\n' +
+                                'Bạn có muốn đăng nhập với tài khoản này không?'
+                            );
+                            
+                            if (userConfirm) {
+                                // Hiển thị toast trước khi chuyển trang
+                                showInfo('Chỉnh đang chuyển đến trang đăng nhập...');
+                                // Delay 1.5s để người dùng thấy toast
+                                setTimeout(() => {
+                                    window.location.href = 'dangnhap.html';
+                                }, 1500);
+                            } else {
+                                // Người dùng không muốn đăng nhập, kích hoạt lại nút
+                                registerButton.disabled = false;
+                                registerButton.textContent = 'Đăng ký';
+                                if (emailInput) emailInput.focus();
+                            }
+                        } else {
+                            // Lỗi khác
+                            showError(data.message || 'Có lỗi xảy ra!');
+                            registerButton.disabled = false;
+                            registerButton.textContent = 'Đăng ký';
+                        }
+                    } else if (data) {
                         console.log(data);
                     }
                 })
@@ -206,6 +243,9 @@
         .then(response => response.json())
         .then(data => {
             if (data.success && data.email) {
+                // Hiển thị thông báo info
+                showInfo('Email "' + data.email + '" chưa có trong hệ thống. Vui lòng đăng ký tài khoản mới.');
+                
                 // Điền email vào form
                 if (emailInput) {
                     emailInput.value = data.email;
@@ -251,6 +291,32 @@
               '5. Quyền của người dùng\n' +
               'Bạn có quyền yêu cầu xóa hoặc chỉnh sửa thông tin cá nhân.\n\n' +
               'Trang chi tiết đang được phát triển.');
+    }
+
+    // Hàm kiểm tra flash message từ server
+    async function checkFlashMessage() {
+        try {
+            const response = await fetch('../api/get-flash-message.php');
+            const result = await response.json();
+            
+            if (result.success && result.message) {
+                // Map type từ PHP sang toast type
+                let toastType = 'info';
+                if (result.type === 'error') toastType = 'error';
+                else if (result.type === 'success') toastType = 'success';
+                else if (result.type === 'warning') toastType = 'warning';
+                
+                // Hiển thị toast
+                if (typeof showToast === 'function') {
+                    showToast(result.message, toastType);
+                } else {
+                    // Fallback nếu chưa có toast-message.js
+                    alert(result.message);
+                }
+            }
+        } catch (error) {
+            console.error('Error checking flash message:', error);
+        }
     }
 
 })();

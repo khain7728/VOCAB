@@ -1,7 +1,7 @@
 /* Toast Message Notification System */
 .toast-container {
     position: fixed;
-    top: 20px;
+    top: 80px; /* Ngay dưới header (header cao khoảng 70-80px) */
     right: 20px;
     z-index: 9999;
     display: flex;

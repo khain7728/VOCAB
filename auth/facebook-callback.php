@@ -116,13 +116,13 @@ try {
     }
 
     // ========================================
-    // BƯỚC 4: TẠO SESSION
+    // BƯỚC 4: TẠO SESSION (sử dụng tên session chuẩn giống login-process.php)
     // ========================================
     $_SESSION['user_id'] = $user['user_id'];
-    $_SESSION['user_name'] = $user['name'];
-    $_SESSION['user_email'] = $user['email'];
-    $_SESSION['user_role'] = $user['role'];
-    $_SESSION['user_avatar'] = $user['avatar'];
+    $_SESSION['name'] = $user['name'];
+    $_SESSION['email'] = $user['email'];
+    $_SESSION['role'] = $user['role'];
+    $_SESSION['avatar'] = $user['avatar'];
     $_SESSION['logged_in'] = true;
 
     // ========================================

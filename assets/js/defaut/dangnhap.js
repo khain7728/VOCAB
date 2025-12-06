@@ -5,6 +5,12 @@
     // Đợi DOM load xong
     document.addEventListener('DOMContentLoaded', function() {
         
+        // Kiểm tra và hiển thị flash message từ server
+        checkFlashMessage();
+        
+        // Tự động điền email từ trang đăng ký (nếu có)
+        checkAndFillEmail();
+        
         // Lấy các elements
         const loginButton = document.querySelector('.login-button');
         const facebookButton = document.querySelector('.facebook-login-button');
@@ -101,15 +107,19 @@
                     // Xử lý response JSON
                     if (data && typeof data === 'object') {
                         if (data.error_type === 'email_not_found') {
-                            // Hiển thị confirm dialog
+                            // Hỏi có muốn đăng ký không (không cần flash message vì confirm đã rõ)
                             const userConfirm = confirm(
                                 data.message + '\n\n' +
                                 'Bạn có muốn đăng ký tài khoản với email này không?'
                             );
                             
                             if (userConfirm) {
-                                // Chuyển sang trang đăng ký
-                                window.location.href = 'dangki.html';
+                                // Hiển thị toast trước khi chuyển trang
+                                showInfo('Đang chuyển đến trang đăng ký...');
+                                // Delay 1.5s để người dùng thấy toast
+                                setTimeout(() => {
+                                    window.location.href = 'dangki.html';
+                                }, 1500);
                             } else {
                                 // Người dùng không muốn đăng ký, giữ nguyên
                                 loginButton.disabled = false;
@@ -156,6 +166,62 @@
     function validateEmail(email) {
         const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         return re.test(email);
+    }
+
+    // Hàm kiểm tra flash message từ server
+    async function checkFlashMessage() {
+        try {
+            const response = await fetch('../api/get-flash-message.php');
+            const result = await response.json();
+            
+            if (result.success && result.message) {
+                // Map type từ PHP sang toast type
+                let toastType = 'info';
+                if (result.type === 'error') toastType = 'error';
+                else if (result.type === 'success') toastType = 'success';
+                else if (result.type === 'warning') toastType = 'warning';
+                
+                // Hiển thị toast
+                if (typeof showToast === 'function') {
+                    showToast(result.message, toastType);
+                } else {
+                    // Fallback nếu chưa có toast-message.js
+                    alert(result.message);
+                }
+            }
+        } catch (error) {
+            console.error('Error checking flash message:', error);
+        }
+    }
+
+    // Kiểm tra và điền email từ session (từ trang đăng ký)
+    function checkAndFillEmail() {
+        // Gọi PHP để lấy email từ session
+        fetch('../process/get-login-email.php', {
+            method: 'GET',
+            cache: 'no-cache'
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success && data.email) {
+                // Điền email vào form (không hiển thị toast)
+                const emailInput = document.getElementById('email');
+                const passwordInput = document.getElementById('password');
+                
+                if (emailInput) {
+                    emailInput.value = data.email;
+                    emailInput.readOnly = true;
+                    emailInput.style.background = '#f0f0f0';
+                }
+                // Focus vào password
+                if (passwordInput) {
+                    passwordInput.focus();
+                }
+            }
+        })
+        .catch(error => {
+            console.error('Lỗi khi lấy email:', error);
+        });
     }
 
 })();
