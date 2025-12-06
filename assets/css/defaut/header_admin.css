@@ -37,10 +37,7 @@
     justify-content: center;
 }
 
-#header_admin #menu:hover {
-    background-color: #f3f4f6;
-    color: #111;
-}
+
 
 
 /* Khu vực bên phải (Setting + User) */
@@ -51,27 +48,6 @@
     gap: 16px;
 }
 
-
-/* Nút Setting */
-
-#setting {
-    background: none;
-    border: none;
-    cursor: pointer;
-    color: #6B7280;
-    font-size: 18px;
-    padding: 8px;
-    border-radius: 50%;
-    transition: all 0.2s;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-#setting:hover {
-    background-color: #f3f4f6;
-    color: #5B9BD5;
-}
 
 
 /* Thông tin Admin */
@@ -84,15 +60,10 @@
     padding: 4px 8px;
     border-radius: 6px;
     transition: background 0.2s;
-    margin-left: 8px;
-    border-left: 1px solid #E5E7EB;
-    /* Đường gạch ngăn cách nhẹ */
     padding-left: 16px;
 }
 
-#user-info:hover {
-    background-color: #f9fafb;
-}
+
 
 #user-info img {
     width: 32px;

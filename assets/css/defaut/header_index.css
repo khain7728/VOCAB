@@ -57,6 +57,14 @@
     transition: color 0.2s ease;
 }
 
+/* Active state */
+#header_index #dieu_huong .header a.active {
+    background-color: #7BB7EE;
+    color: #fff;
+    padding: 0.5rem 2rem;
+    border-radius: 1rem;
+}
+
 /* Hover effect */
 #header_index #dieu_huong .header:hover {
     background-color: #7BB7EE;

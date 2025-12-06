@@ -78,8 +78,8 @@ function activeCurrentMenu() {
 
     links.forEach(link => {
         const href = link.getAttribute("href");
-        // So sánh tương đối để active đúng
-        if (href && currentPath.includes(href)) {
+        // So sánh chính xác bằng cách kiểm tra endsWith
+        if (href && currentPath.endsWith(href)) {
             link.classList.add("active");
         }
     });

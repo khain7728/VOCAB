@@ -68,9 +68,27 @@ async function(){
         // Đảm bảo footer đứng sau content
         if(content && footerContainer){ content.after(footerContainer); }
 
+        // Kích hoạt active state cho navigation sau khi header được load
+        activateNavigation();
+
     }catch(err){
         // Ghi log lỗi ra console (không làm vỡ trang)
         console.error('include-layout - lỗi:', err);
+    }
+
+    // Hàm kích hoạt active state cho navigation
+    function activateNavigation() {
+        const navLinks = document.querySelectorAll('#dieu_huong .nav-link');
+        const currentPath = window.location.pathname;
+        
+        navLinks.forEach(function(link) {
+            const href = link.getAttribute('href');
+            
+            // Kiểm tra nếu href khớp với current path
+            if (href && (currentPath.endsWith(href) || currentPath.includes(href.replace('/VOCAB/', '')))) {
+                link.classList.add('active');
+            }
+        });
     }
 
 })();

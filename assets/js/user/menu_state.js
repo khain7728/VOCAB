@@ -29,12 +29,27 @@
     // Active menu item dựa vào trang hiện tại
     document.addEventListener('DOMContentLoaded', function() {
         const currentPage = window.location.pathname.split('/').pop();
-        const menuLinks = document.querySelectorAll('#frame_menu a');
+        const menuLinks = document.querySelectorAll('#main_menu a');
         
-        menuLinks.forEach(link => {
+        // Các trang cùng nhóm
+        const khoaHocPages = ['khoa_hoc_cua_toi.html', 'khoa_hoc_cong_dong.html'];
+        
+        menuLinks.forEach((link) => {
             const href = link.getAttribute('href');
-            if (href && currentPage.includes(href)) {
+            
+            // Chỉ active link trỏ đến chính trang hiện tại (exact match)
+            if (href === currentPage) {
                 link.classList.add('active');
+                
+                // Workaround: Force background color nếu CSS variable không apply ngay
+                setTimeout(() => {
+                    const computed = window.getComputedStyle(link);
+                    const bg = computed.backgroundColor;
+                    if (!bg || bg === 'rgba(0, 0, 0, 0)' || bg === 'transparent') {
+                        link.style.setProperty('background-color', '#7BB7EE', 'important');
+                        link.style.setProperty('color', '#fff', 'important');
+                    }
+                }, 100);
             }
         });
     });

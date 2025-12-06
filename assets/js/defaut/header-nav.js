@@ -6,16 +6,25 @@
         // Lấy tất cả các link navigation
         const navLinks = document.querySelectorAll('#dieu_huong .nav-link');
         
+        // Lấy URL hiện tại
+        const currentPath = window.location.pathname;
+        
+        // Set active cho link tương ứng
         navLinks.forEach(function(link) {
+            const href = link.getAttribute('href');
+            
+            // Kiểm tra nếu href khớp với current path
+            if (href && (currentPath.endsWith(href) || currentPath.includes(href.replace('/VOCAB/', '')))) {
+                link.classList.add('active');
+            }
+            
+            // Xử lý click
             link.addEventListener('click', function(e) {
-                const href = this.getAttribute('href');
-                
                 // Nếu link bắt đầu bằng /, xử lý relative path
                 if (href && href.startsWith('/')) {
                     e.preventDefault();
                     
                     // Kiểm tra xem đang ở folder nào
-                    const currentPath = window.location.pathname;
                     const isInPagesFolder = currentPath.includes('/pages/');
                     
                     let newPath;

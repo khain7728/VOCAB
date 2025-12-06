@@ -20,7 +20,7 @@
     const PAGE_TO_MENU_MAP = {
         'user_Dashboard.html': 'a[href*="user_Dashboard.html"]',
         'khoa_hoc_cua_toi.html': 'a[href*="khoa_hoc_cua_toi.html"]',
-        'khoa_hoc_cong_dong.html': 'a[href*="khoa_hoc_cong_dong.html"]',
+        'khoa_hoc_cong_dong.html': 'a[href*="khoa_hoc_cua_toi.html"]', // Khóa học cộng đồng -> active "Quản lý khóa học"
         'chi_tiet_khoa_hoc.html': 'a[href*="khoa_hoc_cua_toi.html"]', // Chi tiết khóa học -> active "Quản lý khóa học"
         'them_tu_vung.html': 'a[href*="khoa_hoc_cua_toi.html"]', // Thêm từ vựng -> active "Quản lý khóa học"
         'user_hoc_tu_vung.html': 'a[href*="khoa_hoc_cua_toi.html"]', // Học từ vựng -> active "Quản lý khóa học"

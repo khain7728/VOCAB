@@ -87,6 +87,12 @@ body.menu-collapsed .main-wrapper {
 
 /* --- 4. CÁC THÀNH PHẦN CON MENU (Giữ nguyên style đẹp) --- */
 
+#menu_admin {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
 #menu_admin #logo {
     height: 64px;
     display: flex;
@@ -123,7 +129,7 @@ body.menu-collapsed .main-wrapper {
     align-items: center;
     padding: 10px 15px;
     text-decoration: none;
-    color: #4b5563;
+    color: black;
     font-weight: 500;
     font-size: 14px;
     border-radius: 6px;
@@ -132,14 +138,10 @@ body.menu-collapsed .main-wrapper {
     box-sizing: border-box;
 }
 
-.menu-item a:hover {
-    background-color: #f3f4f6;
-    color: #111;
-}
 
 .menu-item a.active {
-    background-color: #EBF5FF;
-    color: #2563EB;
+    background-color: #7BB7EE;
+    color: #ffffff;
 }
 
 .menu-item a i,
@@ -148,13 +150,17 @@ body.menu-collapsed .main-wrapper {
     width: 24px;
     text-align: center;
     margin-right: 12px;
-    color: #9ca3af;
+    color: Black;
     flex-shrink: 0;
     transition: margin 0.3s;
 }
 
+.menu-item a.active i {
+    color: #ffffff;
+}
 #logout {
     padding: 10px;
+    margin-top: auto;
     border-top: 1px solid #f0f0f0;
 }
 
