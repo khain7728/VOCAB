@@ -127,7 +127,6 @@ async function updateLearnedStatus(wordId, learned) {
                 'Content-Type': 'application/json',
             },
             body: JSON.stringify({
-                user_id: USER_ID,
                 word_id: wordId,
                 learned: learned
             })

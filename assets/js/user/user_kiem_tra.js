@@ -394,7 +394,6 @@ async function finishQuiz() {
     
     // Chuẩn bị dữ liệu gửi API
     const resultData = {
-        user_id: USER_ID,
         course_id: COURSE_ID,
         total_questions: TOTAL_QUESTIONS,
         correct_count: correctCount,

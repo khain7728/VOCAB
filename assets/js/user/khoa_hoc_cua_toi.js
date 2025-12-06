@@ -133,7 +133,7 @@ document.addEventListener('DOMContentLoaded', function() {
             await fetch(`${API_BASE_URL}/delete-course.php`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ user_id: USER_ID, course_id: courseId, action: 'delete' })
+                body: JSON.stringify({ course_id: courseId, action: 'delete' })
             });
         } catch (e) {
             console.error("Lỗi xóa ngầm:", e);
@@ -145,7 +145,6 @@ document.addEventListener('DOMContentLoaded', function() {
         try {
             // Cần gửi đủ thông tin để update-course.php không bị lỗi thiếu trường
             const payload = {
-                user_id: USER_ID,
                 course_id: course.id,
                 course_name: course.tieuDe, // Mapping lại tên trường cho khớp API
                 description: course.mota || '',
@@ -192,7 +191,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const response = await fetch(`${API_BASE_URL}/delete-course.php`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ user_id: USER_ID, course_id: courseId, action: action })
+                body: JSON.stringify({ course_id: courseId, action: action })
             });
             const result = await response.json();
             if (result.success) {
@@ -412,7 +411,7 @@ document.addEventListener('DOMContentLoaded', function() {
             if (!name) return alert('Vui lòng nhập tên khóa học');
 
             const isUpdate = (editingCourseId !== null);
-            const payload = { user_id: USER_ID, course_name: name, description: desc, visibility: visi, tags: tagsToSend };
+            const payload = { course_name: name, description: desc, visibility: visi, tags: tagsToSend };
             if (isUpdate) payload.course_id = editingCourseId;
 
             btnSubmitTaoKhoaHoc.textContent = "Đang xử lý...";

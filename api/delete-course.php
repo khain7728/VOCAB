@@ -33,6 +33,9 @@ try {
         throw new Exception('Method Not Allowed');
     }
 
+    // ✅ BẢO MẬT: Lấy user_id từ session
+    $user_id = api_require_login();
+
     // Đọc và validate input JSON
     $raw = file_get_contents('php://input');
     $input = json_decode($raw, true);
@@ -41,13 +44,14 @@ try {
         throw new Exception('Dữ liệu gửi lên không đúng định dạng JSON.');
     }
 
-    if (!isset($input['course_id']) || !isset($input['user_id']) || !isset($input['action'])) {
-        throw new Exception('Thiếu tham số bắt buộc (course_id, user_id, action).');
+    if (!isset($input['course_id']) || !isset($input['action'])) {
+        throw new Exception('Thiếu tham số bắt buộc (course_id, action).');
     }
 
     $course_id = intval($input['course_id']);
-    $user_id   = intval($input['user_id']);
     $action    = trim($input['action']);
+    
+    // ⚠️ SECURITY: user_id không còn nhận từ client nữa
 
     if ($course_id <= 0 || $user_id <= 0) {
         throw new Exception('course_id hoặc user_id không hợp lệ.');

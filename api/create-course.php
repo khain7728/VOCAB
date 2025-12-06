@@ -38,20 +38,20 @@ try {
         throw new Exception('Method Not Allowed');
     }
 
-    // ✅ BẢO MẬT: Lấy user_id từ session/token (Giả định hàm này tồn tại trong config)
-    // Lưu ý: Biến này sẽ bị ghi đè bởi input bên dưới theo logic cũ của bạn.
-    if (function_exists('api_require_login')) {
-        $user_id = api_require_login();
-    }
+    // ✅ BẢO MẬT: CHỈ lấy user_id từ session - KHÔNG cho phép client gửi
+    $user_id = api_require_login();
 
     $input = json_decode(file_get_contents('php://input'), true);
     
-    // Validate dữ liệu
-    // Logic cũ: Ưu tiên lấy user_id từ input client gửi lên (nếu có)
-    if (isset($input['user_id'])) {
-        $user_id = intval($input['user_id']);
-    }
+    // // Validate dữ liệu
+    // // Logic cũ: Ưu tiên lấy user_id từ input client gửi lên (nếu có)
+    // if (isset($input['user_id'])) {
+    //     $user_id = intval($input['user_id']);
+    // }
 
+    // SECURITY: Không chấp nhận user_id từ client (đã bỏ)
+    // Client KHÔNG được phép gửi user_id để tránh privilege escalation
+    
     $course_name = isset($input['course_name']) ? trim($input['course_name']) : '';
     $description = isset($input['description']) ? trim($input['description']) : '';
     $visibility = isset($input['visibility']) ? $input['visibility'] : 'public';

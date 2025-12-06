@@ -152,7 +152,6 @@ async function saveReviewSession() {
                 'Content-Type': 'application/json',
             },
             body: JSON.stringify({
-                user_id: USER_ID,
                 course_id: COURSE_ID,
                 review_type: 'multiple-choice',
                 total_words: totalQuestions,
@@ -356,7 +355,6 @@ async function saveResultsAndRedirect() {
     
     sessionStorage.setItem('review_results', JSON.stringify({
         course_id: COURSE_ID,
-        user_id: USER_ID,
         type: 'multiple-choice',
         total: totalQuestions,
         correct: correctCount,

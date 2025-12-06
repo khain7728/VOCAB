@@ -19,11 +19,13 @@ require_once '../config/config.php';
 try {
     if ($_SERVER['REQUEST_METHOD'] !== 'POST') throw new Exception('Method Not Allowed');
     
+    // ✅ BẢO MẬT: Lấy user_id từ session
+    $user_id = api_require_login();
+    
     // 1. Lấy dữ liệu từ Client (JSON)
     $input = json_decode(file_get_contents('php://input'), true);
     
-    // Lấy user_id và course_id từ input (Vì JS gửi dạng JSON body)
-    $user_id = isset($input['user_id']) ? intval($input['user_id']) : 0;
+    // Lấy course_id từ input (KHÔNG nhận user_id từ client)
     $course_id = isset($input['course_id']) ? intval($input['course_id']) : 0;
 
     // Validate dữ liệu đầu vào

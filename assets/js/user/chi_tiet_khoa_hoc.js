@@ -271,7 +271,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const response = await fetch(`${API_BASE_URL}/delete-word.php`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ user_id: USER_ID, word_id: wordId })
+                body: JSON.stringify({ word_id: wordId })
             });
 
             const result = await response.json();

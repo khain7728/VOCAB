@@ -22,10 +22,14 @@ require_once '../config/config.php';
 
 try {
     if ($_SERVER['REQUEST_METHOD'] !== 'POST') throw new Exception('Method Not Allowed');
+    
+    // ✅ BẢO MẬT: Lấy user_id từ session
+    $user_id = api_require_login();
+    
     $input = json_decode(file_get_contents('php://input'), true);
 
     $course_id = isset($input['course_id']) ? intval($input['course_id']) : 0;
-    $user_id = isset($input['user_id']) ? intval($input['user_id']) : 0;
+    // ⚠️ SECURITY: Không nhận user_id từ client nữa
     $course_name = isset($input['course_name']) ? trim($input['course_name']) : '';
     $description = isset($input['description']) ? trim($input['description']) : '';
     $visibility = isset($input['visibility']) ? $input['visibility'] : 'public';
