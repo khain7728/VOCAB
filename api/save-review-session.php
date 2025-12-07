@@ -16,6 +16,7 @@ header('Access-Control-Allow-Methods: POST');
 header('Access-Control-Allow-Headers: Content-Type');
 
 require_once '../config/config.php';
+require_once '../includes/notification_helper.php';
 
 try {
     // BẢO MẬT: Lấy user_id từ session
@@ -145,6 +146,16 @@ try {
     
     // Commit transaction
     $conn->commit();
+    
+    // Tạo thông báo cho user
+    $courseStmt = $conn->prepare("SELECT course_name FROM course WHERE course_id = ?");
+    $courseStmt->bind_param("i", $course_id);
+    $courseStmt->execute();
+    $courseResult = $courseStmt->get_result();
+    if ($courseRow = $courseResult->fetch_assoc()) {
+        notifyReviewCompleted($conn, $user_id, $courseRow['course_name'], $review_type, $score);
+    }
+    $courseStmt->close();
     
     echo json_encode([
         'success' => true,

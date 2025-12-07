@@ -49,9 +49,9 @@ try {
         throw new ClientException('ID từ vựng không hợp lệ');
     }
 
-    // --- 3. KIỂM TRA QUYỀN SỞ HỮU ---
-    // Join bảng course để xem ai tạo ra khóa học chứa từ này
-    $sqlCheck = "SELECT c.create_by 
+    // --- 3. KIỂM TRA QUYỀN SỞ HỮU & PERMISSION ---
+    // Join bảng course để xem ai tạo ra khóa học chứa từ này và trạng thái khóa học
+    $sqlCheck = "SELECT c.create_by, c.visibility 
                  FROM word w 
                  JOIN course c ON w.course_id = c.course_id 
                  WHERE w.word_id = ?";
@@ -68,9 +68,26 @@ try {
     }
     
     $row = $resCheck->fetch_assoc();
+    $course_owner_id = $row['create_by'];
+    $course_visibility = $row['visibility'];
+    
     // Validate quyền
-    if ($row['create_by'] != $user_id) {
-        throw new ClientException('Bạn không có quyền xóa từ này (chỉ chủ khóa học mới được xóa)');
+    $is_owner = ($course_owner_id == $user_id);
+    
+    // Nếu user là admin
+    if (isset($_SESSION['role']) && $_SESSION['role'] === 'admin') {
+        // Admin chỉ được xóa từ vựng nếu: (1) Admin tạo khóa học, HOẶC (2) Khóa học công khai của user
+        $is_admin_owner = ($course_owner_id == $user_id);
+        $is_public = ($course_visibility === 'public');
+        
+        if (!$is_admin_owner && !$is_public) {
+            throw new ClientException('Admin không thể xóa từ vựng trong khóa học riêng tư của người dùng.');
+        }
+    } else {
+        // User thường chỉ được xóa từ khóa học của mình
+        if (!$is_owner) {
+            throw new ClientException('Bạn không có quyền xóa từ này (chỉ chủ khóa học mới được xóa)');
+        }
     }
     $stmtCheck->close();
 

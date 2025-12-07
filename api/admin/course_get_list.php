@@ -15,6 +15,7 @@ try {
     if (!check_session_timeout() || !validate_session_security()) throw new Exception("Phiên hết hạn.");
     if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') throw new Exception("Không quyền.");
 
+    $admin_id = $_SESSION['user_id'];
     $page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
     $limit = 10;
     $offset = ($page - 1) * $limit;
@@ -49,7 +50,7 @@ try {
     $totalRecords = $stmtCount->get_result()->fetch_assoc()['total'];
     $totalPages = ceil($totalRecords / $limit);
 
-    $sqlData = "SELECT c.course_id, c.course_code, c.course_name, c.visibility, c.created_at, c.description,
+    $sqlData = "SELECT c.course_id, c.course_code, c.course_name, c.visibility, c.created_at, c.description, c.create_by,
                        IFNULL(u.name, 'Admin') as author_name,
                        GROUP_CONCAT(t.tag_name SEPARATOR ', ') as tags
                 FROM course c
@@ -68,6 +69,14 @@ try {
     $stmt->bind_param($types, ...$params);
     $stmt->execute();
     $data = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+
+    // Thêm thông tin quyền chỉnh sửa từ vựng
+    foreach ($data as &$course) {
+        $is_admin_course = ($course['create_by'] == $admin_id);
+        $is_public = ($course['visibility'] === 'public');
+        // Có thể chỉnh sửa nếu: (1) Admin tạo, hoặc (2) Khóa học công khai của user
+        $course['can_edit_vocab'] = $is_admin_course || $is_public;
+    }
 
     ob_clean();
     echo json_encode([

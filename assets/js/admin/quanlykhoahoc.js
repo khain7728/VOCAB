@@ -63,8 +63,15 @@ function renderTable(data, startIndex) {
     let html = '';
     data.forEach((item, index) => {
         const id = item.course_id;
+        const canEdit = item.can_edit_vocab;
         let tagsHtml = item.tags ? item.tags.split(',').map(t => `<span style="background:#EEF2FF; color:#4F46E5; padding:2px 6px; border-radius:4px; font-size:11px; margin-right:2px;">${escapeHtml(t.trim())}</span>`).join('') : '';
         const statusBadge = (item.visibility === 'public') ? `<span class="status-badge public">Công khai</span>` : `<span class="status-badge private">Riêng tư</span>`;
+        
+        // Nút quản lý từ vựng: chỉ cho phép chỉnh sửa nếu can_edit_vocab = true, ngược lại chỉ xem
+        const vocabBtn = canEdit 
+            ? `<button class="btn-action btn-vocab" onclick="manageVocabulary(${id})" title="Quản lý từ vựng"><i class="fa-solid fa-book"></i></button>`
+            : `<button class="btn-action btn-vocab-view" onclick="viewVocabulary(${id})" title="Xem từ vựng"><i class="fa-solid fa-book-open"></i></button>`;
+        
         html += `<tr>
             <td class="text-center">${startIndex + index + 1}</td>
             <td><strong>${escapeHtml(item.course_code)}</strong></td>
@@ -75,6 +82,7 @@ function renderTable(data, startIndex) {
             <td class="text-center">${statusBadge}</td>
             <td class="text-center">
                 <button class="btn-action btn-edit" onclick="openModal('edit', ${id})" title="Sửa"><i class="fa-solid fa-pen"></i></button>
+                ${vocabBtn}
                 <button class="btn-action btn-delete" onclick="handleDelete(${id})" title="Xóa"><i class="fa-solid fa-trash"></i></button>
             </td>
         </tr>`;
@@ -290,6 +298,14 @@ function showToast(message, type = 'success') {
         toast.style.transform = 'translateX(100%)';
         setTimeout(() => toast.remove(), 300); }, 3000);
 }
+
+window.manageVocabulary = function(courseId) {
+    window.location.href = `themtuvung.html?id=${courseId}`;
+};
+
+window.viewVocabulary = function(courseId) {
+    window.location.href = `themtuvung.html?id=${courseId}&view_only=1`;
+};
 
 window.handleDelete = async function(id) {
     if (!confirm("CẢNH BÁO: Xóa khóa học sẽ xóa toàn bộ dữ liệu liên quan.\nTiếp tục?")) return;

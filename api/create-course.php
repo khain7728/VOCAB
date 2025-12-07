@@ -31,6 +31,7 @@ ini_set('display_errors', 0);
 header('Content-Type: application/json; charset=utf-8');
 
 require_once '../config/config.php';
+require_once '../includes/notification_helper.php';
 
 try {
     // Chỉ nhận POST
@@ -117,6 +118,9 @@ try {
     }
 
     $conn->commit();
+    
+    // Tạo thông báo cho user
+    notifyCourseCreated($conn, $user_id, $course_name);
 
     // 3. Trả về kết quả JSON
     echo json_encode([

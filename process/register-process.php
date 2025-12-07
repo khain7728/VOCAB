@@ -7,6 +7,7 @@
 // Load config
 require_once __DIR__ . '/../config/config.php';
 require_once __DIR__ . '/../includes/rate_limiter.php';
+require_once __DIR__ . '/../includes/notification_helper.php';
 
 // Rate limiting - Chống spam đăng ký
 checkRegisterRateLimit();
@@ -122,6 +123,9 @@ try {
         
         // Lưu code vào session để hiển thị (CHỈ TESTING - XÓA KHI PRODUCTION)
         $_SESSION['verification_code_debug'] = $verification_code;
+        
+        // Tạo thông báo chào mừng user mới
+        notifyWelcomeNewUser($conn, $conn->insert_id, $name);
         
         // Xóa session data cũ
         unset($_SESSION['register_errors']);

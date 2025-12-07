@@ -3,6 +3,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const API_BASE_URL = 'http://localhost/VOCAB/api';
     const urlParams = new URLSearchParams(window.location.search);
     const COURSE_ID = urlParams.get('id');
+    const VIEW_ONLY = urlParams.get('view_only') === '1';
 
     let editingIndex = -1; 
 
@@ -30,6 +31,15 @@ document.addEventListener('DOMContentLoaded', function() {
         alert("Không tìm thấy ID khóa học.");
         window.location.href = 'quanlykhoahoc.html';
         return;
+    }
+
+    // Nếu chế độ chỉ xem, hiển thị thông báo và vô hiệu hóa form
+    if (VIEW_ONLY) {
+        const pageTitle = document.querySelector('.tieu-de-chinh');
+        if (pageTitle) pageTitle.textContent = 'Xem từ vựng (Chỉ đọc)';
+        
+        const subTitle = document.querySelector('.tieu-de-phu');
+        if (subTitle) subTitle.innerHTML = '<span style="color:#DC2626;"><i class="fa-solid fa-lock"></i> Khóa học riêng tư của người dùng - Chỉ được xem, không chỉnh sửa</span>';
     }
 
     let danhSachTu = [];
@@ -118,6 +128,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 const hienThiLink = tu.linkAm ? `<i class="fa-solid fa-link" style="font-size:0.8em; color:#888" title="Có link audio"></i>` : '';
                 const hienThiMoTa = tu.moTa ? `<p class="mo-ta-tu" style="font-size:0.9em; color:#555; font-style:italic; margin-top:4px;">${tu.moTa}</p>` : '';
 
+                const actionButtons = VIEW_ONLY 
+                    ? `<button class="nut-icon nut-phat-am" data-action="phat-am" title="Nghe thử"><i class="fa-solid fa-volume-high"></i></button>`
+                    : `<button class="nut-icon nut-sua-tu" data-action="sua-tu" title="Sửa từ này"><i class="fa-solid fa-pen-to-square"></i></button>
+                       <button class="nut-icon nut-phat-am" data-action="phat-am" title="Nghe thử"><i class="fa-solid fa-volume-high"></i></button>
+                       <button class="nut-icon nut-xoa-tu" data-action="xoa-tu" title="Xóa"><i class="fa-solid fa-times"></i></button>`;
+
                 theTuVung.innerHTML = `
                     <div class="thong-tin-tu">
                         <p class="tu-vung-chinh">
@@ -131,9 +147,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         ${hienThiLink}
                     </div>
                     <div class="hanh-dong-tu">
-                        <button class="nut-icon nut-sua-tu" data-action="sua-tu" title="Sửa từ này"><i class="fa-solid fa-pen-to-square"></i></button>
-                        <button class="nut-icon nut-phat-am" data-action="phat-am" title="Nghe thử"><i class="fa-solid fa-volume-high"></i></button>
-                        <button class="nut-icon nut-xoa-tu" data-action="xoa-tu" title="Xóa"><i class="fa-solid fa-times"></i></button>
+                        ${actionButtons}
                     </div>
                 `;
                 danhSachContainer.appendChild(theTuVung);
@@ -405,11 +419,19 @@ document.addEventListener('DOMContentLoaded', function() {
         } else { history.back(); }
     }
 
-    if (formThemTu) formThemTu.addEventListener('submit', handleThemTu);
+    // Vô hiệu hóa form và nút nếu ở chế độ chỉ xem
+    if (VIEW_ONLY) {
+        if (formThemTu) formThemTu.style.display = 'none';
+        if (btnLuuVaThoat) btnLuuVaThoat.style.display = 'none';
+        if (btnHuyBo) btnHuyBo.style.display = 'none';
+    } else {
+        if (formThemTu) formThemTu.addEventListener('submit', handleThemTu);
+        if (btnHuyBo) btnHuyBo.addEventListener('click', handleHuyBo);
+        if (btnLuuVaThoat) btnLuuVaThoat.addEventListener('click', handleLuuVaThoat);
+    }
+
     if (danhSachContainer) danhSachContainer.addEventListener('click', handleDanhSachClick);
     if (btnTroVe) btnTroVe.addEventListener('click', () => history.back());
-    if (btnHuyBo) btnHuyBo.addEventListener('click', handleHuyBo);
-    if (btnLuuVaThoat) btnLuuVaThoat.addEventListener('click', handleLuuVaThoat);
 
     loadExistingWords();
 });

@@ -29,8 +29,8 @@ try {
     $id = (int)$input['id'];
 
     // 3. LẤY THÔNG TIN KHÓA HỌC TRƯỚC KHI XÓA
-    // Mục đích: Kiểm tra trạng thái và lấy tên để ghi log
-    $stmtCheck = $conn->prepare("SELECT course_name, visibility FROM course WHERE course_id = ?");
+    // Mục đích: Kiểm tra trạng thái, owner và lấy tên để ghi log
+    $stmtCheck = $conn->prepare("SELECT course_name, visibility, create_by FROM course WHERE course_id = ?");
     $stmtCheck->bind_param("i", $id);
     $stmtCheck->execute();
     $resultCheck = $stmtCheck->get_result();
@@ -40,11 +40,17 @@ try {
         throw new Exception("Khóa học không tồn tại hoặc đã bị xóa.");
     }
 
-    // --- YÊU CẦU LOGIC: CHỈ XÓA ĐƯỢC KHÓA HỌC CÔNG KHAI ---
-    // Lưu ý: Logic này tuân thủ đúng yêu cầu của bạn (chỉ xóa Public). 
-    // Nếu bạn muốn ngược lại (chỉ xóa Private), hãy đổi 'public' thành 'private'.
-    if ($course['visibility'] !== 'public') {
-        throw new Exception("Chỉ được phép xóa các khóa học đang ở trạng thái CÔNG KHAI (Public).");
+    $course_owner_id = (int)$course['create_by'];
+    $is_admin_owner = ($course_owner_id === $admin_id);
+
+    // --- LOGIC MỚI: PHÂN QUYỀN XÓA KHÓA HỌC ---
+    // 1. Nếu khóa học do admin tạo → Admin tự do xóa (public hoặc private đều được)
+    // 2. Nếu khóa học do user tạo:
+    //    - Public → Admin có quyền xóa
+    //    - Private → Admin KHÔNG được xóa (bảo vệ quyền riêng tư của user)
+    
+    if (!$is_admin_owner && $course['visibility'] === 'private') {
+        throw new Exception("Không thể xóa khóa học riêng tư của người dùng. Chỉ có thể xóa khóa học công khai hoặc khóa học của chính bạn.");
     }
 
     // 4. THỰC HIỆN XÓA

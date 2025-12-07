@@ -165,7 +165,7 @@ body {
 
 .admin-table th:last-child,
 .admin-table td:last-child {
-    width: 120px;
+    width: 150px;
     text-align: center;
     white-space: nowrap;
 }
@@ -191,14 +191,14 @@ body {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 32px;
-    height: 32px;
+    width: 30px;
+    height: 30px;
     border-radius: 4px;
-    margin: 0 4px;
+    margin: 0 2px;
     border: none;
     background: transparent;
     cursor: pointer;
-    font-size: 14px;
+    font-size: 13px;
 }
 
 .btn-action:hover {
@@ -207,6 +207,14 @@ body {
 
 .btn-edit {
     color: #2563EB;
+}
+
+.btn-vocab {
+    color: #059669;
+}
+
+.btn-vocab-view {
+    color: #6B7280;
 }
 
 .btn-delete {

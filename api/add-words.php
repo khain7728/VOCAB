@@ -54,20 +54,38 @@ try {
          // throw new Exception('Cần tối thiểu 3 từ.'); 
     }
 
-    // 3. Check Ownership (Quyền sở hữu khóa học)
-    $checkOwnerSql = "SELECT course_id FROM course WHERE course_id = ?"; 
-    // $checkOwnerSql = "SELECT course_id FROM course WHERE course_id = ? AND create_by = ?"; // Nếu cần check user
-    
+    // 3. Check Ownership & Permission (Quyền chỉnh sửa từ vựng)
+    $checkOwnerSql = "SELECT create_by, visibility FROM course WHERE course_id = ?";
     $stmtOwner = $conn->prepare($checkOwnerSql);
     $stmtOwner->bind_param("i", $course_id); 
     $stmtOwner->execute();
-    $stmtOwner->store_result();
+    $result = $stmtOwner->get_result();
     
-    if ($stmtOwner->num_rows === 0) {
+    if ($result->num_rows === 0) {
         $stmtOwner->close();
-        throw new Exception("Khóa học không tồn tại hoặc bạn không có quyền.");
+        throw new Exception("Khóa học không tồn tại.");
     }
+    
+    $course = $result->fetch_assoc();
     $stmtOwner->close();
+    
+    // Kiểm tra quyền chỉnh sửa từ vựng
+    $is_owner = ($course['create_by'] == $user_id);
+    $is_public = ($course['visibility'] === 'public');
+    
+    // Nếu user là admin
+    if (isset($_SESSION['role']) && $_SESSION['role'] === 'admin') {
+        // Admin chỉ được chỉnh sửa nếu: (1) Admin tạo khóa học, HOẶC (2) Khóa học công khai của user
+        $is_admin_owner = ($course['create_by'] == $user_id);
+        if (!$is_admin_owner && !$is_public) {
+            throw new Exception("Admin không thể chỉnh sửa từ vựng trong khóa học riêng tư của người dùng.");
+        }
+    } else {
+        // User thường chỉ được sửa khóa học của mình
+        if (!$is_owner) {
+            throw new Exception("Bạn không có quyền chỉnh sửa khóa học này.");
+        }
+    }
 
     // 4. Transaction & Prepare Statements
     $conn->begin_transaction();

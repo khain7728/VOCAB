@@ -15,6 +15,7 @@ error_reporting(0);
 ini_set('display_errors', 0);
 header('Content-Type: application/json; charset=utf-8');
 require_once '../config/config.php';
+require_once '../includes/notification_helper.php';
 
 try {
     if ($_SERVER['REQUEST_METHOD'] !== 'POST') throw new Exception('Method Not Allowed');
@@ -71,6 +72,16 @@ try {
     $stmt->bind_param("ii", $user_id, $course_id);
 
     if ($stmt->execute()) {
+        // Lấy tên khóa học để tạo thông báo
+        $courseNameStmt = $conn->prepare("SELECT course_name FROM course WHERE course_id = ?");
+        $courseNameStmt->bind_param("i", $course_id);
+        $courseNameStmt->execute();
+        $courseNameResult = $courseNameStmt->get_result();
+        if ($courseNameRow = $courseNameResult->fetch_assoc()) {
+            notifyCourseJoined($conn, $user_id, $courseNameRow['course_name']);
+        }
+        $courseNameStmt->close();
+        
         echo json_encode(['success' => true, 'message' => 'Tham gia khóa học thành công!']);
     } else {
         throw new Exception('Lỗi Database: ' . $stmt->error);

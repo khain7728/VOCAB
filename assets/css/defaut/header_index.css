@@ -57,19 +57,26 @@
     transition: color 0.2s ease;
 }
 
-/* Active state */
-#header_index #dieu_huong .header a.active {
+/* Active state - FIXED: Active được áp cho thẻ a, không phải .header */
+#header_index #dieu_huong a.nav-link.active {
     background-color: #7BB7EE;
-    color: #fff;
-    padding: 0.5rem 2rem;
+    color: #fff !important;
+    padding: 0.5rem 1.5rem;
     border-radius: 1rem;
+    display: inline-block;
 }
 
 /* Hover effect */
 #header_index #dieu_huong .header:hover {
-    background-color: #7BB7EE;
+    background-color: rgba(123, 183, 238, 0.1);
 }
 
 #header_index #dieu_huong .header:hover a {
+    color: #5B9BD5;
+}
+
+/* Hover không áp dụng khi đã active */
+#header_index #dieu_huong .header:hover a.active {
+    background-color: #7BB7EE;
     color: #fff;
 }
