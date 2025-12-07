@@ -92,12 +92,14 @@ async function initializeUser() {
 /**
  * Load thống kê dashboard
  */
-async function loadDashboardStats() {
-    // Check cache first
-    const cached = getCachedData('dashboard_stats');
-    if (cached) {
-        displayDashboardStats(cached);
-        return;
+async function loadDashboardStats(forceRefresh = false) {
+    // Check cache first (skip if forceRefresh)
+    if (!forceRefresh) {
+        const cached = getCachedData('dashboard_stats');
+        if (cached) {
+            displayDashboardStats(cached);
+            return;
+        }
     }
     
     try {
@@ -148,12 +150,14 @@ function displayDashboardStats(data) {
 /**
  * Load khóa học của người dùng
  */
-async function loadMyCourses() {
-    // Check cache first
-    const cached = getCachedData('dashboard_courses');
-    if (cached) {
-        displayMyCourses(cached);
-        return;
+async function loadMyCourses(forceRefresh = false) {
+    // Check cache first (skip if forceRefresh)
+    if (!forceRefresh) {
+        const cached = getCachedData('dashboard_courses');
+        if (cached) {
+            displayMyCourses(cached);
+            return;
+        }
     }
     
     try {
@@ -233,12 +237,14 @@ function displayMyCourses(courses) {
 /**
  * Load mục tiêu hàng ngày
  */
-async function loadDailyGoal() {
-    // Check cache first
-    const cached = getCachedData('dashboard_goal');
-    if (cached) {
-        displayDailyGoal(cached);
-        return;
+async function loadDailyGoal(forceRefresh = false) {
+    // Check cache first (skip if forceRefresh)
+    if (!forceRefresh) {
+        const cached = getCachedData('dashboard_goal');
+        if (cached) {
+            displayDailyGoal(cached);
+            return;
+        }
     }
     
     try {
@@ -469,12 +475,14 @@ function escapeHtml(text) {
  */
 let weeklyChart = null; // Biến global để lưu Chart instance
 
-async function loadWeeklyQuizStats() {
-    // Check cache first
-    const cached = getCachedData('dashboard_weekly_stats');
-    if (cached) {
-        drawWeeklyChart(cached);
-        return;
+async function loadWeeklyQuizStats(forceRefresh = false) {
+    // Check cache first (skip if forceRefresh)
+    if (!forceRefresh) {
+        const cached = getCachedData('dashboard_weekly_stats');
+        if (cached) {
+            drawWeeklyChart(cached);
+            return;
+        }
     }
     
     try {
@@ -547,9 +555,9 @@ function drawWeeklyChart(weekData) {
                 pointBackgroundColor: '#4A90E2',
                 pointBorderColor: '#fff',
                 pointBorderWidth: 2,
-                pointRadius: 6,
-                pointHoverRadius: 6, // Giữ nguyên kích thước khi hover
-                pointHoverBorderWidth: 3, // Chỉ tăng độ dày viền
+                pointRadius: 5,
+                pointHoverRadius: 5,
+                pointHoverBorderWidth: 2,
                 tension: 0,
                 fill: true
             }]
@@ -638,15 +646,27 @@ function drawWeeklyChart(weekData) {
             },
             interaction: {
                 intersect: false,
-                mode: 'nearest',
+                mode: 'index',
                 axis: 'x'
             },
-            animation: {
-                duration: 0 // Tắt animation khi hover để tránh rung
+            animation: false,
+            animations: {
+                colors: false,
+                x: false,
+                y: false
+            },
+            transitions: {
+                active: {
+                    animation: {
+                        duration: 0
+                    }
+                }
             },
             hover: {
-                animationDuration: 0 // Tắt animation khi hover
-            }
+                animationDuration: 0,
+                mode: null
+            },
+            responsiveAnimationDuration: 0
         }
     });
     

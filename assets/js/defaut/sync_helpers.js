@@ -63,14 +63,21 @@ function setupDashboardSync() {
         window.SyncManager.on(action, () => {
             console.log(`[Sync] Refreshing dashboard due to: ${action}`);
             
-            // Reload dashboard stats nếu function tồn tại
+            // Reload dashboard stats với forceRefresh = true để bỏ qua cache
             if (typeof loadDashboardStats === 'function') {
-                loadDashboardStats();
+                loadDashboardStats(true);
             }
             
-            // Reload daily goal nếu function tồn tại
+            // Reload daily goal với forceRefresh = true
             if (typeof loadDailyGoal === 'function') {
-                loadDailyGoal();
+                loadDailyGoal(true);
+            }
+            
+            // Reload weekly chart khi có quiz completed
+            if (action === window.SYNC_ACTIONS.QUIZ_COMPLETED || action === window.SYNC_ACTIONS.REVIEW_COMPLETED) {
+                if (typeof loadWeeklyQuizStats === 'function') {
+                    loadWeeklyQuizStats(true);
+                }
             }
         });
     });
@@ -93,9 +100,14 @@ function setupCourseListSync() {
         window.SyncManager.on(action, () => {
             console.log(`[Sync] Refreshing courses due to: ${action}`);
             
-            // Reload course list nếu function tồn tại
+            // Reload course list với forceRefresh = true để bỏ qua cache
             if (typeof fetchMyCourses === 'function') {
                 fetchMyCourses();
+            }
+            
+            // Reload loadMyCourses nếu tồn tại (cho Dashboard)
+            if (typeof loadMyCourses === 'function') {
+                loadMyCourses(true);
             }
             
             if (typeof fetchPublicCourses === 'function') {
