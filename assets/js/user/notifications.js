@@ -16,12 +16,15 @@
   const CONFIG = {
     API_URL: '../../api/get-notifications.php',
     AUTO_MARK_READ: true, // Tự động đánh dấu đã đọc khi click vào thông báo
+    CACHE_DURATION: 30000, // Cache 30 giây
   };
 
   // State quản lý
   let currentPage = 1;
   let isLoading = false;
   let hasMore = true;
+  let lastFetchTime = 0;
+  let cachedData = null;
 
   /**
    * KHỞI TẠO MODULE KHI DOM READY
@@ -44,11 +47,35 @@
   async function loadNotifications(page = 1, replace = false) {
     if (isLoading) return;
     
+    // Kiểm tra cache nếu đang load trang đầu
+    const now = Date.now();
+    if (page === 1 && cachedData && (now - lastFetchTime) < CONFIG.CACHE_DURATION) {
+      console.log('📦 Using cached notifications');
+      const { notifications, pagination, unread_count } = cachedData;
+      renderNotifications(notifications, replace);
+      updateBadge(unread_count);
+      updateLoadMoreButton(pagination.has_more);
+      return;
+    }
+    
     isLoading = true;
     showLoadingIndicator();
 
     try {
       const response = await fetch(`${CONFIG.API_URL}?page=${page}`);
+      
+      // Xử lý lỗi 429 Too Many Requests - không hiển thị error
+      if (response.status === 429) {
+        console.warn('⚠️ Rate limit reached, skipping notifications load');
+        // Thử lại sau 5 giây nếu cần
+        setTimeout(() => {
+          if (page === 1 && replace) {
+            loadNotifications(page, replace);
+          }
+        }, 5000);
+        return;
+      }
+      
       const result = await response.json();
 
       if (!result.success) {
@@ -56,6 +83,12 @@
       }
 
       const { notifications, pagination, unread_count } = result.data;
+
+      // Cache dữ liệu trang đầu
+      if (page === 1) {
+        cachedData = result.data;
+        lastFetchTime = now;
+      }
 
       // Cập nhật state
       currentPage = pagination.current_page;
@@ -74,7 +107,10 @@
 
     } catch (error) {
       console.error('❌ Lỗi khi load thông báo:', error);
-      showError('Không thể tải thông báo. Vui lòng thử lại!');
+      // Chỉ hiển thị error nếu không phải rate limit
+      if (!error.message.includes('429')) {
+        showError('Không thể tải thông báo. Vui lòng thử lại!');
+      }
     } finally {
       isLoading = false;
       hideLoadingIndicator();

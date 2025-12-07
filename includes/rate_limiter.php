@@ -82,7 +82,7 @@ function checkRateLimit($maxRequests = 60, $timeWindow = 60, $action = 'general'
  * Rate limit cho API endpoints (strict hơn)
  */
 function checkApiRateLimit() {
-    return checkRateLimit(30, 60, 'api'); // 30 requests/minute
+    return checkRateLimit(100, 60, 'api'); // 100 requests/minute
 }
 
 /**
@@ -193,7 +193,7 @@ function getRateLimitInfo($action = 'general') {
     // Custom limits per action
     switch ($action) {
         case 'api':
-            $maxRequests = 30;
+            $maxRequests = 100;
             break;
         case 'login':
             $maxRequests = 5;
