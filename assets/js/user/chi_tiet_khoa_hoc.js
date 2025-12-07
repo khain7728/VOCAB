@@ -265,7 +265,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     window.editWord = function(wordId) {
-        window.location.href = `sua_tu_vung.html?id=${wordId}&course_id=${COURSE_ID}`;
+        window.location.href = `them_tu_vung.html?word_id=${wordId}&course_id=${COURSE_ID}`;
     };
 
     window.deleteWord = async function(wordId) {

@@ -32,11 +32,24 @@ try {
     // --- B. TÍNH TOÁN THỐNG KÊ (Real-time) ---
 
     // 1. Tổng số khóa học (Yêu cầu: Lấy từ bảng course, cột create_by)
-    $sqlCourse = "SELECT COUNT(*) as cnt FROM course WHERE create_by = ?";
-    $stmtCourse = $conn->prepare($sqlCourse);
-    $stmtCourse->bind_param("i", $user_id);
-    $stmtCourse->execute();
-    $totalCourses = $stmtCourse->get_result()->fetch_assoc()['cnt'];
+    try {
+        $sqlCourses = "SELECT COUNT(DISTINCT c.course_id) as total_courses
+                       FROM course c
+                       LEFT JOIN user_course uc ON c.course_id = uc.course_id AND uc.user_id = ?
+                       WHERE c.create_by = ? OR uc.user_id = ?";
+        
+        $stmtCourses = $conn->prepare($sqlCourses);
+        if ($stmtCourses) {
+            $stmtCourses->bind_param("iii", $user_id, $user_id, $user_id);
+            $stmtCourses->execute();
+            $resultCourses = $stmtCourses->get_result();
+            $row = $resultCourses->fetch_assoc();
+            $totalCourses = (int)($row['total_courses'] ?? 0);
+            $stmtCourses->close();
+        }
+    } catch (Exception $e) {
+        error_log("[get-dashboard-stats] Error counting courses: " . $e->getMessage());
+    }
 
     // 2. Thống kê Quiz & Độ chính xác (Yêu cầu: Lấy từ bảng review_session)
     // - total_quizzes: Đếm số dòng
