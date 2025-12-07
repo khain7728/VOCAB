@@ -20,10 +20,11 @@ document.addEventListener('DOMContentLoaded', function() {
         toastContainer.id = 'toast-container';
         document.body.appendChild(toastContainer);
     }
-    function showToast(message, duration = 2000) {
+    function showToast(message, duration = 2000, type = 'success') {
         const toast = document.createElement('div');
-        toast.className = 'toast-msg';
-        toast.innerHTML = `<i class="fa-solid fa-check-circle"></i> ${message}`;
+        toast.className = `toast-msg ${type}`;
+        const icon = type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle';
+        toast.innerHTML = `<i class="fa-solid ${icon}"></i> ${message}`;
         toastContainer.appendChild(toast);
         requestAnimationFrame(() => { toast.classList.add('show'); });
         setTimeout(() => {
@@ -39,6 +40,8 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     let danhSachTu = [];
+    let isProcessing = false; // Prevent duplicate submissions
+    let autoSaveTimer = null;
 
     // DOM ELEMENTS (Giữ nguyên)
     const formThemTu = document.getElementById('form-them-tu');
@@ -157,12 +160,11 @@ document.addEventListener('DOMContentLoaded', function() {
                     theTuVung.style.transition = 'all 0.3s ease';
                 }
 
-                theTuVung.setAttribute('data-index', index);
+                theTuVung.setAttribute('data-index', index + 1); // Số thứ tự bắt đầu từ 1
 
                 const hienThiTuLoai = tu.tuLoai ? `<span style="font-weight:normal; font-size:0.9em">(${tu.tuLoai})</span>` : '';
                 const hienThiDaCo = tu.isExisting ? `<span style="font-size:0.7em; color:green; margin-left:5px">✔ Đã có</span>` : '';
-                const hienThiLink = tu.linkAm ? `<i class="fa-solid fa-link" style="font-size:0.8em; color:#888" title="Có link audio"></i>` : '';
-                const hienThiMoTa = tu.moTa ? `<p class="mo-ta-tu" style="font-size:0.9em; color:#555; font-style:italic; margin-top:4px;">${tu.moTa}</p>` : '';
+                const hienThiMoTa = tu.moTa ? `<p class="mota-tu">${tu.moTa}</p>` : '';
 
                 theTuVung.innerHTML = `
                     <div class="thong-tin-tu">
@@ -174,11 +176,10 @@ document.addEventListener('DOMContentLoaded', function() {
                         <p class="phien-am-tu">${tu.phienAm}</p>
                         <p class="nghia-tu">${tu.nghia}</p>
                         ${hienThiMoTa}
-                        ${hienThiLink}
                     </div>
                     <div class="hanh-dong-tu">
-                        <button class="nut-icon nut-sua-tu" data-action="sua-tu" title="Sửa từ này"><i class="fa-solid fa-pen-to-square"></i></button>
                         <button class="nut-icon nut-phat-am" data-action="phat-am" title="Nghe thử"><i class="fa-solid fa-volume-high"></i></button>
+                        <button class="nut-icon nut-sua-tu" data-action="sua-tu" title="Sửa từ này"><i class="fa-solid fa-pen-to-square"></i></button>
                         <button class="nut-icon nut-xoa-tu" data-action="xoa-tu" title="Xóa"><i class="fa-solid fa-times"></i></button>
                     </div>
                 `;
@@ -237,8 +238,12 @@ document.addEventListener('DOMContentLoaded', function() {
     // --- XỬ LÝ THÊM/SỬA TỪ (Giữ nguyên logic, chỉ cập nhật biến editingIndex) ---
     function handleThemTu(event) {
         event.preventDefault();
-        if (btnThemTu.disabled) return;
+        if (btnThemTu.disabled || isProcessing) return;
+        
+        isProcessing = true;
         btnThemTu.disabled = true;
+        const originalText = btnThemTu.innerHTML;
+        btnThemTu.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Đang xử lý...';
 
         const tuTiengAnh = inputTuTiengAnh.value.trim();
         const phienAm = inputPhienAm.value.trim();
@@ -248,21 +253,35 @@ document.addEventListener('DOMContentLoaded', function() {
         const moTa = inputMoTa.value.trim();
 
         if (!tuTiengAnh || !nghia) {
-            alert('Vui lòng nhập đầy đủ "Từ tiếng Anh" và "Nghĩa tiếng Việt".');
-            btnThemTu.disabled = false; return;
+            showToast('Vui lòng nhập đầy đủ "Từ tiếng Anh" và "Nghĩa tiếng Việt".', 2000, 'error');
+            isProcessing = false;
+            btnThemTu.disabled = false;
+            btnThemTu.innerHTML = originalText;
+            return;
         }
 
         if (!isEnglishOnly(tuTiengAnh)) {
-            alert('Lỗi: Từ tiếng Anh chỉ được chứa chữ cái và số.');
-            inputTuTiengAnh.focus(); btnThemTu.disabled = false; return;
+            showToast('Từ tiếng Anh chỉ được chứa chữ cái và số.', 2000, 'error');
+            inputTuTiengAnh.focus();
+            isProcessing = false;
+            btnThemTu.disabled = false;
+            btnThemTu.innerHTML = originalText;
+            return;
         }
         if (!isVietnameseValid(nghia)) {
-            alert('Lỗi: Nghĩa tiếng Việt không được chứa ký tự đặc biệt (@, !, #...).');
-            inputNghiaTiengViet.focus(); btnThemTu.disabled = false; return;
+            showToast('Nghĩa tiếng Việt không được chứa ký tự đặc biệt.', 2000, 'error');
+            inputNghiaTiengViet.focus();
+            isProcessing = false;
+            btnThemTu.disabled = false;
+            btnThemTu.innerHTML = originalText;
+            return;
         }
         if (linkAm && linkAm.startsWith('http') && !isValidUrl(linkAm)) {
-            alert('Link phát âm không hợp lệ.');
-            btnThemTu.disabled = false; return;
+            showToast('Link phát âm không hợp lệ.', 2000, 'error');
+            isProcessing = false;
+            btnThemTu.disabled = false;
+            btnThemTu.innerHTML = originalText;
+            return;
         }
 
         // Validate trùng lặp
@@ -274,8 +293,11 @@ document.addEventListener('DOMContentLoaded', function() {
         });
 
         if (isDuplicate) {
-            alert('Từ này đã có trong danh sách!');
-            btnThemTu.disabled = false; return;
+            showToast('Từ này đã có trong danh sách!', 2000, 'error');
+            isProcessing = false;
+            btnThemTu.disabled = false;
+            btnThemTu.innerHTML = originalText;
+            return;
         }
 
         const tuData = {
@@ -303,7 +325,10 @@ document.addEventListener('DOMContentLoaded', function() {
         formThemTu.reset();
         window.scrollTo({ top: 0, behavior: 'smooth' });
         inputTuTiengAnh.focus();
-        setTimeout(() => { btnThemTu.disabled = false; }, 300);
+        
+        isProcessing = false;
+        btnThemTu.disabled = false;
+        btnThemTu.innerHTML = originalText;
     }
 
     function handleDanhSachClick(event) {
