@@ -51,13 +51,11 @@
     width: 100%;
     margin: 0.625rem 0;
     font-family: sans-serif;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
     height: 21.875rem;
     border-radius: 1.25rem;
-    perspective: 62.5rem;
+    perspective: 1000px;
     position: relative;
+    transform-style: preserve-3d;
 }
 
 #frame_flashcard .flashcard {
@@ -65,7 +63,7 @@
     height: 100%;
     position: absolute;
     backface-visibility: hidden;
-    /* ẩn mặt sau khi chưa lật */
+    -webkit-backface-visibility: hidden;
     border: 0.0625rem solid #ccc;
     border-radius: 0.625rem;
     padding: 0.9375rem;
@@ -75,20 +73,20 @@
     justify-content: space-evenly;
     align-items: center;
     background-color: #7BB7EE;
-    transition: transform 0.6s ease-in-out, box-shadow 0.3s ease;
+    transition: transform 0.6s ease-in-out;
     cursor: pointer;
     font-family: sans-serif;
     box-shadow: 0 0.25rem 0.5rem rgba(0, 0, 0, 0.1);
+    transform-style: preserve-3d;
 }
 
 /* Hiệu ứng hover cho flashcard */
 #frame_flashcard .flashcard:hover {
     box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
-    transform: translateY(-0.3125rem);
 }
 
 #frame_flashcard.flipped .flashcard:hover {
-    transform: translateY(-0.3125rem) rotateY(180deg);
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
 }
 
 #frame_flashcard .flashcard #tieude_tuvung,
