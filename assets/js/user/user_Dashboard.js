@@ -9,54 +9,6 @@ const API_BASE = '../../api';
 // Lấy user_id từ session
 let currentUserId = null;
 
-// Cache configuration 
-const CACHE_DURATION = 5 * 60 * 1000; 
-
-/**
- * Cache helper functions
- */
-function getCachedData(key) {
-    const cached = localStorage.getItem(key);
-    if (!cached) return null;
-    
-    try {
-        const data = JSON.parse(cached);
-        const now = Date.now();
-        
-        // Check if cache is still valid
-        if (data.timestamp && (now - data.timestamp < CACHE_DURATION)) {
-            console.log(`Using cached data for: ${key}`);
-            return data.value;
-        }
-        
-        // Cache expired, remove it
-        localStorage.removeItem(key);
-        return null;
-    } catch (e) {
-        localStorage.removeItem(key);
-        return null;
-    }
-}
-
-function setCachedData(key, value) {
-    const data = {
-        timestamp: Date.now(),
-        value: value
-    };
-    localStorage.setItem(key, JSON.stringify(data));
-}
-
-function clearDashboardCache() {
-    const keys = [
-        'dashboard_stats',
-        'dashboard_courses',
-        'dashboard_goal',
-        'dashboard_weekly_stats'
-    ];
-    keys.forEach(key => localStorage.removeItem(key));
-    console.log('🗑️ Dashboard cache cleared');
-}
-
 /**
  * Khởi tạo user_id từ session
  */
@@ -79,7 +31,7 @@ async function initializeUser() {
             window.location.href = '../dangnhap.html';
         }
     } catch (error) {
-        console.error('❌ Error getting session:', error);
+        console.error('Error getting session:', error);
         // Fallback to localStorage
         currentUserId = localStorage.getItem('user_id');
         if (!currentUserId) {
@@ -93,15 +45,6 @@ async function initializeUser() {
  * Load thống kê dashboard
  */
 async function loadDashboardStats(forceRefresh = false) {
-    // Check cache first (skip if forceRefresh)
-    if (!forceRefresh) {
-        const cached = getCachedData('dashboard_stats');
-        if (cached) {
-            displayDashboardStats(cached);
-            return;
-        }
-    }
-    
     try {
         console.log('Fetching dashboard stats for user:', currentUserId);
         const response = await fetch(`${API_BASE}/get-dashboard-stats.php?user_id=${currentUserId}`);
@@ -115,13 +58,11 @@ async function loadDashboardStats(forceRefresh = false) {
         try {
             result = JSON.parse(text);
         } catch (parseError) {
-            console.error('❌ JSON Parse Error. Raw response:', text);
+            console.error('JSON Parse Error. Raw response:', text);
             return;
         }
 
         if (result.success) {
-            // Cache the data
-            setCachedData('dashboard_stats', result.data);
             displayDashboardStats(result.data);
             console.log('Dashboard stats loaded successfully');
         } else {
@@ -151,22 +92,11 @@ function displayDashboardStats(data) {
  * Load khóa học của người dùng
  */
 async function loadMyCourses(forceRefresh = false) {
-    // Check cache first (skip if forceRefresh)
-    if (!forceRefresh) {
-        const cached = getCachedData('dashboard_courses');
-        if (cached) {
-            displayMyCourses(cached);
-            return;
-        }
-    }
-    
     try {
         const response = await fetch(`${API_BASE}/get-my-courses.php?user_id=${currentUserId}`);
         const result = await response.json();
 
         if (result.success) {
-            // Cache the data
-            setCachedData('dashboard_courses', result.data || []);
             displayMyCourses(result.data || []);
         } else {
             console.error('Lỗi khi tải khóa học:', result.error);
@@ -238,15 +168,6 @@ function displayMyCourses(courses) {
  * Load mục tiêu hàng ngày
  */
 async function loadDailyGoal(forceRefresh = false) {
-    // Check cache first (skip if forceRefresh)
-    if (!forceRefresh) {
-        const cached = getCachedData('dashboard_goal');
-        if (cached) {
-            displayDailyGoal(cached);
-            return;
-        }
-    }
-    
     try {
         console.log('Fetching daily goal for user:', currentUserId);
         const response = await fetch(`${API_BASE}/get-daily-goal.php?user_id=${currentUserId}`);
@@ -273,8 +194,6 @@ async function loadDailyGoal(forceRefresh = false) {
         console.log('Daily goal result:', result);
 
         if (result.success) {
-            // Cache the data
-            setCachedData('dashboard_goal', result.data);
             displayDailyGoal(result.data);
             
         } else {
@@ -326,49 +245,6 @@ function displayDailyGoal(data) {
         if (goalBarEl) goalBarEl.style.width = `${data.progress_percent}%`;
     } else {
         // Chưa có mục tiêu
-        noGoalCard.style.display = 'block';
-        hasGoalCard.style.display = 'none';
-    }
-}
-
-/**
- * Display daily goal (separated from loading)
- */
-function displayDailyGoal(data) {
-    const noGoalCard = document.getElementById('no-goal-card');
-    const hasGoalCard = document.getElementById('has-goal-card');
-    const streakBadge = document.getElementById('streak-badge');
-    const streakDaysEl = document.getElementById('streak-days');
-    
-    if (!noGoalCard || !hasGoalCard) {
-        console.error('Goal card elements not found in DOM');
-        return;
-    }
-    
-    // Hiển thị streak nếu có
-    if (data.streak_days && data.streak_days > 0) {
-        if (streakBadge) streakBadge.style.display = 'flex';
-        if (streakDaysEl) streakDaysEl.textContent = data.streak_days;
-    }
-    
-    if (data.has_goal) {
-        // Hiển thị mục tiêu hiện tại
-        noGoalCard.style.display = 'none';
-        hasGoalCard.style.display = 'block';
-        
-        const goalTitle = `Học ${data.daily_target} từ hôm nay${data.is_recurring ? ' (Lặp lại hàng ngày)' : ''}`;
-        const goalSubtitle = `Đã học ${data.words_learned_today}/${data.daily_target} từ hôm nay`;
-        
-        const goalTitleEl = document.getElementById('goal-title');
-        const goalSubtitleEl = document.getElementById('goal-subtitle');
-        const goalPercentEl = document.getElementById('goal-progress-percent');
-        const goalBarEl = document.getElementById('goal-progress-bar');
-        
-        if (goalTitleEl) goalTitleEl.textContent = goalTitle;
-        if (goalSubtitleEl) goalSubtitleEl.textContent = goalSubtitle;
-        if (goalPercentEl) goalPercentEl.textContent = `${data.progress_percent}%`;
-        if (goalBarEl) goalBarEl.style.width = `${data.progress_percent}%`;
-    } else {
         noGoalCard.style.display = 'block';
         hasGoalCard.style.display = 'none';
     }
@@ -476,15 +352,6 @@ function escapeHtml(text) {
 let weeklyChart = null; // Biến global để lưu Chart instance
 
 async function loadWeeklyQuizStats(forceRefresh = false) {
-    // Check cache first (skip if forceRefresh)
-    if (!forceRefresh) {
-        const cached = getCachedData('dashboard_weekly_stats');
-        if (cached) {
-            drawWeeklyChart(cached);
-            return;
-        }
-    }
-    
     try {
         const response = await fetch(`${API_BASE}/get-weekly-quiz-stats.php?user_id=${currentUserId}`);
         const text = await response.text();
@@ -498,8 +365,6 @@ async function loadWeeklyQuizStats(forceRefresh = false) {
         }
         
         if (result.success && result.data) {
-            // Cache the data
-            setCachedData('dashboard_weekly_stats', result.data);
             drawWeeklyChart(result.data);
             console.log('Weekly quiz stats loaded:', result.data);
         }
@@ -520,7 +385,7 @@ function drawWeeklyChart(weekData) {
     }
     
     if (weekData.length === 0) {
-        console.warn('⚠️ No data to display');
+        console.warn('No data to display');
         return;
     }
     
@@ -539,7 +404,7 @@ function drawWeeklyChart(weekData) {
     const labels = weekData.map(day => day.day_name);
     const scores = weekData.map(day => day.avg_score || 0);
     
-    console.log('📊Drawing chart with data:', { labels, scores });
+    console.log('Drawing chart with data:', { labels, scores });
     
     // Create new chart
     weeklyChart = new Chart(ctx, {
