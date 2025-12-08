@@ -161,12 +161,12 @@ function renderLogTable(logs, startIndex) {
                     ${escapeHtml(ipDisplay)}
                 </td>
                 
+                <td class="col-time">${formattedDate}</td>
+                
                 <td class="col-ua truncate-cell" title="${escapeHtml(uaFull)}">
                     <span style="color:#9CA3AF; margin-right:5px;">${deviceIcon}</span>
                     ${escapeHtml(uaFull)}
                 </td>
-                
-                <td class="col-time">${formattedDate}</td>
             </tr>
         `;
     });

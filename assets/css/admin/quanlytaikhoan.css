@@ -82,6 +82,7 @@
     width: 100%;
     border-collapse: collapse;
     min-width: 800px;
+    table-layout: auto;
 }
 
 .admin-table th {
@@ -101,6 +102,7 @@
     color: #4B5563;
     font-size: 14px;
     vertical-align: middle;
+    word-wrap: break-word;
 }
 
 .admin-table tr:hover {

@@ -82,7 +82,7 @@ body {
 
 .search-bar {
     position: relative;
-    width: 300px;
+    width: 200px;
 }
 
 .search-bar i {
@@ -157,10 +157,8 @@ body {
 .admin-table {
     width: 100%;
     border-collapse: collapse;
-    /* FIX LỖI BIẾN DẠNG: Cố định layout bảng */
-    table-layout: fixed;
+    table-layout: auto;
     min-width: 1000px;
-    /* Đảm bảo độ rộng tối thiểu */
 }
 
 .admin-table th,
@@ -171,6 +169,7 @@ body {
     font-size: 14px;
     vertical-align: middle;
     color: #4B5563;
+    word-wrap: break-word;
 }
 
 .admin-table th {
@@ -209,31 +208,24 @@ body {
     color: #64748b;
 }
 
-
-/* Font số cho IP */
-
-.col-ua {
-    width: 250px;
-}
-
-
-/* Cột thiết bị rộng hơn chút */
-
+/* Cột thời gian - đã hoán đổi vị trí với thiết bị */
 .col-time {
     width: 150px;
+    text-align: center !important;
+}
+
+/* Cột thiết bị - đã hoán đổi vị trí với thời gian */
+.col-ua {
+    width: 250px;
     text-align: right !important;
 }
 
 
-/* --- CLASS CẮT CHỮ (TRUNCATE) --- */
+/* --- CLASS CẮT CHỮ (TRUNCATE) - Đã tắt để hiện full text --- */
 
 .truncate-cell {
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    /* Hiện dấu ... */
-    max-width: 0;
-    /* Kích hoạt ellipsis trong table-layout: fixed */
+    word-wrap: break-word;
+    white-space: normal;
 }
 
 .admin-table tr:hover {

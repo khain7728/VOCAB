@@ -26,6 +26,16 @@ try {
     $limit = isset($_GET['limit']) ? (int)$_GET['limit'] : 10;
     $offset = ($page - 1) * $limit;
     $search = isset($_GET['search']) ? trim($_GET['search']) : '';
+    
+    // Sort parameters
+    $sort_by = isset($_GET['sort_by']) ? $_GET['sort_by'] : 'created_at';
+    $order = isset($_GET['order']) && strtoupper($_GET['order']) === 'ASC' ? 'ASC' : 'DESC';
+    
+    // Validate sort column to prevent SQL injection
+    $allowed_sort_columns = ['created_at', 'action', 'target_id', 'admin_id'];
+    if (!in_array($sort_by, $allowed_sort_columns)) {
+        $sort_by = 'created_at';
+    }
 
     $where = " WHERE 1=1 ";
     if (!empty($search)) {
@@ -55,7 +65,7 @@ try {
             FROM admin_log l
             LEFT JOIN user u ON l.admin_id = u.user_id
             $where 
-            ORDER BY l.created_at DESC 
+            ORDER BY l.$sort_by $order 
             LIMIT $offset, $limit";
 
     $result = $conn->query($sql);
