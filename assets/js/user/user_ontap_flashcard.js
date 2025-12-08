@@ -298,7 +298,6 @@ async function speakWord() {
             });
             
             currentAudio.addEventListener('error', () => {
-                console.log('Audio file failed, fallback to TTS');
                 currentAudio = null;
                 useTTS(c.word);
             });
@@ -306,7 +305,6 @@ async function speakWord() {
             await currentAudio.play();
             return;
         } catch (error) {
-            console.log('Audio playback error, fallback to TTS:', error);
             currentAudio = null;
         }
     }

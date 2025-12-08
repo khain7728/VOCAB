@@ -30,8 +30,6 @@
    * KHỞI TẠO MODULE KHI DOM READY
    */
   function init() {
-    console.log('📢 Khởi tạo Notification Module...');
-    
     // Load thông báo trang đầu tiên
     loadNotifications(1, true);
     

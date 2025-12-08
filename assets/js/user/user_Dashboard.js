@@ -19,7 +19,6 @@ async function initializeUser() {
         
         if (result.success) {
             currentUserId = result.user_id;
-            console.log('Loaded user_id from session:', currentUserId);
             
             // Lưu vào localStorage để dùng cho các request tiếp theo
             localStorage.setItem('user_id', currentUserId);
@@ -46,7 +45,6 @@ async function initializeUser() {
  */
 async function loadDashboardStats(forceRefresh = false) {
     try {
-        console.log('Fetching dashboard stats for user:', currentUserId);
         const response = await fetch(`${API_BASE}/get-dashboard-stats.php?user_id=${currentUserId}`);
         
         if (!response.ok) {
@@ -64,7 +62,6 @@ async function loadDashboardStats(forceRefresh = false) {
 
         if (result.success) {
             displayDashboardStats(result.data);
-            console.log('Dashboard stats loaded successfully');
         } else {
             console.error('Lỗi API:', result.error);
         }
@@ -169,7 +166,6 @@ function displayMyCourses(courses) {
  */
 async function loadDailyGoal(forceRefresh = false) {
     try {
-        console.log('Fetching daily goal for user:', currentUserId);
         const response = await fetch(`${API_BASE}/get-daily-goal.php?user_id=${currentUserId}`);
         
         // Kiểm tra response status
@@ -534,8 +530,6 @@ function drawWeeklyChart(weekData) {
             responsiveAnimationDuration: 0
         }
     });
-    
-    console.log('Chart created successfully');
 }
 
 /**
