@@ -325,6 +325,67 @@ document.addEventListener('DOMContentLoaded', function() {
     if (btnOnTap) btnOnTap.addEventListener('click', () => checkAndNavigate('user_hinh_thuc_on_tap.html'));
     if (btnKiemTra) btnKiemTra.addEventListener('click', () => checkAndNavigate('user_kiem_tra.html'));
 
+    // --- SỰ KIỆN NÚT THAM GIA ---
+    if (btnThemKhoaHoc) {
+        btnThemKhoaHoc.addEventListener('click', async () => {
+            if (!confirm('Bạn có muốn tham gia khóa học này?')) return;
+            
+            try {
+                const response = await fetch(`${API_BASE_URL}/join-course.php`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ course_id: COURSE_ID })
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    alert(result.message || "Đã tham gia khóa học thành công!");
+                    fetchCourseDetails(currentPage); // Reload lại trang để cập nhật UI
+                } else {
+                    alert("Lỗi: " + result.error);
+                }
+            } catch (e) {
+                console.error(e);
+                alert("Lỗi kết nối server khi tham gia khóa học.");
+            }
+        });
+    }
+
+    // --- SỰ KIỆN NÚT XÓA/RỜI KHÓA HỌC ---
+    if (btnXoaKhoaHoc) {
+        btnXoaKhoaHoc.addEventListener('click', async () => {
+            const isOwner = courseData && courseData.info.isOwner;
+            const action = isOwner ? 'delete' : 'leave';
+            const confirmText = isOwner ? 'Bạn có chắc chắn muốn xóa vĩnh viễn khóa học này?' : 'Bạn có chắc chắn muốn rời khóa học này?';
+            
+            if (!confirm(confirmText)) return;
+            
+            try {
+                const response = await fetch(`${API_BASE_URL}/delete-course.php`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        course_id: COURSE_ID, 
+                        action: action 
+                    })
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    alert(result.message);
+                    window.location.href = 'khoa_hoc_cua_toi.html'; // Quay về danh sách khóa học
+                } else {
+                    alert("Lỗi: " + result.error);
+                }
+            } catch (e) {
+                console.error(e);
+                alert("Lỗi kết nối server.");
+            }
+        });
+    }
+
     // --- INIT ---
     fetchCourseDetails(1);
 });
