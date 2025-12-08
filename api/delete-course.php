@@ -26,6 +26,8 @@ ini_set('display_errors', 0);
 header('Content-Type: application/json; charset=utf-8');
 
 require_once '../config/config.php'; // cần cung cấp $conn (mysqli)
+require_once '../includes/rate_limiter.php';
+checkApiRateLimit();
 
 try {
     if ($_SERVER['REQUEST_METHOD'] !== 'POST') {

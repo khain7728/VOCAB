@@ -9,6 +9,8 @@ header('Access-Control-Allow-Origin: *');
 
 // Import config (includes session & functions)
 require_once '../config/config.php';
+require_once '../includes/rate_limiter.php';
+checkApiRateLimit();
 
 try {
     // BẢO MẬT: Lấy user_id từ session
