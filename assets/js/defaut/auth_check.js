@@ -91,17 +91,17 @@ async function verifySessionWithServer() {
             localStorage.setItem('user_name', userFromMeta.name);
             localStorage.setItem('user_role', userFromMeta.role);
             
-            console.log('✅ PHP Gateway Auth Verified:', userFromMeta);
+            // console.log('✅ PHP Gateway Auth Verified:', userFromMeta);
             
-            // Optional: Verify lại với server (phòng trường hợp session expire giữa chừng)
-            setTimeout(async () => {
-                const serverUser = await verifySessionWithServer();
-                if (!serverUser) {
-                    console.warn('⚠️ Session expired - redirecting to login');
-                    alert('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.');
-                    window.location.href = getLoginPath();
-                }
-            }, 1000);
+            // Verify ngay lập tức với server (phòng trường hợp session expire)
+            const serverUser = await verifySessionWithServer();
+            if (!serverUser) {
+                console.warn('⚠️ Session expired - redirecting to login');
+                alert('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.');
+                localStorage.clear(); // Xóa localStorage cũ
+                window.location.href = getLoginPath();
+                return;
+            }
             
             return; // Authenticated - cho phép tiếp tục
         }
@@ -146,7 +146,7 @@ async function verifySessionWithServer() {
             return;
         }
         
-        console.log('✅ Fallback authentication check passed:', result);
+        // console.log('✅ Fallback authentication check passed:', result);
         
     } catch (error) {
         console.error('❌ Auth check failed:', error);

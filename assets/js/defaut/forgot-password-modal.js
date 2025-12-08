@@ -3,10 +3,10 @@
  * Xử lý 3 bước: Nhập email → Nhập code → Đổi password
  */
 
-console.log('forgot-password-modal.js loaded');
+// console.log('forgot-password-modal.js loaded');
 
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('DOMContentLoaded - Initializing modal...');
+    // console.log('DOMContentLoaded - Initializing modal...');
     
     // Elements
     const forgotPasswordLink = document.getElementById('forgotPasswordLink');
@@ -14,12 +14,12 @@ document.addEventListener('DOMContentLoaded', function() {
     const modal = document.getElementById('forgotPasswordModal');
     const closeModalBtn = document.getElementById('closeModal');
     
-    console.log('Modal elements:', {
-        forgotPasswordLink,
-        modalOverlay,
-        modal,
-        closeModalBtn
-    });
+    // console.log('Modal elements:', {
+    //     forgotPasswordLink,
+    //     modalOverlay,
+    //     modal,
+    //     closeModalBtn
+    // });
     
     // Steps
     const step1 = document.getElementById('step1');
@@ -51,30 +51,30 @@ document.addEventListener('DOMContentLoaded', function() {
     // Mở modal
     forgotPasswordLink.addEventListener('click', function(e) {
         e.preventDefault();
-        console.log('Forgot password link clicked!');
+        // console.log('Forgot password link clicked!');
         openModal();
     });
     
     // Đóng modal
     closeModalBtn.addEventListener('click', function() {
-        console.log('Close button clicked!');
+        // console.log('Close button clicked!');
         closeModal();
     });
     
     modalOverlay.addEventListener('click', function() {
-        console.log('Overlay clicked!');
+        // console.log('Overlay clicked!');
         closeModal();
     });
     
     function openModal() {
-        console.log('Opening modal...');
+        // console.log('Opening modal...');
         modalOverlay.classList.add('active');
         modal.classList.add('active');
         resetToStep1();
     }
     
     function closeModal() {
-        console.log('Closing modal...');
+        // console.log('Closing modal...');
         modalOverlay.classList.remove('active');
         modal.classList.remove('active');
         resetToStep1();
@@ -236,21 +236,21 @@ document.addEventListener('DOMContentLoaded', function() {
     resetPasswordBtn.addEventListener('click', async function(e) {
         // Ngăn không cho submit nhiều lần
         if (resetPasswordBtn.disabled) {
-            console.log('Button đã disabled, bỏ qua click');
+            // console.log('Button đã disabled, bỏ qua click');
             return;
         }
         
-        console.log('Reset password button clicked');
+        // console.log('Reset password button clicked');
         
         const password = newPassword.value;
         const confirm = confirmPassword.value;
         
-        console.log('Password validation:', {
-            hasPassword: !!password,
-            hasConfirm: !!confirm,
-            length: password.length,
-            match: password === confirm
-        });
+        // console.log('Password validation:', {   
+        //     hasPassword: !!password,
+        //     hasConfirm: !!confirm,
+        //     length: password.length,
+        //     match: password === confirm
+        // });
         
         // Validate
         if (!password || !confirm) {
@@ -274,13 +274,13 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         
         // Disable button ngay lập tức
-        console.log('Disabling button...');
+        // console.log('Disabling button...');
         resetPasswordBtn.disabled = true;
         resetPasswordBtn.innerHTML = '<span class="modal-loading"></span>Đang cập nhật...';
         clearAlert(alertStep3);
         
         try {
-            console.log('Sending request to reset-password.php...');
+            // console.log('Sending request to reset-password.php...');
             const startTime = performance.now();
             
             const response = await fetch('../api/reset-password.php', {
@@ -295,10 +295,10 @@ document.addEventListener('DOMContentLoaded', function() {
             });
             
             const endTime = performance.now();
-            console.log(`API response time: ${endTime - startTime}ms`);
+            // console.log(`API response time: ${endTime - startTime}ms`);
             
             const data = await response.json();
-            console.log('API response:', data);
+            // console.log('API response:', data);
             
             if (data.success) {
                 // Thành công - hiển thị thông báo và đóng modal

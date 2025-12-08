@@ -349,7 +349,7 @@ async function speakWord() {
             await currentAudio.play();
             return;
         } catch (error) {
-            console.log('Audio file failed, fallback to TTS:', error);
+            // console.log('Audio file failed, fallback to TTS:', error);
             currentAudio = null;
         }
     }

@@ -77,7 +77,7 @@ async function fetchLogs(forceReload = false) {
         // Nếu giá trị ô input hiện tại KHÁC với giá trị lúc bắt đầu gọi API -> Hủy bỏ kết quả này
         const nowSearchVal = searchEl ? searchEl.value.trim() : '';
         if (nowSearchVal !== currentSearchVal) {
-            console.log("Dữ liệu cũ về chậm -> Bỏ qua để tránh lỗi hiển thị");
+            // console.log("Dữ liệu cũ về chậm -> Bỏ qua để tránh lỗi hiển thị");
             return;
         }
         // ---------------------------

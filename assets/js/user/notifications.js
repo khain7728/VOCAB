@@ -48,7 +48,7 @@
     // Kiểm tra cache nếu đang load trang đầu
     const now = Date.now();
     if (page === 1 && cachedData && (now - lastFetchTime) < CONFIG.CACHE_DURATION) {
-      console.log('📦 Using cached notifications');
+      // console.log('📦 Using cached notifications');
       const { notifications, pagination, unread_count } = cachedData;
       renderNotifications(notifications, replace);
       updateBadge(unread_count);
@@ -101,7 +101,7 @@
       // Cập nhật nút "Xem thêm"
       updateLoadMoreButton(pagination.has_more);
 
-      console.log(`✅ Đã load ${notifications.length} thông báo (trang ${page})`);
+      // console.log(`✅ Đã load ${notifications.length} thông báo (trang ${page})`);
 
     } catch (error) {
       console.error('❌ Lỗi khi load thông báo:', error);
@@ -211,7 +211,7 @@
     }
 
     // TODO: Thêm logic điều hướng tùy theo type của thông báo
-    console.log(`📌 Clicked notification #${id}`)
+    // console.log(`📌 Clicked notification #${id}`)
   }
 
   /**
@@ -255,7 +255,7 @@
         }
       }
 
-      console.log(`✅ ${result.message}`);
+      // console.log(`✅ ${result.message}`);
 
     } catch (error) {
       console.error('❌ Lỗi khi đánh dấu đã đọc:', error);
@@ -342,7 +342,7 @@
         }
       }
 
-      console.log(`✅ ${result.message}`);
+      // console.log(`✅ ${result.message}`);
 
     } catch (error) {
       console.error('❌ Lỗi khi xóa thông báo:', error);
