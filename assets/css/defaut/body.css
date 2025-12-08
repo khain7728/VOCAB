@@ -5,9 +5,15 @@
     font-family: 'Roboto', Arial, sans-serif;
 }
 
+#content {
+    padding: 1.5rem 2.5rem;
+}
+
 #main {
-    width: 95%;
-    margin-left: 2.5rem;
+    width: 100%;
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 0 2rem;
     display: flex;
     flex-direction: column;
     gap: 1rem;

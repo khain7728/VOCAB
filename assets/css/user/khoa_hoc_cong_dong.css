@@ -34,7 +34,9 @@
 
 
 /* --- CSS CHO #main --- */
+/* Styles kế thừa từ body.css: *, #tieu_de_trang */
 
+/* Override #main với max-width centered layout */
 #main {
     max-width: 62.5rem; /* 1000px */
     margin: 1.25rem auto;

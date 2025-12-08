@@ -1,3 +1,6 @@
+/* Styles kế thừa từ body.css: *, #tieu_de_trang */
+
+/* Override #main với layout full-width */
 #main {
     max-width: 100%;
     margin: 1.25rem 2rem;

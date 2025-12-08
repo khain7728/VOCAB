@@ -1,7 +1,7 @@
-* { box-sizing: border-box; font-family: 'roboto', arial, sans-serif; }
-html { font-size: 16px; }
+/* Styles kế thừa từ body.css: *, #tieu_de_trang */
+/* #main - sử dụng từ body.css (width: 95%, margin-left: 2.5rem, flex layout) */
 
-#main { width: 95%; margin-left: 2.5rem; }
+html { font-size: 16px; }
 
 /* Loading Spinner */
 .kt-loading {

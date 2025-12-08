@@ -1,27 +1,28 @@
-* {
-	font-family: 'roboto', arial, sans-serif;
-	box-sizing: border-box;
-}
+/* Styles kế thừa từ body.css: *, #main, #tieu_de_trang */
 
 html { font-size: 16px; }
 
+/* Custom cho trang flashcard ôn tập */
 #tieu_de_trang {
-	font-size: 2.25rem;
-	font-weight: bold;
-	font-style: italic;
-	margin-bottom: 1rem;
-	display: flex;
-	flex-direction: row;
-	align-items: center;
 	color: #7F4A4A;
+	display: flex;
+	align-items: center;
+	gap: 0.625rem;
+}
+#tieu_de_trang p {
+	margin: 0;
 }
 #tieu_de_trang i {
-	margin-right: 1rem;
 	background-color: #7F4A4A;
 	color: #fff;
-	padding: 0.5125rem 0.625rem;
-	border-radius: 0.625rem;
-	font-size: 1.5rem;
+	padding: 0.5rem;
+	border-radius: 0.5rem;
+	font-size: 1.25rem;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 2.5rem;
+	height: 2.5rem;
 }
 
 .process {

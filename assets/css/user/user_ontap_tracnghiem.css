@@ -1,36 +1,34 @@
-* {
-    font-family: 'roboto', arial, sans-serif;
-    box-sizing: border-box;
-}
+/* Styles kế thừa từ body.css: *, #main, #tieu_de_trang */
 
 html { font-size: 16px; }
 
 #main {
-    width: 95%;
     margin: 0 auto;
-    display: flex;
-    flex-direction: column;
-    gap: 1.25rem; /* ~20px */
+    gap: 1.25rem;
     max-width: 80rem;
 }
 
+/* Custom cho trang trắc nghiệm */
 #tieu_de_trang {
-    font-size: 2.25rem;
-    font-weight: bold;
-    font-style: italic;
-    margin-bottom: 1rem;
-    display: flex;
-    flex-direction: row;
-    align-items: center;
     color: #2F80ED;
+    display: flex;
+    align-items: center;
+    gap: 0.625rem;
+}
+#tieu_de_trang p {
+    margin: 0;
 }
 #tieu_de_trang i {
-    margin-right: 1rem;
     background-color: #2F80ED;
     color: white;
-    padding: 0.3125rem 0.625rem; /* 5px 10px */
-    border-radius: 0.625rem; /* 10px */
-    font-size: 1.5rem;
+    padding: 0.5rem;
+    border-radius: 0.5rem;
+    font-size: 1.25rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.5rem;
+    height: 2.5rem;
 }
 
 .process {

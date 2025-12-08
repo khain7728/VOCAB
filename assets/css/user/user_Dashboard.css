@@ -1,19 +1,5 @@
 /* ===== GENERAL ===== */
-body {
-    font-family: 'Roboto', sans-serif;
-    margin: 0;
-    padding: 0;
-}
-
-#content {
-    padding: 20px 40px;
-}
-
-#tieu_de_trang {
-    font-size: 26px;
-    font-weight: 700;
-    margin-bottom: 10px;
-}
+/* Styles kế thừa từ body.css: *, body, #main, #tieu_de_trang, #content */
 
 .title {
     font-size: 22px;

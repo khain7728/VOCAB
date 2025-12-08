@@ -1,13 +1,5 @@
 /* --- GLOBAL --- */
-
-* {
-    box-sizing: border-box;
-}
-
-body {
-    font-family: 'Roboto', sans-serif;
-    background-color: #f4f7f6;
-}
+/* Styles kế thừa từ body.css: *, body, #main, #tieu_de_trang */
 
 .page-content {
     padding: 24px;
