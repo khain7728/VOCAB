@@ -4,7 +4,7 @@ html { font-size: 16px; }
 
 #main {
     margin: 0 auto;
-    gap: 1.25rem;
+    gap: 0.75rem;
     max-width: 80rem;
 }
 
@@ -33,12 +33,12 @@ html { font-size: 16px; }
 
 .process {
     width: 100%;
-    height: 1.5rem;
+    height: 1.25rem;
     background-color: #D0E9FF;
     border-radius: 0.625rem;
     border: #2F80ED 0.0625rem solid;
     overflow: hidden;
-    margin-bottom: 1.25rem;
+    margin-bottom: 0.75rem;
     position: relative;
 }
 .process .tongsocauhoi { width:100%; height:100%; }
@@ -53,32 +53,32 @@ html { font-size: 16px; }
 #frame_cauhoi #cauhoi {
     border: #2F80ED 0.0625rem solid;
     border-radius: 1rem;
-    padding: 1rem;
-    margin: 0 auto 1rem auto;
+    padding: 0.75rem;
+    margin: 0 auto 0.75rem auto;
     width: 55%;
-    min-width: 18.75rem; /* 300px */
+    min-width: 18.75rem;
     display: flex;
     align-items: center;
     justify-content: center;
     text-align: center;
-    font-size: 2.5rem; /* 40px */
+    font-size: 2rem;
     font-weight: 700;
-    min-height: 6.5rem; /* ~104px */
+    min-height: 4.5rem;
     line-height: 1.2;
     background-color:#F8FCFF;
 }
 
 #frame_cautraloi {
     display: grid;
-    grid-template-columns: 1fr 1fr;  /* 2 cột */
-    gap: 2rem; /* 32px */
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
     width: 100%;
-    margin-top: 1.25rem; /* 20px */
+    margin-top: 0.75rem;
 }
 
 .cautraloi {
-    min-height: 6rem; /* 96px */
-    padding: 0.75rem;
+    min-height: 4rem;
+    padding: 0.625rem;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -86,7 +86,7 @@ html { font-size: 16px; }
     cursor: pointer;
     border: #2F80ED 0.0625rem solid;
     border-radius: 1rem;
-    font-size: 1.75rem; /* 28px */
+    font-size: 1.25rem;
     font-weight: 600;
     background: #ffffff;
     position: relative;
@@ -130,10 +130,10 @@ html { font-size: 16px; }
 #thaotac.show { display:flex; }
 
 #thaotac button {
-    font-size: 1.5rem; /* 24px */
-    padding: 0.625rem 1.25rem; /* 10px 20px */
+    font-size: 1.125rem;
+    padding: 0.625rem 1.5rem;
     font-weight: 600;
-    border-radius: 0.625rem;
+    border-radius: 2rem;
     border: none;
     cursor:pointer;
     transition: all 0.3s ease;
@@ -151,8 +151,15 @@ button[title="dathuoctunay"] {
     color: white;
     transition: all 0.3s ease, transform 0.12s ease;
 }
-button[title="dathuoctunay"]:hover { background-color:#2567c7; }
-button[title="dathuoctunay"]:active { transform:scale(0.95); }
+button[title="dathuoctunay"]:hover { 
+    background-color:#2567c7;
+    transform: translateY(-0.1875rem);
+    box-shadow: 0 0.25rem 0.5rem rgba(47, 128, 237, 0.3);
+}
+button[title="dathuoctunay"]:active { 
+    transform: translateY(0);
+    box-shadow: 0 0.125rem 0.25rem rgba(47, 128, 237, 0.3);
+}
 
 /* State khi đã đánh dấu "Đã thuộc" */
 button[title="dathuoctunay"].marked {
@@ -166,8 +173,16 @@ button[title="quentunay"] {
     border: #FF0404 0.0625rem solid !important;
     transition: all 0.3s ease, transform 0.12s ease;
 }
-button[title="quentunay"]:hover { background-color:#FF0404; color:#fff; }
-button[title="quentunay"]:active { transform:scale(0.95); }
+button[title="quentunay"]:hover { 
+    background-color:#FF0404;
+    color:#fff;
+    transform: translateY(-0.1875rem);
+    box-shadow: 0 0.25rem 0.5rem rgba(255, 4, 4, 0.3);
+}
+button[title="quentunay"]:active { 
+    transform: translateY(0);
+    box-shadow: 0 0.125rem 0.25rem rgba(255, 4, 4, 0.3);
+}
 
 /* State khi đã đánh dấu "Quên" */
 button[title="quentunay"].marked {
@@ -179,8 +194,15 @@ button[title="tieptheo"] {
     background-color: #A8CAF8;
     color:#000;
 }
-button[title="tieptheo"]:hover { background-color:#7BAEF6; }
-button[title="tieptheo"]:active { transform:scale(0.95); }
+button[title="tieptheo"]:hover { 
+    background-color:#7BAEF6;
+    transform: translateY(-0.1875rem);
+    box-shadow: 0 0.25rem 0.5rem rgba(168, 202, 248, 0.3);
+}
+button[title="tieptheo"]:active { 
+    transform: translateY(0);
+    box-shadow: 0 0.125rem 0.25rem rgba(168, 202, 248, 0.3);
+}
 
 /* Responsive thu gọn trên màn hình nhỏ */
 @media (max-width: 48rem) { /* 768px */
