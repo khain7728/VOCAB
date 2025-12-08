@@ -45,8 +45,10 @@ try {
     $targetFilePath = $targetDir . $newFileName;
 
     if (move_uploaded_file($file['tmp_name'], $targetFilePath)) {
-        // Trả về đường dẫn để frontend lưu vào ô input
-        $publicPath = "uploads/documents/" . $newFileName;
+        // === FIX: TRẢ VỀ FULL URL THAY VÌ RELATIVE PATH ===
+        // Load config để lấy BASE_URL
+        require_once '../config/config.php';
+        $publicPath = BASE_URL . "/uploads/documents/" . $newFileName;
 
         echo json_encode([
             'success' => true,

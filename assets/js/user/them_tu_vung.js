@@ -374,10 +374,16 @@ document.addEventListener('DOMContentLoaded', function() {
     function handlePhatAm(tu) {
         if (audioPlayer) { audioPlayer.pause(); audioPlayer.currentTime = 0; }
         window.speechSynthesis.cancel(); 
-        if (tu.linkAm) {
+        
+        // === FIX: Nếu có linkAm, ưu tiên phát file, KHÔNG fallback sang text ===
+        if (tu.linkAm && tu.linkAm.trim() !== '') {
             audioPlayer.src = tu.linkAm; 
-            audioPlayer.play().catch(e => { phatAmBangAPI(tu.tiengAnh); });
+            audioPlayer.play().catch(e => {
+                console.error("Lỗi phát audio file:", e);
+                alert("Không thể phát file audio. Vui lòng kiểm tra URL: " + tu.linkAm);
+            });
         } else if (tu.tiengAnh) {
+            // Chỉ phát text nếu không có file audio
             phatAmBangAPI(tu.tiengAnh);
         }
     }

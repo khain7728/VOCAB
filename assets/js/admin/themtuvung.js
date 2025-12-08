@@ -64,7 +64,17 @@ document.addEventListener('DOMContentLoaded', function() {
     const audioPlayer = document.getElementById('audio-player-an');
     
     const linkTaiFileAm = document.getElementById('link-tai-file-am');
-    const inputFileAn = document.getElementById('input-file-an');
+    
+    // === TẠO INPUT FILE NẾU KHÔNG CÓ TRONG HTML ===
+    let inputFileAn = document.getElementById('input-file-an');
+    if (!inputFileAn) {
+        inputFileAn = document.createElement('input');
+        inputFileAn.type = 'file';
+        inputFileAn.id = 'input-file-an';
+        inputFileAn.accept = '.mp3';
+        inputFileAn.style.display = 'none';
+        document.body.appendChild(inputFileAn);
+    }
 
     // --- VALIDATION FUNCTIONS ---
     function isEnglishOnly(text) {
@@ -75,6 +85,13 @@ document.addEventListener('DOMContentLoaded', function() {
         return /^[a-zA-Z0-9\s\u00C0-\u024F\u1E00-\u1EFF]+$/.test(text);
     }
     // ----------------------------
+
+    // --- SECURITY: Escape HTML để chống XSS ---
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
 
     // --- LOAD EXISTING WORDS ---
     async function loadExistingWords() {
@@ -123,10 +140,10 @@ document.addEventListener('DOMContentLoaded', function() {
 
                 theTuVung.setAttribute('data-index', index);
 
-                const hienThiTuLoai = tu.tuLoai ? `<span style="font-weight:normal; font-size:0.9em">(${tu.tuLoai})</span>` : '';
+                const hienThiTuLoai = tu.tuLoai ? `<span style="font-weight:normal; font-size:0.9em">(${escapeHtml(tu.tuLoai)})</span>` : '';
                 const hienThiDaCo = tu.isExisting ? `<span style="font-size:0.7em; color:green; margin-left:5px">✔ Đã có</span>` : '';
                 const hienThiLink = tu.linkAm ? `<i class="fa-solid fa-link" style="font-size:0.8em; color:#888" title="Có link audio"></i>` : '';
-                const hienThiMoTa = tu.moTa ? `<p class="mo-ta-tu" style="font-size:0.9em; color:#555; font-style:italic; margin-top:4px;">${tu.moTa}</p>` : '';
+                const hienThiMoTa = tu.moTa ? `<p class="mo-ta-tu" style="font-size:0.9em; color:#555; font-style:italic; margin-top:4px;">${escapeHtml(tu.moTa)}</p>` : '';
 
                 const actionButtons = VIEW_ONLY 
                     ? `<button class="nut-icon nut-phat-am" data-action="phat-am" title="Nghe thử"><i class="fa-solid fa-volume-high"></i></button>`
@@ -137,12 +154,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 theTuVung.innerHTML = `
                     <div class="thong-tin-tu">
                         <p class="tu-vung-chinh">
-                            ${tu.tiengAnh} 
+                            ${escapeHtml(tu.tiengAnh)} 
                             ${hienThiTuLoai}
                             ${hienThiDaCo}
                         </p>
-                        <p class="phien-am-tu">${tu.phienAm}</p>
-                        <p class="nghia-tu">${tu.nghia}</p>
+                        <p class="phien-am-tu">${escapeHtml(tu.phienAm)}</p>
+                        <p class="nghia-tu">${escapeHtml(tu.nghia)}</p>
                         ${hienThiMoTa}
                         ${hienThiLink}
                     </div>
@@ -325,10 +342,16 @@ document.addEventListener('DOMContentLoaded', function() {
     function handlePhatAm(tu) {
         if (audioPlayer) { audioPlayer.pause(); audioPlayer.currentTime = 0; }
         window.speechSynthesis.cancel(); 
-        if (tu.linkAm) {
+        
+        // === FIX: Nếu có linkAm, ưu tiên phát file, KHÔNG fallback sang text ===
+        if (tu.linkAm && tu.linkAm.trim() !== '') {
             audioPlayer.src = tu.linkAm; 
-            audioPlayer.play().catch(e => { phatAmBangAPI(tu.tiengAnh); });
+            audioPlayer.play().catch(e => {
+                console.error("Lỗi phát audio file:", e);
+                alert("Không thể phát file audio. Vui lòng kiểm tra URL: " + tu.linkAm);
+            });
         } else if (tu.tiengAnh) {
+            // Chỉ phát text nếu không có file audio
             phatAmBangAPI(tu.tiengAnh);
         }
     }

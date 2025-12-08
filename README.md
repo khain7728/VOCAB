@@ -843,10 +843,6 @@ Bạn được tự do:
 
 ---
 
-## 👨‍💻 Tác giả
-
-**Tên của bạn**
-
 ---
 
 ## 🙏 Lời cảm ơn
@@ -857,56 +853,4 @@ Bạn được tự do:
 - [XAMPP](https://www.apachefriends.org/) - Development environment
 
 ---
-
-## 📞 Liên hệ & Hỗ trợ
-
-Nếu bạn cần hỗ trợ hoặc có câu hỏi:
-
----
-
-<div align="center">
-
-### ⭐ Nếu thấy project hữu ích, hãy cho một Star nhé! ⭐
-
-
-</div>
-
-#### 6. **api/** - RESTful API Endpoints
-- Trả về dữ liệu dạng JSON
-- Dùng cho AJAX calls
-- Ví dụ: `get-users.php` → `{"status":"success","data":[...]}`
-
-#### 7. **uploads/** - Lưu trữ file
-- ⚠️ **QUAN TRỌNG**: Folder này cần có quyền ghi (chmod 777 trên Linux/Mac)
-- Không commit file upload lên Git (đã có trong `.gitignore`)
-- Có `.htaccess` ngăn chặn thực thi file PHP trong thư mục này
-
-#### 8. **logs/** - Ghi log lỗi
-- Tự động tạo file log theo ngày
-- Giúp debug và theo dõi lỗi
-- Ví dụ: `error_2025-11-09.log`
-- Có `.htaccess` ngăn chặn truy cập web
-
-#### 9. **Root files** - File cấu hình gốc
-- `.env`: Biến môi trường (database credentials, API keys) - ⚠️ KHÔNG commit
-- `.gitignore`: Loại trừ file nhạy cảm khỏi Git (logs/, uploads/, .env)
-- `.htaccess`: Cấu hình Apache (URL rewriting, security headers)
-- `index.php`: Landing page / trang chủ chính
-
----
-
-
-
-## 💻 Hướng dẫn Development
-
-### 1. Quy trình làm việc cơ bản
-
-```
-1. Khởi động XAMPP (Apache + MySQL)
-2. Mở project trong code editor (VS Code, PHPStorm...)
-3. Truy cập http://localhost/VOCAB
-4. Code và test
-5. Commit code lên Git
-```
-
 
