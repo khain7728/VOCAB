@@ -22,6 +22,8 @@ ini_set('display_errors', 0);
 header('Content-Type: application/json; charset=utf-8');
 
 require_once '../config/config.php';
+require_once '../includes/rate_limiter.php';
+checkApiRateLimit();
 
 // Class lỗi hiển thị cho User
 class ClientException extends Exception {}

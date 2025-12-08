@@ -25,6 +25,8 @@ error_reporting(E_ALL);
 
 header('Content-Type: application/json; charset=utf-8');
 require_once '../config/config.php';
+require_once '../includes/rate_limiter.php';
+checkApiRateLimit();
 
 $response = [];
 
