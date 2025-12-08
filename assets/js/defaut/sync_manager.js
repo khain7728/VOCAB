@@ -184,7 +184,7 @@ class SyncManager {
      */
     log(...args) {
         if (this.debug) {
-            console.log('[SyncManager]', ...args);
+            // console.log('[SyncManager]', ...args);
         }
     }
     

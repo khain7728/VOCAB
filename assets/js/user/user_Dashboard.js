@@ -19,23 +19,35 @@ async function initializeUser() {
         
         if (result.success) {
             currentUserId = result.user_id;
-            console.log('Loaded user_id from session:', currentUserId);
             
             // Lưu vào localStorage để dùng cho các request tiếp theo
             localStorage.setItem('user_id', currentUserId);
             localStorage.setItem('user_name', result.name);
             localStorage.setItem('user_role', result.role);
         } else {
-            console.error('Not logged in');
-            alert('Vui lòng đăng nhập');
+            // Session hết hạn hoặc chưa đăng nhập
+            console.error('Session expired or not logged in');
+            localStorage.clear(); // Xóa localStorage cũ
+            alert('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.');
             window.location.href = '../dangnhap.html';
         }
     } catch (error) {
         console.error('Error getting session:', error);
-        // Fallback to localStorage
-        currentUserId = localStorage.getItem('user_id');
-        if (!currentUserId) {
-            alert('Vui lòng đăng nhập lại');
+        
+        // Phân biệt loại lỗi
+        if (!navigator.onLine) {
+            // Mất kết nối mạng - cho phép dùng cache tạm thời
+            currentUserId = localStorage.getItem('user_id');
+            if (!currentUserId) {
+                alert('Không có kết nối mạng. Vui lòng kiểm tra và đăng nhập lại.');
+                window.location.href = '../dangnhap.html';
+            }
+            // Hiển thị cảnh báo offline
+            console.warn('⚠️ Offline mode - using cached data');
+        } else {
+            // Lỗi khác (server error, timeout, etc.) - bắt buộc login lại
+            localStorage.clear();
+            alert('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.');
             window.location.href = '../dangnhap.html';
         }
     }
@@ -46,7 +58,6 @@ async function initializeUser() {
  */
 async function loadDashboardStats(forceRefresh = false) {
     try {
-        console.log('Fetching dashboard stats for user:', currentUserId);
         const response = await fetch(`${API_BASE}/get-dashboard-stats.php?user_id=${currentUserId}`);
         
         if (!response.ok) {
@@ -64,7 +75,6 @@ async function loadDashboardStats(forceRefresh = false) {
 
         if (result.success) {
             displayDashboardStats(result.data);
-            console.log('Dashboard stats loaded successfully');
         } else {
             console.error('Lỗi API:', result.error);
         }
@@ -169,7 +179,6 @@ function displayMyCourses(courses) {
  */
 async function loadDailyGoal(forceRefresh = false) {
     try {
-        console.log('Fetching daily goal for user:', currentUserId);
         const response = await fetch(`${API_BASE}/get-daily-goal.php?user_id=${currentUserId}`);
         
         // Kiểm tra response status
@@ -179,7 +188,7 @@ async function loadDailyGoal(forceRefresh = false) {
         
         // Lấy raw text trước để debug
         const text = await response.text();
-        console.log('Raw response:', text);
+        // console.log('Raw response:', text);
         
         // Parse JSON
         let result;
@@ -191,7 +200,7 @@ async function loadDailyGoal(forceRefresh = false) {
             return;
         }
         
-        console.log('Daily goal result:', result);
+        // console.log('Daily goal result:', result);
 
         if (result.success) {
             displayDailyGoal(result.data);
@@ -366,7 +375,7 @@ async function loadWeeklyQuizStats(forceRefresh = false) {
         
         if (result.success && result.data) {
             drawWeeklyChart(result.data);
-            console.log('Weekly quiz stats loaded:', result.data);
+            // console.log('Weekly quiz stats loaded:', result.data);
         }
     } catch (error) {
         console.error('Error loading weekly quiz stats:', error);
@@ -404,7 +413,7 @@ function drawWeeklyChart(weekData) {
     const labels = weekData.map(day => day.day_name);
     const scores = weekData.map(day => day.avg_score || 0);
     
-    console.log('Drawing chart with data:', { labels, scores });
+    // console.log('Drawing chart with data:', { labels, scores });
     
     // Create new chart
     weeklyChart = new Chart(ctx, {
@@ -534,8 +543,6 @@ function drawWeeklyChart(weekData) {
             responsiveAnimationDuration: 0
         }
     });
-    
-    console.log('Chart created successfully');
 }
 
 /**

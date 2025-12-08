@@ -384,10 +384,10 @@ const SyncValidator = {
      * Security report (for debugging)
      */
     getSecurityReport() {
-        console.log('=== Sync Security Report ===');
-        console.log('Rate Limits:', Array.from(this.rateLimits.entries()));
-        console.log('Max Message Age:', this.MAX_MESSAGE_AGE + 'ms');
-        console.log('Max Calls/Min:', this.MAX_CALLS_PER_MINUTE);
+        // console.log('=== Sync Security Report ===');
+        // console.log('Rate Limits:', Array.from(this.rateLimits.entries()));
+        // console.log('Max Message Age:', this.MAX_MESSAGE_AGE + 'ms');
+        // console.log('Max Calls/Min:', this.MAX_CALLS_PER_MINUTE);
     }
 };
 
@@ -396,6 +396,6 @@ if (typeof window !== 'undefined') {
     window.SyncValidator = SyncValidator;
     
     if (window.location.hostname === 'localhost') {
-        console.log('✅ SyncValidator loaded');
+        // console.log('✅ SyncValidator loaded');
     }
 }

@@ -63,7 +63,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
     async function fetchCourseDetails(page = 1) {
         try {
-            console.log(`Đang tải chi tiết khóa học ID: ${COURSE_ID}, Page: ${page}...`);
             const response = await fetch(`${API_BASE_URL}/get-course-details.php?course_id=${COURSE_ID}&user_id=${USER_ID}&page=${page}&limit=${ITEMS_PER_PAGE}`);
             const text = await response.text();
             

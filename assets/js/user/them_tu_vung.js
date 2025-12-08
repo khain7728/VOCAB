@@ -69,6 +69,13 @@ document.addEventListener('DOMContentLoaded', function() {
     function isEnglishOnly(text) { return /^[a-zA-Z0-9\s]+$/.test(text); }
     function isVietnameseValid(text) { return /^[a-zA-Z0-9\s\u00C0-\u024F\u1E00-\u1EFF]+$/.test(text); }
 
+    // --- SECURITY: Escape HTML để chống XSS ---
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+
     // --- [SỬA ĐỔI 2] Tách logic kích hoạt sửa từ ra hàm riêng ---
     // Hàm này sẽ được gọi từ 2 nơi: 
     // 1. Khi người dùng click nút sửa trong danh sách
@@ -129,14 +136,13 @@ document.addEventListener('DOMContentLoaded', function() {
                     const indexCanSua = danhSachTu.findIndex(w => w.id == TARGET_WORD_ID);
                     
                     if (indexCanSua !== -1) {
-                        console.log("Auto-edit mode triggered for word ID:", TARGET_WORD_ID);
                         triggerEditMode(indexCanSua);
                         showToast(`Đang chỉnh sửa từ: <b>${danhSachTu[indexCanSua].tiengAnh}</b>`);
                     }
                 }
             }
         } catch (error) {
-            console.error("Lỗi tải từ vựng cũ:", error);
+            console.error("Lỗi tải từ vựng:", error);
         }
     }
 
@@ -158,23 +164,24 @@ document.addEventListener('DOMContentLoaded', function() {
                     theTuVung.style.backgroundColor = '#e7f1ff';
                     theTuVung.style.transform = 'scale(1.01)';
                     theTuVung.style.transition = 'all 0.3s ease';
+                    theTuVung.setAttribute('data-editing', 'true');
                 }
 
-                theTuVung.setAttribute('data-index', index + 1); // Số thứ tự bắt đầu từ 1
+                theTuVung.setAttribute('data-index', index);
 
-                const hienThiTuLoai = tu.tuLoai ? `<span style="font-weight:normal; font-size:0.9em">(${tu.tuLoai})</span>` : '';
+                const hienThiTuLoai = tu.tuLoai ? `<span style="font-weight:normal; font-size:0.9em">(${escapeHtml(tu.tuLoai)})</span>` : '';
                 const hienThiDaCo = tu.isExisting ? `<span style="font-size:0.7em; color:green; margin-left:5px">✔ Đã có</span>` : '';
-                const hienThiMoTa = tu.moTa ? `<p class="mota-tu">${tu.moTa}</p>` : '';
+                const hienThiMoTa = tu.moTa ? `<p class="mota-tu">${escapeHtml(tu.moTa)}</p>` : '';
 
                 theTuVung.innerHTML = `
                     <div class="thong-tin-tu">
                         <p class="tu-vung-chinh">
-                            ${tu.tiengAnh} 
+                            ${escapeHtml(tu.tiengAnh)} 
                             ${hienThiTuLoai}
                             ${hienThiDaCo}
                         </p>
-                        <p class="phien-am-tu">${tu.phienAm}</p>
-                        <p class="nghia-tu">${tu.nghia}</p>
+                        <p class="phien-am-tu">${escapeHtml(tu.phienAm)}</p>
+                        <p class="nghia-tu">${escapeHtml(tu.nghia)}</p>
                         ${hienThiMoTa}
                     </div>
                     <div class="hanh-dong-tu">
@@ -229,7 +236,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 alert("Lỗi upload: " + (result.error || "Không xác định"));
             }
         } catch (error) {
-            console.error(error); alert("Lỗi kết nối server khi upload file.");
+            console.error("Upload error:", error);
+            alert("Lỗi kết nối server khi upload file.");
         } finally {
             linkTaiFileAm.textContent = oldText; linkTaiFileAm.style.pointerEvents = "auto"; inputFileAn.value = '';
         }
@@ -435,7 +443,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 btnLuuVaThoat.disabled = false;
             }
         } catch (error) {
-            console.error(error);
+            console.error("Save error:", error);
             alert("Lỗi: " + error.message);
             renderDanhSach(); 
             btnLuuVaThoat.textContent = "Lưu & Thoát";

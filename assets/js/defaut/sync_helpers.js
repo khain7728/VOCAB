@@ -61,7 +61,7 @@ function setupDashboardSync() {
     
     dashboardActions.forEach(action => {
         window.SyncManager.on(action, () => {
-            console.log(`[Sync] Refreshing dashboard due to: ${action}`);
+            // console.log(`[Sync] Refreshing dashboard due to: ${action}`);
             
             // Reload dashboard stats với forceRefresh = true để bỏ qua cache
             if (typeof loadDashboardStats === 'function') {
@@ -98,7 +98,7 @@ function setupCourseListSync() {
     
     courseActions.forEach(action => {
         window.SyncManager.on(action, () => {
-            console.log(`[Sync] Refreshing courses due to: ${action}`);
+            // console.log(`[Sync] Refreshing courses due to: ${action}`);
             
             // Reload course list với forceRefresh = true để bỏ qua cache
             if (typeof fetchMyCourses === 'function') {
@@ -122,7 +122,7 @@ function setupCourseListSync() {
  */
 function setupHeaderSync() {
     window.SyncManager.on(window.SYNC_ACTIONS.PROFILE_UPDATED, (payload) => {
-        console.log('[Sync] Updating header profile');
+        // console.log('[Sync] Updating header profile');
         
         // Update localStorage
         if (payload.name) {
@@ -145,7 +145,7 @@ function setupHeaderSync() {
     });
     
     window.SyncManager.on(window.SYNC_ACTIONS.AVATAR_UPDATED, (payload) => {
-        console.log('[Sync] Updating avatar');
+        // console.log('[Sync] Updating avatar');
         
         if (payload.avatar) {
             localStorage.setItem('user_avatar', payload.avatar);
@@ -182,14 +182,14 @@ function setupAdminSync() {
  * Gọi function này trong mọi trang để enable cross-tab sync
  */
 function initializeSyncHandlers() {
-    console.log('[Sync] Initializing sync handlers...');
+    // console.log('[Sync] Initializing sync handlers...');
     
     setupDashboardSync();
     setupCourseListSync();
     setupHeaderSync();
     setupAdminSync();
     
-    console.log('[Sync] ✅ All sync handlers initialized');
+    // console.log('[Sync] ✅ All sync handlers initialized'); 
 }
 
 // Auto-initialize nếu DOM đã ready

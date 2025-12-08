@@ -218,7 +218,5 @@ function speakWord(word) {
         utterance.lang = 'en-US';
         utterance.rate = 0.8; // Tốc độ chậm hơn một chút
         window.speechSynthesis.speak(utterance);
-    } else {
-        console.log('Trình duyệt không hỗ trợ phát âm');
     }
 }

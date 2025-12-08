@@ -2,8 +2,6 @@
 // LOAD & DISPLAY QUIZ RESULT
 // ===========================
 
-console.log('Loading quiz result page...');
-
 // Ngăn người dùng bấm nút Back của trình duyệt
 history.pushState(null, null, location.href);
 window.addEventListener('popstate', function() {
@@ -13,7 +11,6 @@ window.addEventListener('popstate', function() {
 
 // Lấy dữ liệu từ sessionStorage
 const resultDataStr = sessionStorage.getItem('quizResult');
-console.log('Raw sessionStorage data:', resultDataStr);
 
 if (!resultDataStr) {
     console.error('No quiz result found in sessionStorage');
@@ -22,7 +19,6 @@ if (!resultDataStr) {
 } else {
     try {
         const resultData = JSON.parse(resultDataStr);
-        console.log('Parsed result data:', resultData);
         displayResult(resultData);
     } catch (error) {
         console.error('Error parsing result data:', error);
@@ -36,8 +32,6 @@ function displayResult(data) {
     const course_id = data.course_id || urlParams.get('course_id') || sessionStorage.getItem('current_course_id');
     const { correct_count, incorrect_count, score } = data;
     
-    console.log('Displaying result:', { correct_count, incorrect_count, score, course_id });
-    
     // Cập nhật số liệu
     const soCauDungEl = document.getElementById('so_cau_dung');
     const soCauSaiEl = document.getElementById('so_cau_sai');
@@ -46,8 +40,6 @@ function displayResult(data) {
     if (soCauDungEl) soCauDungEl.textContent = correct_count;
     if (soCauSaiEl) soCauSaiEl.textContent = incorrect_count;
     if (tyLeDungEl) tyLeDungEl.textContent = score + '%';
-    
-    console.log('Updated DOM elements');
     
     // Cập nhật lời khen dựa trên điểm
     const complimentEl = document.getElementById('khen');
@@ -80,8 +72,6 @@ function displayResult(data) {
     if (hocLaiLink) {
         hocLaiLink.href = `user_hoc_tu_vung.html?course_id=${course_id}`;
     }
-    
-    console.log('Result display complete');
 }
 
 // Script để load menu và header đã có trong HTML
