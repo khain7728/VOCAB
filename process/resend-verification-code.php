@@ -37,32 +37,25 @@ try {
     $stmt->execute();
     $stmt->close();
     
+    // Gửi email xác thực
+    require_once __DIR__ . '/../includes/email_helper.php';
+    $emailResult = sendVerificationEmail($pending['email'], $pending['name'], $new_code);
+    
     // Ghi log
     $log_message = sprintf(
-        "[%s] Resend verification code to %s (%s). New code: %s, Expires: %s\n",
+        "[%s] Resend verification to %s (%s). Code: %s, Status: %s\n",
         date('Y-m-d H:i:s'),
         $pending['name'],
         $pending['email'],
         $new_code,
-        $new_expire
+        $emailResult['success'] ? 'SUCCESS' : 'FAILED'
     );
     file_put_contents(__DIR__ . '/../logs/email_verification.log', $log_message, FILE_APPEND);
     
-    // TODO: Gửi email thật (production)
-    /*
-    $mail = new PHPMailer\PHPMailer\PHPMailer();
-    $mail->setFrom('noreply@vocab.com', 'VOCAB System');
-    $mail->addAddress($pending['email'], $pending['name']);
-    $mail->Subject = 'Mã xác thực email VOCAB';
-    $mail->Body = "Xin chào " . $pending['name'] . ",\n\n";
-    $mail->Body .= "Mã xác thực email mới của bạn là: " . $new_code . "\n\n";
-    $mail->Body .= "Mã này sẽ hết hạn sau 30 phút.\n\n";
-    $mail->Body .= "Trân trọng,\nVOCAB Team";
-    $mail->send();
-    */
-    
-    // Cập nhật debug code (testing only)
-    $_SESSION['verification_code_debug'] = $new_code;
+    // Debug mode
+    if (defined('APP_ENV') && APP_ENV === 'development') {
+        $_SESSION['verification_code_debug'] = $new_code;
+    }
     
     set_message('Mã xác thực mới đã được gửi đến email của bạn!', MSG_SUCCESS);
     redirect('/VOCAB/auth/verify-email.php');

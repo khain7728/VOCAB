@@ -131,12 +131,20 @@
                 registerButton.disabled = true;
                 registerButton.textContent = 'Đang xử lý...';
 
+                // Timeout sau 10 giây
+                const timeoutId = setTimeout(() => {
+                    registerButton.disabled = false;
+                    registerButton.textContent = 'Đăng ký';
+                    showError('Yêu cầu quá lâu. Vui lòng thử lại!');
+                }, 10000);
+
                 // Gửi request
                 fetch('../process/register-process.php', {
                     method: 'POST',
                     body: formData
                 })
                 .then(response => {
+                    clearTimeout(timeoutId);
                     // Kiểm tra xem có redirect không
                     if (response.redirected) {
                         window.location.href = response.url;

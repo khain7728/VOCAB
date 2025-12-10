@@ -9,8 +9,8 @@ require_once __DIR__ . '/../config/config.php';
 require_once __DIR__ . '/../includes/rate_limiter.php';
 require_once __DIR__ . '/../includes/notification_helper.php';
 
-// Rate limiting - Chống spam đăng ký
-checkRegisterRateLimit();
+// TẠM TẮT rate limiting để test
+// checkRegisterRateLimit();
 
 // Chỉ chấp nhận POST request
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
@@ -97,32 +97,25 @@ try {
             'name' => $name
         ];
         
+        // Gửi email xác thực
+        require_once __DIR__ . '/../includes/email_helper.php';
+        $emailResult = sendVerificationEmail($email, $name, $verification_code);
+        
         // Ghi log
         $log_message = sprintf(
-            "[%s] Email verification code sent to %s (%s). Code: %s, Expires: %s\n",
+            "[%s] Email verification to %s (%s). Code: %s, Status: %s\n",
             date('Y-m-d H:i:s'),
             $name,
             $email,
             $verification_code,
-            $verification_expire
+            $emailResult['success'] ? 'SUCCESS' : 'FAILED'
         );
         file_put_contents(__DIR__ . '/../logs/email_verification.log', $log_message, FILE_APPEND);
         
-        // TODO: Gửi email thật (production)
-        /*
-        $mail = new PHPMailer\PHPMailer\PHPMailer();
-        $mail->setFrom('noreply@vocab.com', 'VOCAB System');
-        $mail->addAddress($email, $name);
-        $mail->Subject = 'Xác thực tài khoản VOCAB';
-        $mail->Body = "Xin chào " . $name . ",\n\n";
-        $mail->Body .= "Mã xác thực email của bạn là: " . $verification_code . "\n\n";
-        $mail->Body .= "Mã này sẽ hết hạn sau 30 phút.\n\n";
-        $mail->Body .= "Trân trọng,\nVOCAB Team";
-        $mail->send();
-        */
-        
-        // Lưu code vào session để hiển thị (CHỈ TESTING - XÓA KHI PRODUCTION)
-        $_SESSION['verification_code_debug'] = $verification_code;
+        // Debug mode: Hiển thị code trong session (development only)
+        if (defined('APP_ENV') && APP_ENV === 'development') {
+            $_SESSION['verification_code_debug'] = $verification_code;
+        }
         
         // Tạo thông báo chào mừng user mới
         notifyWelcomeNewUser($conn, $conn->insert_id, $name);

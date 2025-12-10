@@ -62,37 +62,30 @@ try {
     // GỬI CODE CHO NGƯỜI DÙNG
     // ==================================================
     
-    // TESTING: Lưu vào session để hiển thị (XÓA KHI PRODUCTION)
-    $_SESSION['reset_code_info'] = [
-        'email' => $email,
-        'name' => $user['name'],
-        'code' => $reset_code,
-        'expire' => $expire
-    ];
+    // Gửi email reset password
+    require_once __DIR__ . '/../includes/email_helper.php';
+    $emailResult = sendResetPasswordEmail($email, $user['name'], $reset_code);
     
     // Ghi log
     $log_message = sprintf(
-        "[%s] Reset code sent to %s (%s). Code: %s, Expires: %s\n",
+        "[%s] Reset code to %s (%s). Code: %s, Status: %s\n",
         date('Y-m-d H:i:s'),
         $user['name'],
         $email,
         $reset_code,
-        $expire
+        $emailResult['success'] ? 'SUCCESS' : 'FAILED'
     );
     file_put_contents(__DIR__ . '/../logs/password_reset.log', $log_message, FILE_APPEND);
     
-    // TODO: Trong production, gửi email thật bằng PHPMailer
-    /*
-    $mail = new PHPMailer\PHPMailer\PHPMailer();
-    $mail->setFrom('noreply@vocab.com', 'VOCAB System');
-    $mail->addAddress($email, $user['name']);
-    $mail->Subject = 'Mã đặt lại mật khẩu VOCAB';
-    $mail->Body = "Xin chào " . $user['name'] . ",\n\n";
-    $mail->Body .= "Mã đặt lại mật khẩu của bạn là: " . $reset_code . "\n\n";
-    $mail->Body .= "Mã này sẽ hết hạn sau 15 phút.\n\n";
-    $mail->Body .= "Nếu bạn không yêu cầu đặt lại mật khẩu, vui lòng bỏ qua email này.\n\n";
-    $mail->send();
-    */
+    // Debug mode
+    if (defined('APP_ENV') && APP_ENV === 'development') {
+        $_SESSION['reset_code_info'] = [
+            'email' => $email,
+            'name' => $user['name'],
+            'code' => $reset_code,
+            'expire' => $expire
+        ];
+    }
     
     echo json_encode([
         'success' => true,
