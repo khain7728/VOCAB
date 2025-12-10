@@ -39,17 +39,35 @@ if (empty($email)) {
     $errors[] = 'Vui lòng nhập email!';
 } elseif (!validate_email($email)) {
     $errors[] = 'Email không hợp lệ!';
-} elseif (email_exists($conn, $email)) {
-    // Email đã tồn tại - Trả về JSON để hỏi user có muốn đăng nhập không
-    $_SESSION['login_email'] = $email;
-    header('Content-Type: application/json');
-    echo json_encode([
-        'success' => false,
-        'error_type' => 'email_exists',
-        'message' => 'Email "' . $email . '" đã được đăng ký.',
-        'email' => $email
-    ]);
-    exit;
+} else {
+    // Kiểm tra email đã tồn tại và trạng thái verify
+    $stmt = $conn->prepare("SELECT user_id, email_verified FROM user WHERE email = ?");
+    $stmt->bind_param("s", $email);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    $existing_user = $result->fetch_assoc();
+    
+    if ($existing_user) {
+        if ($existing_user['email_verified'] == 0) {
+            // Email tồn tại nhưng chưa verify -> Xóa user cũ để cho phép đăng ký lại
+            $deleteStmt = $conn->prepare("DELETE FROM user WHERE email = ? AND email_verified = 0");
+            $deleteStmt->bind_param("s", $email);
+            $deleteStmt->execute();
+            $deleteStmt->close();
+        } else {
+            // Email đã verify -> Báo lỗi và chuyển đến đăng nhập
+            $_SESSION['login_email'] = $email;
+            header('Content-Type: application/json');
+            echo json_encode([
+                'success' => false,
+                'error_type' => 'email_exists',
+                'message' => 'Email "' . $email . '" đã được đăng ký.',
+                'email' => $email
+            ]);
+            exit;
+        }
+    }
+    $stmt->close();
 }
 
 if (empty($password)) {
