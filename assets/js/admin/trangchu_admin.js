@@ -154,7 +154,7 @@ function renderCharts(data) {
             data: data.user_chart.map(i => i.count),
             borderColor: '#7367F0',
             backgroundColor: 'rgba(115, 103, 240, 0.1)',
-            tension: 0.4,
+            tension: 0,
             fill: true,
             pointRadius: 4,
             pointHoverRadius: 6
